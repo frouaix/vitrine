@@ -12,6 +12,10 @@ export type { RenderContext } from './context';
 export { ImmediateRenderer } from './renderer-immediate';
 export type { RendererConfig } from './renderer-immediate';
 
+// Performance
+export { PerformanceOptimizer, PerformanceMonitor } from './performance';
+export type { Viewport } from './performance';
+
 // Event system
 export { EventManager } from './events';
 export type { PointerEventData } from './events';

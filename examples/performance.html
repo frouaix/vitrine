@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Performance Test (10k+ blocks)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a1a;
+      color: white;
+    }
+    canvas {
+      border: 2px solid #444;
+      background: #0d0d0d;
+      display: block;
+      margin: 20px auto;
+    }
+    h1 {
+      text-align: center;
+      color: #4dabf7;
+    }
+    .controls {
+      max-width: 900px;
+      margin: 0 auto 20px;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-box {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #4dabf7;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #4dabf7;
+    }
+    .controls button {
+      background: #4dabf7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      transition: background 0.2s;
+    }
+    .controls button:hover {
+      background: #339af0;
+    }
+    .controls button:active {
+      background: #1971c2;
+    }
+    label {
+      margin-right: 15px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    input[type="range"] {
+      width: 200px;
+      vertical-align: middle;
+    }
+    input[type="checkbox"] {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Vitrine Performance Test</h1>
+  
+  <div class="controls">
+    <div>
+      <label>
+        Block Count: <span id="blockCountLabel">10000</span>
+        <input type="range" id="blockCount" min="1000" max="50000" step="1000" value="10000">
+      </label>
+      
+      <label>
+        <input type="checkbox" id="culling" checked> Enable Culling
+      </label>
+      
+      <label>
+        <input type="checkbox" id="animate" checked> Animate
+      </label>
+    </div>
+    
+    <div style="margin-top: 15px;">
+      <button id="regenerate">Regenerate Scene</button>
+      <button id="toggleFullscreen">Fullscreen Canvas</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">FPS</div>
+        <div class="stat-value" id="fps">60</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Blocks Rendered</div>
+        <div class="stat-value" id="rendered">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Blocks Culled</div>
+        <div class="stat-value" id="culled">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Render Time (ms)</div>
+        <div class="stat-value" id="renderTime">0</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+  
+  <script type="module">
+    import { 
+      ImmediateRenderer, 
+      rectangle, 
+      circle, 
+      text,
+      group 
+    } from '../dist/index.js';
+
+    const canvas = document.getElementById('canvas');
+    let renderer = new ImmediateRenderer({ 
+      canvas, 
+      width: 900, 
+      height: 600,
+      enableCulling: true
+    });
+
+    let config = {
+      blockCount: 10000,
+      animate: true,
+      culling: true,
+      time: 0
+    };
+
+    // Generate random blocks
+    function generateBlocks(count) {
+      const blocks = [];
+      const colors = ['#ff6b6b', '#51cf66', '#4dabf7', '#ffd43b', '#ff8787', '#a9e34b'];
+      
+      for (let i = 0; i < count; i++) {
+        const type = Math.random();
+        const x = Math.random() * 2000 - 500; // Some blocks off-screen
+        const y = Math.random() * 1500 - 300;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        
+        if (type < 0.6) {
+          // Rectangle
+          blocks.push(rectangle({
+            x,
+            y,
+            width: 20 + Math.random() * 30,
+            height: 20 + Math.random() * 30,
+            fill: color,
+            opacity: 0.7 + Math.random() * 0.3,
+            rotation: Math.random() * Math.PI * 2
+          }));
+        } else {
+          // Circle
+          blocks.push(circle({
+            x,
+            y,
+            radius: 10 + Math.random() * 20,
+            fill: color,
+            opacity: 0.7 + Math.random() * 0.3
+          }));
+        }
+      }
+      
+      return blocks;
+    }
+
+    let blocks = generateBlocks(config.blockCount);
+
+    function render() {
+      if (config.animate) {
+        config.time += 0.02;
+      }
+
+      const scene = group({ x: 0, y: 0 }, [
+        // Background
+        rectangle({ 
+          width: 900, 
+          height: 600, 
+          fill: '#0d0d0d' 
+        }),
+
+        // Info overlay
+        group({ x: 0, y: 0 }, [
+          text({ 
+            x: 20, 
+            y: 30, 
+            text: `${config.blockCount.toLocaleString()} blocks`, 
+            fontSize: 24,
+            fill: '#4dabf7',
+          }),
+          text({ 
+            x: 20, 
+            y: 55, 
+            text: 'Pan the scene with animation to see culling in action', 
+            fontSize: 14,
+            fill: '#999',
+          })
+        ]),
+
+        // Animated container with all blocks
+        group({ 
+          x: 450 + Math.sin(config.time) * 200,
+          y: 300 + Math.cos(config.time * 0.7) * 150,
+        }, blocks)
+      ]);
+
+      renderer.render(scene);
+
+      // Update stats
+      const stats = renderer.getPerformanceStats();
+      document.getElementById('fps').textContent = stats.fps || 0;
+      document.getElementById('rendered').textContent = stats.blocksRendered.toLocaleString();
+      document.getElementById('culled').textContent = stats.blocksCulled.toLocaleString();
+      document.getElementById('renderTime').textContent = stats.renderTime.toFixed(2);
+
+      requestAnimationFrame(render);
+    }
+
+    // Controls
+    document.getElementById('blockCount').addEventListener('input', (e) => {
+      config.blockCount = parseInt(e.target.value);
+      document.getElementById('blockCountLabel').textContent = config.blockCount.toLocaleString();
+    });
+
+    document.getElementById('regenerate').addEventListener('click', () => {
+      blocks = generateBlocks(config.blockCount);
+    });
+
+    document.getElementById('culling').addEventListener('change', (e) => {
+      config.culling = e.target.checked;
+      renderer.destroy();
+      renderer = new ImmediateRenderer({ 
+        canvas, 
+        width: 900, 
+        height: 600,
+        enableCulling: config.culling
+      });
+    });
+
+    document.getElementById('animate').addEventListener('change', (e) => {
+      config.animate = e.target.checked;
+    });
+
+    document.getElementById('toggleFullscreen').addEventListener('click', () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        canvas.requestFullscreen();
+      }
+    });
+
+    // Start rendering
+    render();
+  </script>
+</body>
+</html>

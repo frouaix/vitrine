@@ -4,6 +4,7 @@ import { BlockType } from './types';
 import type { RenderContext } from './context';
 import { Canvas2DContext } from './context';
 import { EventManager } from './events';
+import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from './performance';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
@@ -11,6 +12,7 @@ export interface RendererConfig {
   height?: number;
   pixelRatio?: number;
   enableEvents?: boolean;
+  enableCulling?: boolean;
 }
 
 export class ImmediateRenderer {
@@ -20,12 +22,23 @@ export class ImmediateRenderer {
   private height: number;
   private pixelRatio: number;
   private eventManager: EventManager | null = null;
+  private enableCulling: boolean;
+  private viewport: Viewport;
+  private perfMonitor: PerformanceMonitor;
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
     this.width = config.width || 800;
     this.height = config.height || 600;
     this.pixelRatio = config.pixelRatio || window.devicePixelRatio || 1;
+    this.enableCulling = config.enableCulling ?? true;
+
+    this.viewport = {
+      x: 0,
+      y: 0,
+      width: this.width,
+      height: this.height
+    };
 
     this.setupCanvas();
     
@@ -37,6 +50,8 @@ export class ImmediateRenderer {
     if (config.enableEvents !== false) {
       this.eventManager = new EventManager(this.canvas);
     }
+
+    this.perfMonitor = new PerformanceMonitor();
   }
 
   private setupCanvas(): void {
@@ -53,10 +68,15 @@ export class ImmediateRenderer {
   resize(width: number, height: number): void {
     this.width = width;
     this.height = height;
+    this.viewport.width = width;
+    this.viewport.height = height;
     this.setupCanvas();
   }
 
   render(block: Block): void {
+    const startTime = performance.now();
+    
+    PerformanceOptimizer.resetStats();
     this.context.clear();
     this.context.save();
     
@@ -73,6 +93,14 @@ export class ImmediateRenderer {
     if (this.eventManager) {
       this.eventManager.setScene(block);
     }
+
+    // Update performance stats
+    PerformanceOptimizer.stats.renderTime = performance.now() - startTime;
+    this.perfMonitor.update();
+  }
+
+  getPerformanceStats() {
+    return this.perfMonitor.getStats();
   }
 
   destroy(): void {
@@ -83,6 +111,21 @@ export class ImmediateRenderer {
 
   private renderBlock(block: Block): void {
     if (block.props.visible === false) return;
+
+    // Frustum culling
+    if (this.enableCulling) {
+      const inView = PerformanceOptimizer.cullBlocks(
+        block,
+        this.viewport,
+        this.context.transformStack.getCurrent()
+      );
+      if (!inView) {
+        PerformanceOptimizer.stats.blocksCulled++;
+        return;
+      }
+    }
+
+    PerformanceOptimizer.stats.blocksRendered++;
 
     this.context.save();
     

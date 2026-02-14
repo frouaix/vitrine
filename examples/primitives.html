@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - All Primitives Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Vitrine All Primitives</h1>
+  <div class="info">
+    <strong>Demonstrating all block types:</strong>
+    Rectangle, Circle, Ellipse, Line, Arc, Path, Text, and Image
+  </div>
+  <canvas id="canvas"></canvas>
+  
+  <script type="module">
+    import { 
+      ImmediateRenderer, 
+      rectangle, 
+      circle,
+      ellipse,
+      line,
+      arc,
+      path,
+      text, 
+      group 
+    } from '../dist/index.js';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new ImmediateRenderer({ 
+      canvas, 
+      width: 900, 
+      height: 700 
+    });
+
+    function render() {
+      const scene = group({ x: 0, y: 0 }, [
+        // Background
+        rectangle({ 
+          width: 900, 
+          height: 700, 
+          fill: '#f8f9fa' 
+        }),
+
+        // Title
+        text({ 
+          x: 450, 
+          y: 30, 
+          text: 'All Vitrine Primitives', 
+          fontSize: 32,
+          fill: '#212529',
+          align: 'center',
+          baseline: 'middle'
+        }),
+
+        // Row 1: Rectangle and Circle
+        group({ x: 0, y: 80 }, [
+          // Rectangle
+          group({ x: 150, y: 100 }, [
+            rectangle({ 
+              width: 180, 
+              height: 120, 
+              fill: '#ff6b6b',
+              stroke: '#c92a2a',
+              strokeWidth: 3,
+              cornerRadius: 15
+            }),
+            text({ 
+              x: 90, 
+              y: 150, 
+              text: 'Rectangle', 
+              fontSize: 14,
+              fill: 'white',
+              align: 'center',
+              baseline: 'middle'
+            })
+          ]),
+
+          // Circle
+          group({ x: 550, y: 160 }, [
+            circle({ 
+              radius: 60, 
+              fill: '#4dabf7',
+              stroke: '#1971c2',
+              strokeWidth: 3
+            }),
+            text({ 
+              x: 0, 
+              y: 90, 
+              text: 'Circle', 
+              fontSize: 14,
+              fill: '#495057',
+              align: 'center',
+              baseline: 'middle'
+            })
+          ]),
+
+          // Ellipse
+          group({ x: 780, y: 160 }, [
+            ellipse({ 
+              radiusX: 70, 
+              radiusY: 50, 
+              fill: '#51cf66',
+              stroke: '#2f9e44',
+              strokeWidth: 3
+            }),
+            text({ 
+              x: 0, 
+              y: 75, 
+              text: 'Ellipse', 
+              fontSize: 14,
+              fill: '#495057',
+              align: 'center',
+              baseline: 'middle'
+            })
+          ])
+        ]),
+
+        // Row 2: Lines
+        group({ x: 0, y: 280 }, [
+          text({ 
+            x: 100, 
+            y: 0, 
+            text: 'Lines:', 
+            fontSize: 16,
+            fill: '#495057',
+            baseline: 'middle'
+          }),
+
+          line({ 
+            x1: 100, 
+            y1: 40, 
+            x2: 300, 
+            y2: 40, 
+            stroke: '#f59f00',
+            strokeWidth: 3
+          }),
+
+          line({ 
+            x1: 100, 
+            y1: 80, 
+            x2: 300, 
+            y2: 120, 
+            stroke: '#f59f00',
+            strokeWidth: 5
+          }),
+
+          line({ 
+            x1: 320, 
+            y1: 40, 
+            x2: 520, 
+            y2: 120, 
+            stroke: '#cc5de8',
+            strokeWidth: 2
+          }),
+
+          text({ 
+            x: 310, 
+            y: 140, 
+            text: 'Various line styles', 
+            fontSize: 12,
+            fill: '#868e96',
+            align: 'center'
+          })
+        ]),
+
+        // Row 3: Arcs
+        group({ x: 0, y: 420 }, [
+          text({ 
+            x: 150, 
+            y: 0, 
+            text: 'Arcs:', 
+            fontSize: 16,
+            fill: '#495057',
+            baseline: 'middle'
+          }),
+
+          arc({ 
+            x: 150,
+            y: 80,
+            radius: 50, 
+            startAngle: 0, 
+            endAngle: Math.PI, 
+            fill: '#ffd43b',
+            stroke: '#fab005',
+            strokeWidth: 3
+          }),
+
+          arc({ 
+            x: 300,
+            y: 80,
+            radius: 50, 
+            startAngle: 0, 
+            endAngle: Math.PI * 1.5, 
+            fill: '#ff8787',
+            stroke: '#fa5252',
+            strokeWidth: 3
+          }),
+
+          arc({ 
+            x: 450,
+            y: 80,
+            radius: 50, 
+            startAngle: -Math.PI / 2, 
+            endAngle: Math.PI / 2, 
+            stroke: '#4dabf7',
+            strokeWidth: 5
+          })
+        ]),
+
+        // Row 4: Custom Path
+        group({ x: 550, y: 350 }, [
+          text({ 
+            x: 100, 
+            y: 0, 
+            text: 'Custom Path:', 
+            fontSize: 16,
+            fill: '#495057',
+            baseline: 'middle'
+          }),
+
+          // Star shape using SVG path
+          path({ 
+            x: 100,
+            y: 100,
+            pathData: 'M 50 0 L 60 35 L 95 35 L 67 57 L 80 95 L 50 73 L 20 95 L 33 57 L 5 35 L 40 35 Z',
+            fill: '#ffd43b',
+            stroke: '#f59f00',
+            strokeWidth: 2
+          }),
+
+          // Heart shape
+          path({ 
+            x: 220,
+            y: 70,
+            pathData: 'M 50 80 C 20 50, 0 40, 0 25 C 0 10, 10 0, 25 0 C 35 0, 45 5, 50 15 C 55 5, 65 0, 75 0 C 90 0, 100 10, 100 25 C 100 40, 80 50, 50 80 Z',
+            fill: '#ff6b6b',
+            stroke: '#c92a2a',
+            strokeWidth: 2
+          })
+        ]),
+
+        // Bottom text
+        text({ 
+          x: 450, 
+          y: 680, 
+          text: 'All primitives support transforms, events, opacity, and shadows!', 
+          fontSize: 14,
+          fill: '#868e96',
+          align: 'center',
+          baseline: 'middle'
+        })
+      ]);
+
+      renderer.render(scene);
+    }
+
+    render();
+
+    // Animate
+    let rotation = 0;
+    function animate() {
+      rotation += 0.01;
+      // Could add rotation animation here
+      requestAnimationFrame(animate);
+    }
+    // animate(); // Uncomment to enable animation
+  </script>
+</body>
+</html>
