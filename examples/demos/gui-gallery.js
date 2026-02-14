@@ -49,25 +49,26 @@ export const demo = {
 
     // Build gallery GUI
     const gui = vstack(
-      { x: 50, y: 30, spacing: 20, padding: 0 },
+      { x: 50, y: 30, spacing: 25, padding: 0 },
       [
         // Header
         panel(
-          { width: 700, height: 80, padding: 20 },
+          { width: 900, height: 100, padding: 25 },
           [
             hstack(
-              { spacing: 20, alignment: 'center' },
+              { spacing: 25, alignment: 'center' },
               [
                 label({ 
                   text: '🖼️ Image Gallery', 
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: 'bold'
                 }),
                 button({
                   label: state.autoPlay ? '⏸ Pause' : '▶ Auto Play',
                   variant: 'primary',
-                  width: 140,
-                  x: 400,
+                  width: 180,
+                  height: 50,
+                  x: 530,
                   onClick: () => {
                     state.autoPlay = !state.autoPlay;
                     state.time = 0;
@@ -80,13 +81,13 @@ export const demo = {
 
         // Main carousel area
         panel(
-          { width: 700, height: 400, padding: 20 },
+          { width: 900, height: 450, padding: 25 },
           [
             // Carousel with image placeholders
             carousel(
               {
-                width: 660,
-                height: 300,
+                width: 850,
+                height: 350,
                 currentIndex: state.currentIndex,
                 onIndexChange: (index) => { 
                   state.currentIndex = index;
@@ -95,18 +96,18 @@ export const demo = {
               },
               state.images.map((img, index) => 
                 vstack(
-                  { spacing: 15, alignment: 'center' },
+                  { spacing: 20, alignment: 'center' },
                   [
                     // Image placeholder (colored rectangle)
                     panel(
-                      { width: 660, height: 250, padding: 0 },
+                      { width: 850, height: 280, padding: 0 },
                       [
                         // We'll use a colored rectangle as image placeholder
                         label({ 
                           text: `[Image ${index + 1}]`,
-                          fontSize: 32,
-                          x: 330,
-                          y: 125,
+                          fontSize: 40,
+                          x: 425,
+                          y: 140,
                           align: 'center'
                         })
                       ]
@@ -114,17 +115,17 @@ export const demo = {
                     
                     // Image info
                     vstack(
-                      { spacing: 5, alignment: 'center' },
+                      { spacing: 8, alignment: 'center' },
                       [
                         label({ 
                           text: img.title, 
-                          fontSize: 20,
+                          fontSize: 24,
                           fontWeight: 'bold',
                           align: 'center'
                         }),
                         label({ 
                           text: img.description, 
-                          fontSize: 14,
+                          fontSize: 16,
                           align: 'center'
                         })
                       ]
@@ -138,15 +139,16 @@ export const demo = {
 
         // Navigation controls
         panel(
-          { width: 700, height: 80, padding: 20 },
+          { width: 900, height: 100, padding: 25 },
           [
             hstack(
-              { spacing: 15, alignment: 'center', x: 175 },
+              { spacing: 18, alignment: 'center', x: 200 },
               [
                 button({
                   label: '⏮ First',
                   variant: 'secondary',
-                  width: 100,
+                  width: 130,
+                  height: 50,
                   onClick: () => { 
                     state.currentIndex = 0;
                     state.time = 0;
@@ -155,7 +157,8 @@ export const demo = {
                 button({
                   label: '◀ Previous',
                   variant: 'secondary',
-                  width: 120,
+                  width: 150,
+                  height: 50,
                   onClick: () => { 
                     state.currentIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
                     state.time = 0;
@@ -163,15 +166,16 @@ export const demo = {
                 }),
                 label({ 
                   text: `${state.currentIndex + 1} / ${state.images.length}`,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: 'bold',
-                  width: 60,
+                  width: 70,
                   align: 'center'
                 }),
                 button({
                   label: 'Next ▶',
                   variant: 'secondary',
-                  width: 120,
+                  width: 150,
+                  height: 50,
                   onClick: () => { 
                     state.currentIndex = (state.currentIndex + 1) % state.images.length;
                     state.time = 0;
@@ -180,7 +184,8 @@ export const demo = {
                 button({
                   label: 'Last ⏭',
                   variant: 'secondary',
-                  width: 100,
+                  width: 130,
+                  height: 50,
                   onClick: () => { 
                     state.currentIndex = state.images.length - 1;
                     state.time = 0;

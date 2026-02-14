@@ -48,8 +48,8 @@ function transformTextBox(
   const props = control.props as TextBoxProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 200;
-  const height = props.height || 40;
+  const width = props.width || 300;
+  const height = props.height || 50;
   
   const bgColor = state.focused
     ? style.backgroundColor
@@ -71,7 +71,9 @@ function transformTextBox(
       fill: bgColor,
       stroke: borderColor,
       strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius
+      cornerRadius: style.borderRadius,
+      onClick: props.onClick,
+      onHover: props.onHover
     })
   );
   
@@ -81,7 +83,7 @@ function transformTextBox(
     children.push(
       text({
         text: displayText,
-        x: style.padding || 10,
+        x: style.padding || 12,
         y: height / 2,
         fill: props.value ? style.textColor : (style.disabledTextColor || style.textColor),
         fontSize: style.fontSize,
@@ -111,8 +113,8 @@ function transformCheckBox(
   const props = control.props as CheckBoxProps;
   const style = getControlStyle(control, context);
   
-  const boxSize = 20;
-  const labelSpacing = 8;
+  const boxSize = 28;
+  const labelSpacing = 12;
   
   const children: Block[] = [];
   
@@ -142,7 +144,7 @@ function transformCheckBox(
         x: boxSize / 2,
         y: boxSize / 2,
         fill: '#ffffff',
-        fontSize: 14,
+        fontSize: 18,
         align: 'center',
         baseline: 'middle'
       })
@@ -170,7 +172,8 @@ function transformCheckBox(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.onChange ? () => props.onChange!(!props.checked) : undefined
+      onClick: props.onChange ? () => props.onChange!(!props.checked) : undefined,
+      onHover: props.onHover
     },
     children
   );
@@ -185,8 +188,8 @@ function transformRadioButton(
   const props = control.props as RadioButtonProps;
   const style = getControlStyle(control, context);
   
-  const radius = 10;
-  const labelSpacing = 8;
+  const radius = 14;
+  const labelSpacing = 12;
   
   const children: Block[] = [];
   
@@ -208,7 +211,7 @@ function transformRadioButton(
   if (props.checked) {
     children.push(
       circle({
-        radius: 6,
+        radius: 8,
         fill: style.checkedBackgroundColor
       })
     );
@@ -235,7 +238,8 @@ function transformRadioButton(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.onChange && props.value ? () => props.onChange!(props.value!) : undefined
+      onClick: props.onChange && props.value ? () => props.onChange!(props.value!) : undefined,
+      onHover: props.onHover
     },
     children
   );
@@ -257,8 +261,8 @@ function transformButton(
   
   const style = getControlStyle({ ...control, props: { ...props, className } }, context);
   
-  const width = props.width || 120;
-  const height = props.height || 40;
+  const width = props.width || 160;
+  const height = props.height || 50;
   
   const bgColor = !props.enabled && props.enabled !== undefined
     ? style.disabledBackgroundColor
@@ -306,7 +310,8 @@ function transformButton(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.enabled !== false && props.onClick ? props.onClick : undefined
+      onClick: props.enabled !== false && props.onClick ? props.onClick : undefined,
+      onHover: props.onHover
     },
     children
   );
@@ -321,9 +326,9 @@ function transformSlider(
   const props = control.props as SliderProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 200;
-  const trackHeight = 4;
-  const thumbRadius = 8;
+  const width = props.width || 300;
+  const trackHeight = 6;
+  const thumbRadius = 12;
   
   const min = props.min || 0;
   const max = props.max || 100;
@@ -360,7 +365,8 @@ function transformSlider(
       x: props.x || 0,
       y: props.y || 0,
       visible: props.visible !== false,
-      id: props.id
+      id: props.id,
+      onHover: props.onHover
     },
     children
   );
@@ -375,8 +381,8 @@ function transformDropdown(
   const props = control.props as DropdownProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 200;
-  const height = props.height || 40;
+  const width = props.width || 300;
+  const height = props.height || 50;
   
   const bgColor = state.hovered
     ? style.hoverBackgroundColor || style.backgroundColor
@@ -403,7 +409,7 @@ function transformDropdown(
   children.push(
     text({
       text: displayText,
-      x: style.padding || 10,
+      x: style.padding || 12,
       y: height / 2,
       fill: selectedOption ? style.textColor : (style.disabledTextColor || style.textColor),
       fontSize: style.fontSize,
@@ -416,10 +422,10 @@ function transformDropdown(
   children.push(
     text({
       text: '▼',
-      x: width - (style.padding || 10) - 5,
+      x: width - (style.padding || 12) - 8,
       y: height / 2,
       fill: style.textColor,
-      fontSize: 10,
+      fontSize: 14,
       baseline: 'middle'
     })
   );
@@ -429,7 +435,9 @@ function transformDropdown(
       x: props.x || 0,
       y: props.y || 0,
       visible: props.visible !== false,
-      id: props.id
+      id: props.id,
+      onClick: props.onClick,
+      onHover: props.onHover
     },
     children
   );

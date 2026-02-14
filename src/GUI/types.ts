@@ -48,12 +48,15 @@ export interface TextBoxProps extends GUIBaseProps {
   onChange?: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  onClick?: (event: PointerEvent) => void;
+  onHover?: (event: PointerEvent) => void;
 }
 
 export interface CheckBoxProps extends GUIBaseProps {
   checked?: boolean;
   label?: string;
   onChange?: (checked: boolean) => void;
+  onHover?: (event: PointerEvent) => void;
 }
 
 export interface RadioButtonProps extends GUIBaseProps {
@@ -62,12 +65,14 @@ export interface RadioButtonProps extends GUIBaseProps {
   value?: string;
   group?: string;
   onChange?: (value: string) => void;
+  onHover?: (event: PointerEvent) => void;
 }
 
 export interface ButtonProps extends GUIBaseProps {
   label: string;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
+  onHover?: (event: PointerEvent) => void;
 }
 
 export interface SliderProps extends GUIBaseProps {
@@ -76,6 +81,7 @@ export interface SliderProps extends GUIBaseProps {
   max?: number;
   step?: number;
   onChange?: (value: number) => void;
+  onHover?: (event: PointerEvent) => void;
 }
 
 export interface DropdownProps extends GUIBaseProps {
@@ -83,6 +89,8 @@ export interface DropdownProps extends GUIBaseProps {
   options: Array<{ label: string; value: string }>;
   placeholder?: string;
   onChange?: (value: string) => void;
+  onClick?: (event: PointerEvent) => void;
+  onHover?: (event: PointerEvent) => void;
 }
 
 // Layout control properties

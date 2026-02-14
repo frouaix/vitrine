@@ -56,22 +56,23 @@ export const demo = {
       {
         x: 50,
         y: 30,
-        width: 700,
-        height: 540,
+        width: 900,
+        height: 680,
         title: 'User Registration Form',
-        padding: 20
+        padding: 25
       },
       [
         vstack(
-          { spacing: 20, padding: 0 },
+          { spacing: 25, padding: 0 },
           [
             // Name field
             vstack(
-              { spacing: 5 },
+              { spacing: 8 },
               [
-                label({ text: 'Full Name:', fontSize: 14 }),
+                label({ text: 'Full Name:', fontSize: 16 }),
                 textbox({
-                  width: 660,
+                  width: 850,
+                  height: 50,
                   value: state.formData.name,
                   placeholder: 'Enter your full name',
                   onChange: (val) => { state.formData.name = val; }
@@ -81,11 +82,12 @@ export const demo = {
 
             // Email field
             vstack(
-              { spacing: 5 },
+              { spacing: 8 },
               [
-                label({ text: 'Email Address:', fontSize: 14 }),
+                label({ text: 'Email Address:', fontSize: 16 }),
                 textbox({
-                  width: 660,
+                  width: 850,
+                  height: 50,
                   value: state.formData.email,
                   placeholder: 'your.email@example.com',
                   onChange: (val) => { state.formData.email = val; }
@@ -102,9 +104,9 @@ export const demo = {
 
             // Notification preferences
             vstack(
-              { spacing: 8 },
+              { spacing: 12 },
               [
-                label({ text: 'Notification Preferences:', fontSize: 14 }),
+                label({ text: 'Notification Preferences:', fontSize: 16 }),
                 radiobutton({
                   label: 'Email notifications',
                   value: 'email',
@@ -131,11 +133,11 @@ export const demo = {
 
             // Volume slider
             vstack(
-              { spacing: 8 },
+              { spacing: 12 },
               [
-                label({ text: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 14 }),
+                label({ text: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 16 }),
                 slider({
-                  width: 660,
+                  width: 850,
                   value: state.formData.volume,
                   min: 0,
                   max: 100,
@@ -146,11 +148,12 @@ export const demo = {
 
             // Country dropdown
             vstack(
-              { spacing: 5 },
+              { spacing: 8 },
               [
-                label({ text: 'Country:', fontSize: 14 }),
+                label({ text: 'Country:', fontSize: 16 }),
                 dropdown({
-                  width: 660,
+                  width: 850,
+                  height: 50,
                   value: state.formData.country,
                   placeholder: 'Select your country',
                   options: [
@@ -169,11 +172,13 @@ export const demo = {
 
             // Action buttons and theme switcher
             hstack(
-              { spacing: 10, alignment: 'center' },
+              { spacing: 15, alignment: 'center' },
               [
                 button({
                   label: 'Submit',
                   variant: 'primary',
+                  width: 160,
+                  height: 50,
                   onClick: () => {
                     console.log('Form submitted:', state.formData);
                   }
@@ -181,6 +186,8 @@ export const demo = {
                 button({
                   label: 'Reset',
                   variant: 'secondary',
+                  width: 160,
+                  height: 50,
                   onClick: () => {
                     state.formData = {
                       name: '',
@@ -195,7 +202,8 @@ export const demo = {
                 button({
                   label: 'Theme: ' + state.currentTheme,
                   variant: 'secondary',
-                  width: 150,
+                  width: 200,
+                  height: 50,
                   onClick: () => {
                     const themes = ['light', 'dark', 'colorful'];
                     const currentIndex = themes.indexOf(state.currentTheme);
