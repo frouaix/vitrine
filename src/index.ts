@@ -1,16 +1,16 @@
 // Core types and interfaces
-export * from './types.js';
+export * from './core/types.js';
 
 // Transform system
 export { Matrix2D, TransformStack } from './transform.js';
 
 // Rendering context
-export { Canvas2DContext } from './context.js';
-export type { RenderContext } from './context.js';
+export { Canvas2DContext } from './core/context.js';
+export type { RenderContext } from './core/context.js';
 
 // Immediate renderer
-export { ImmediateRenderer } from './renderer-immediate.js';
-export type { RendererConfig } from './renderer-immediate.js';
+export { ImmediateRenderer } from './core/renderer-immediate.js';
+export type { RendererConfig } from './core/renderer-immediate.js';
 
 // Performance
 export { PerformanceOptimizer, PerformanceMonitor } from './performance.js';
@@ -23,7 +23,7 @@ export { HitTester } from './hit-test.js';
 export type { HitTestResult } from './hit-test.js';
 
 // Block factory functions
-export * from './blocks.js';
+export * from './core/blocks.js';
 
 // Legacy exports (for backwards compatibility)
-export * from './renderer.js';
+export * from './core/renderer.js';

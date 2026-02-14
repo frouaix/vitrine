@@ -1,5 +1,5 @@
 // Performance optimization utilities
-import type { Block, Bounds } from './types.js';
+import type { Block, Bounds } from './core/types.js';
 import { HitTester } from './hit-test.js';
 import { Matrix2D } from './transform.js';
 

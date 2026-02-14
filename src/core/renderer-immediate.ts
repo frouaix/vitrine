@@ -3,8 +3,8 @@ import type { Block } from './types.js';
 import { BlockType } from './types.js';
 import type { RenderContext } from './context.js';
 import { Canvas2DContext } from './context.js';
-import { EventManager } from './events.js';
-import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from './performance.js';
+import { EventManager } from '../events.js';
+import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.js';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
