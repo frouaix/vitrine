@@ -9,7 +9,8 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, 'examples/gallery.html')
+        main: resolve(__dirname, 'examples/index.html'),
+        gallery: resolve(__dirname, 'examples/gallery.html')
       }
     }
   },
