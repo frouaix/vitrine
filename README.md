@@ -2,13 +2,14 @@
 
 **Immediate-mode graphics library for TypeScript** with declarative block-based DSL, optimized for rendering tens of thousands of visual elements in productivity applications.
 
-## 🎨 [Interactive Demo Gallery](examples/gallery.html)
+## 🎨 [Interactive Demo Gallery](https://frouaix.github.io/vitrine/)
 
-**[View Live Demos](examples/gallery.html)** - 12 interactive examples showcasing:
-- 📊 Data Visualization (charts, gauges, scatter plots)
-- 📋 Productivity Apps (kanban, mind maps)
-- 🎨 Creative Graphics (particles, patterns, animations)
-- 🎮 Interactive Games (snake)
+**[🚀 View Live Demos](https://frouaix.github.io/vitrine/)** - 12 interactive examples showcasing:
+- 📊 Data Visualization (charts, gauges, scatter plots with 5k points)
+- 📋 Productivity Apps (kanban boards, mind maps)
+- 🎨 Creative Graphics (2k particle systems, tessellations, animated clock)
+- 🎮 Interactive Games (snake with keyboard controls)
+- 🎨 UI Components (HSV color picker)
 
 ## Features
 
@@ -137,13 +138,27 @@ const stats = renderer.getPerformanceStats();
 console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
 ```
 
-## Build
+## Development
 
 ```bash
-pnpm build      # Compile TypeScript
-pnpm dev        # Watch mode
-pnpm clean      # Remove build artifacts
+pnpm install         # Install dependencies
+pnpm dev             # Start dev server with gallery
+pnpm build           # Compile TypeScript library
+pnpm build:examples  # Build examples for production
+pnpm deploy          # Deploy to GitHub Pages
+pnpm clean           # Remove build artifacts
 ```
+
+## Deployment
+
+The demo gallery is automatically deployed to GitHub Pages at [https://frouaix.github.io/vitrine/](https://frouaix.github.io/vitrine/)
+
+To deploy manually:
+```bash
+pnpm run deploy
+```
+
+This builds the examples with Vite and pushes to the `gh-pages` branch.
 
 ## Architecture
 
