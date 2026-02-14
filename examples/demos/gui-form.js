@@ -176,7 +176,6 @@ export const demo = {
                   variant: 'primary',
                   onClick: () => {
                     console.log('Form submitted:', state.formData);
-                    alert('Form submitted! Check console for data.');
                   }
                 }),
                 button({

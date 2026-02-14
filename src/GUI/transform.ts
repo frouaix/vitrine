@@ -32,7 +32,7 @@ function getControlStyle(
   
   // Check for custom class style first
   if (control.props.className && theme.styles[control.props.className]) {
-    return { ...theme.defaults[control.type], ...theme.styles[control.props.className] };
+    return { ...(theme.defaults[control.type] || {}), ...theme.styles[control.props.className] };
   }
   
   // Fall back to default style for control type
@@ -567,17 +567,21 @@ function transformStack(
   for (const child of control.children) {
     const transformed = transformGUIControl(child, context);
     
-    if (direction === 'horizontal') {
-      transformed.props.x = offset;
-      transformed.props.y = padding;
-      offset += (child.props.width || 100) + spacing;
-    } else {
-      transformed.props.x = padding;
-      transformed.props.y = offset;
-      offset += (child.props.height || 40) + spacing;
-    }
+    // Create a new block with updated coordinates instead of mutating
+    const positionedBlock: Block = {
+      ...transformed,
+      props: {
+        ...transformed.props,
+        x: direction === 'horizontal' ? offset : padding,
+        y: direction === 'horizontal' ? padding : offset
+      }
+    };
     
-    children.push(transformed);
+    offset += (direction === 'horizontal' 
+      ? (child.props.width || 100) 
+      : (child.props.height || 40)) + spacing;
+    
+    children.push(positionedBlock);
   }
   
   return group(
@@ -690,10 +694,18 @@ function transformGrid(
     const row = Math.floor(index / columns);
     
     const transformed = transformGUIControl(child, context);
-    transformed.props.x = padding + col * ((child.props.width || 100) + spacing);
-    transformed.props.y = padding + row * ((child.props.height || 100) + spacing);
     
-    children.push(transformed);
+    // Create a new block with updated coordinates instead of mutating
+    const positionedBlock: Block = {
+      ...transformed,
+      props: {
+        ...transformed.props,
+        x: padding + col * ((child.props.width || 100) + spacing),
+        y: padding + row * ((child.props.height || 100) + spacing)
+      }
+    };
+    
+    children.push(positionedBlock);
   });
   
   return group(
@@ -716,9 +728,15 @@ function transformGUIChildren(
 ): Block[] {
   return children.map(child => {
     const transformed = transformGUIControl(child, context);
-    transformed.props.x = (transformed.props.x || 0) + offsetX;
-    transformed.props.y = (transformed.props.y || 0) + offsetY;
-    return transformed;
+    // Create a new block with updated coordinates instead of mutating
+    return {
+      ...transformed,
+      props: {
+        ...transformed.props,
+        x: (transformed.props.x || 0) + offsetX,
+        y: (transformed.props.y || 0) + offsetY
+      }
+    };
   });
 }
 

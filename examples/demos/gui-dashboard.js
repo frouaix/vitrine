@@ -64,7 +64,7 @@ export const demo = {
                   onClick: () => {
                     state.refreshCount++;
                     state.stats.revenue += Math.floor(Math.random() * 1000);
-                    state.stats.growth = (Math.random() * 30).toFixed(1);
+                    state.stats.growth = parseFloat((Math.random() * 30).toFixed(1));
                   }
                 })
               ]

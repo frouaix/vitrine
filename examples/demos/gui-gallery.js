@@ -26,7 +26,7 @@ export const demo = {
         { title: 'Ocean Sunset', description: 'Stunning ocean view at sunset', color: '#ff6b6b' },
         { title: 'Forest Path', description: 'Peaceful forest trail', color: '#51cf66' },
         { title: 'Desert Dunes', description: 'Golden sand dunes', color: '#ffd43b' },
-        { title: 'City Lights', description: 'Urban skyline at night', color: '#a9e34b' }
+        { title: 'City Lights', description: 'Urban skyline at night', color: '#8b5cf6' }
       ],
       time: 0,
       autoPlayInterval: 3
