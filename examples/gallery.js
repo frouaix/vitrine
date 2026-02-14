@@ -1,8 +1,36 @@
 // Demo Gallery Framework
-import { ImmediateRenderer } from '../dist/index.js';
+import { ImmediateRenderer } from 'vitrine';
+
+// Import all demos statically
+import { demo as barChartDemo } from './demos/bar-chart.js';
+import { demo as lineChartDemo } from './demos/line-chart.js';
+import { demo as pieChartDemo } from './demos/pie-chart.js';
+import { demo as scatterPlotDemo } from './demos/scatter-plot.js';
+import { demo as gaugeDemo } from './demos/gauge.js';
+import { demo as kanbanDemo } from './demos/kanban.js';
+import { demo as mindMapDemo } from './demos/mind-map.js';
+import { demo as particlesDemo } from './demos/particles.js';
+import { demo as patternsDemo } from './demos/patterns.js';
+import { demo as clockDemo } from './demos/clock.js';
+import { demo as colorPickerDemo } from './demos/color-picker.js';
+import { demo as snakeDemo } from './demos/snake.js';
 
 // Demo registry
-const demos = [];
+const demos = [
+  { ...barChartDemo, category: 'data-viz' },
+  { ...lineChartDemo, category: 'data-viz' },
+  { ...pieChartDemo, category: 'data-viz' },
+  { ...scatterPlotDemo, category: 'data-viz' },
+  { ...gaugeDemo, category: 'data-viz' },
+  { ...kanbanDemo, category: 'productivity' },
+  { ...mindMapDemo, category: 'productivity' },
+  { ...particlesDemo, category: 'creative' },
+  { ...patternsDemo, category: 'creative' },
+  { ...clockDemo, category: 'creative' },
+  { ...colorPickerDemo, category: 'ui' },
+  { ...snakeDemo, category: 'games' }
+];
+
 let currentDemo = null;
 let renderer = null;
 let animationId = null;
@@ -12,7 +40,7 @@ let canvas = null;
 let demoListEl, demoNameEl, demoDescEl, codePanelEl, codeContentEl, statsOverlayEl;
 
 // Initialize gallery
-async function init() {
+function init() {
   canvas = document.getElementById('canvas');
   demoListEl = document.getElementById('demo-list');
   demoNameEl = document.getElementById('demo-name');
@@ -26,44 +54,12 @@ async function init() {
   document.getElementById('toggleStats').addEventListener('click', toggleStats);
   document.getElementById('resetDemo').addEventListener('click', resetDemo);
 
-  // Load all demos
-  await loadDemos();
-  
   // Render demo list
   renderDemoList();
   
   // Load first demo
   if (demos.length > 0) {
     loadDemo(demos[0]);
-  }
-}
-
-// Load all demo modules
-async function loadDemos() {
-  const demoModules = [
-    { path: './demos/bar-chart.js', category: 'data-viz' },
-    { path: './demos/line-chart.js', category: 'data-viz' },
-    { path: './demos/pie-chart.js', category: 'data-viz' },
-    { path: './demos/scatter-plot.js', category: 'data-viz' },
-    { path: './demos/gauge.js', category: 'data-viz' },
-    { path: './demos/kanban.js', category: 'productivity' },
-    { path: './demos/mind-map.js', category: 'productivity' },
-    { path: './demos/particles.js', category: 'creative' },
-    { path: './demos/patterns.js', category: 'creative' },
-    { path: './demos/clock.js', category: 'creative' },
-    { path: './demos/color-picker.js', category: 'ui' },
-    { path: './demos/snake.js', category: 'games' },
-  ];
-
-  for (const { path, category } of demoModules) {
-    try {
-      const module = await import(path);
-      if (module.demo) {
-        demos.push({ ...module.demo, category });
-      }
-    } catch (err) {
-      console.warn(`Failed to load demo: ${path}`, err);
-    }
   }
 }
 

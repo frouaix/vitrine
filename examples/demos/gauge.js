@@ -1,5 +1,5 @@
 // Gauge/Speedometer Demo
-import { group, rectangle, text, arc, circle, line } from '../../dist/index.js';
+import { group, rectangle, text, arc, circle, line } from 'vitrine';
 
 export const demo = {
   id: 'gauge',

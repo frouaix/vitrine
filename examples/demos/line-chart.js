@@ -1,5 +1,5 @@
 // Line Chart Demo
-import { group, rectangle, text, line, circle } from '../../dist/index.js';
+import { group, rectangle, text, line, circle } from 'vitrine';
 
 export const demo = {
   id: 'line-chart',

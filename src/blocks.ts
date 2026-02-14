@@ -11,8 +11,8 @@ import type {
   ImageProps,
   GroupProps,
   LayerProps
-} from './types';
-import { BlockType } from './types';
+} from './types.js';
+import { BlockType } from './types.js';
 
 export function rectangle(props: RectangleProps, children?: Block[]): Block {
   return {

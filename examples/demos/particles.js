@@ -1,5 +1,5 @@
 // Particle System Demo
-import { group, rectangle, text, circle } from '../../dist/index.js';
+import { group, rectangle, text, circle } from 'vitrine';
 
 export const demo = {
   id: 'particles',

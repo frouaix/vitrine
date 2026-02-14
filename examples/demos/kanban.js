@@ -1,5 +1,5 @@
 // Kanban Board Demo
-import { group, rectangle, text } from '../../dist/index.js';
+import { group, rectangle, text } from 'vitrine';
 
 export const demo = {
   id: 'kanban',

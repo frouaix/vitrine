@@ -1,7 +1,7 @@
 // Hit testing utilities for event handling
-import type { Block, Bounds } from './types';
-import { BlockType } from './types';
-import { Matrix2D } from './transform';
+import type { Block, Bounds } from './types.js';
+import { BlockType } from './types.js';
+import { Matrix2D } from './transform.js';
 
 export interface HitTestResult {
   block: Block;

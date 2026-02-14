@@ -1,6 +1,6 @@
 // Rendering context abstraction
-import { Matrix2D, TransformStack } from './transform';
-import type { Block, BaseBlockProps, Bounds } from './types';
+import { Matrix2D, TransformStack } from './transform.js';
+import type { Block, BaseBlockProps, Bounds } from './types.js';
 
 export interface RenderContext {
   transformStack: TransformStack;

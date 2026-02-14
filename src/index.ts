@@ -1,29 +1,29 @@
 // Core types and interfaces
-export * from './types';
+export * from './types.js';
 
 // Transform system
-export { Matrix2D, TransformStack } from './transform';
+export { Matrix2D, TransformStack } from './transform.js';
 
 // Rendering context
-export { Canvas2DContext } from './context';
-export type { RenderContext } from './context';
+export { Canvas2DContext } from './context.js';
+export type { RenderContext } from './context.js';
 
 // Immediate renderer
-export { ImmediateRenderer } from './renderer-immediate';
-export type { RendererConfig } from './renderer-immediate';
+export { ImmediateRenderer } from './renderer-immediate.js';
+export type { RendererConfig } from './renderer-immediate.js';
 
 // Performance
-export { PerformanceOptimizer, PerformanceMonitor } from './performance';
-export type { Viewport } from './performance';
+export { PerformanceOptimizer, PerformanceMonitor } from './performance.js';
+export type { Viewport } from './performance.js';
 
 // Event system
-export { EventManager } from './events';
-export type { PointerEventData } from './events';
-export { HitTester } from './hit-test';
-export type { HitTestResult } from './hit-test';
+export { EventManager } from './events.js';
+export type { PointerEventData } from './events.js';
+export { HitTester } from './hit-test.js';
+export type { HitTestResult } from './hit-test.js';
 
 // Block factory functions
-export * from './blocks';
+export * from './blocks.js';
 
 // Legacy exports (for backwards compatibility)
-export * from './renderer';
+export * from './renderer.js';

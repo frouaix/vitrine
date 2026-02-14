@@ -1,5 +1,5 @@
 // Geometric Patterns Demo
-import { group, rectangle, text, circle, path } from '../../dist/index.js';
+import { group, rectangle, text, circle, path } from 'vitrine';
 
 export const demo = {
   id: 'patterns',

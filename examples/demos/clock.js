@@ -1,5 +1,5 @@
 // Analog Clock Demo
-import { group, rectangle, text, circle, line } from '../../dist/index.js';
+import { group, rectangle, text, circle, line } from 'vitrine';
 
 export const demo = {
   id: 'clock',

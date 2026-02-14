@@ -17,8 +17,10 @@
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
-    "clean": "rm -rf dist"
+    "dev": "vite",
+    "preview": "vite preview",
+    "clean": "rm -rf dist",
+    "gallery": "vite"
   },
   "keywords": [
     "canvas",
@@ -32,6 +34,7 @@
   "packageManager": "pnpm@10.28.2",
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vite": "^7.3.1"
   }
 }

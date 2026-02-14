@@ -1,5 +1,5 @@
 // Bar Chart Demo
-import { group, rectangle, text, line } from '../../dist/index.js';
+import { group, rectangle, text, line } from 'vitrine';
 
 export const demo = {
   id: 'bar-chart',

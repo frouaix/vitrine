@@ -1,5 +1,5 @@
 // Pie Chart Demo
-import { group, rectangle, text, arc, circle } from '../../dist/index.js';
+import { group, rectangle, text, arc, circle } from 'vitrine';
 
 export const demo = {
   id: 'pie-chart',

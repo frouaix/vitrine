@@ -1,7 +1,7 @@
 // Performance optimization utilities
-import type { Block, Bounds } from './types';
-import { HitTester } from './hit-test';
-import { Matrix2D } from './transform';
+import type { Block, Bounds } from './types.js';
+import { HitTester } from './hit-test.js';
+import { Matrix2D } from './transform.js';
 
 export interface Viewport {
   x: number;
