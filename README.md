@@ -2,6 +2,14 @@
 
 **Immediate-mode graphics library for TypeScript** with declarative block-based DSL, optimized for rendering tens of thousands of visual elements in productivity applications.
 
+## 🎨 [Interactive Demo Gallery](examples/gallery.html)
+
+**[View Live Demos](examples/gallery.html)** - 12 interactive examples showcasing:
+- 📊 Data Visualization (charts, gauges, scatter plots)
+- 📋 Productivity Apps (kanban, mind maps)
+- 🎨 Creative Graphics (particles, patterns, animations)
+- 🎮 Interactive Games (snake)
+
 ## Features
 
 ✅ **Immediate Mode Rendering** - No retained scene graph, full control every frame  
@@ -63,10 +71,20 @@ render();
 
 ## Examples
 
+**[🎨 Interactive Demo Gallery](examples/gallery.html)** - Comprehensive showcase with 12 diverse demos
+
+Individual examples:
 - **[basic.html](examples/basic.html)** - Basic shapes and hierarchy
 - **[events.html](examples/events.html)** - Interactive events (click, hover, drag)
 - **[primitives.html](examples/primitives.html)** - All primitive types
 - **[performance.html](examples/performance.html)** - 10k+ blocks performance test
+
+Demo categories:
+- **Data Visualization**: Bar charts, line charts, pie charts, scatter plots, gauges
+- **Productivity**: Kanban boards, mind maps with node connections
+- **Creative**: Particle systems (2k particles), geometric patterns, analog clock
+- **UI Components**: HSV color picker with sliders
+- **Games**: Snake game with keyboard controls
 
 ## API Overview
 
