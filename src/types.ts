@@ -1,0 +1,139 @@
+// Core type definitions for the block system
+
+export type Color = string; // CSS color format
+export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
+
+export interface Transform {
+  x?: number;
+  y?: number;
+  rotation?: number;
+  scaleX?: number;
+  scaleY?: number;
+  skewX?: number;
+  skewY?: number;
+}
+
+export interface ShadowProps {
+  offsetX: number;
+  offsetY: number;
+  blur: number;
+  color: Color;
+}
+
+export interface EventHandlers {
+  onClick?: (event: PointerEvent) => void;
+  onPointerDown?: (event: PointerEvent) => void;
+  onPointerUp?: (event: PointerEvent) => void;
+  onPointerMove?: (event: PointerEvent) => void;
+  onHover?: (event: PointerEvent) => void;
+  onDrag?: (event: PointerEvent) => void;
+}
+
+export interface BaseBlockProps extends Transform, EventHandlers {
+  opacity?: number;
+  visible?: boolean;
+  shadow?: ShadowProps;
+  id?: string;
+}
+
+export enum BlockType {
+  Rectangle = 'rectangle',
+  Circle = 'circle',
+  Ellipse = 'ellipse',
+  Path = 'path',
+  Line = 'line',
+  Text = 'text',
+  Image = 'image',
+  Arc = 'arc',
+  Group = 'group',
+  Layer = 'layer'
+}
+
+export interface Block {
+  type: BlockType;
+  props: BaseBlockProps;
+  children?: Block[];
+}
+
+export interface RectangleProps extends BaseBlockProps {
+  width: number;
+  height: number;
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+  cornerRadius?: number;
+}
+
+export interface CircleProps extends BaseBlockProps {
+  radius: number;
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+}
+
+export interface EllipseProps extends BaseBlockProps {
+  radiusX: number;
+  radiusY: number;
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+}
+
+export interface LineProps extends BaseBlockProps {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  stroke: Color;
+  strokeWidth?: number;
+}
+
+export interface TextProps extends BaseBlockProps {
+  text: string;
+  font?: string;
+  fontSize?: number;
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+  align?: 'left' | 'center' | 'right' | 'start' | 'end';
+  baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
+}
+
+export interface PathProps extends BaseBlockProps {
+  pathData: string; // SVG path format
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+  closed?: boolean;
+}
+
+export interface ArcProps extends BaseBlockProps {
+  radius: number;
+  startAngle: number;
+  endAngle: number;
+  fill?: Color;
+  stroke?: Color;
+  strokeWidth?: number;
+}
+
+export interface ImageProps extends BaseBlockProps {
+  src: string | HTMLImageElement;
+  width: number;
+  height: number;
+}
+
+export interface GroupProps extends BaseBlockProps {
+  clip?: boolean;
+}
+
+export interface LayerProps extends BaseBlockProps {
+  blendMode?: BlendMode;
+  cache?: boolean;
+}
+
+export interface Bounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
