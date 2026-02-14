@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Interactive Events Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Vitrine Interactive Events</h1>
+  <div class="info">
+    <strong>Try these interactions:</strong>
+    <ul>
+      <li>Click the red rectangle to change its color</li>
+      <li>Hover over the blue circle (watch cursor change)</li>
+      <li>Drag the green square around</li>
+      <li>Click the orange circle for an alert</li>
+    </ul>
+    <div id="status">Status: Ready</div>
+  </div>
+  <canvas id="canvas"></canvas>
+  
+  <script type="module">
+    import { 
+      ImmediateRenderer, 
+      rectangle, 
+      circle, 
+      text, 
+      group 
+    } from '../dist/index.js';
+
+    const canvas = document.getElementById('canvas');
+    const statusDiv = document.getElementById('status');
+    const renderer = new ImmediateRenderer({ 
+      canvas, 
+      width: 800, 
+      height: 600 
+    });
+
+    // Application state
+    let state = {
+      rectangleColor: '#ff6b6b',
+      rectangleClicks: 0,
+      greenSquareX: 400,
+      greenSquareY: 400,
+      isDragging: false,
+      hoverMessage: ''
+    };
+
+    function updateStatus(message) {
+      statusDiv.textContent = `Status: ${message}`;
+    }
+
+    function render() {
+      const scene = group({ x: 0, y: 0 }, [
+        // Background
+        rectangle({ 
+          width: 800, 
+          height: 600, 
+          fill: '#f5f5f5' 
+        }),
+
+        // Title
+        text({ 
+          x: 400, 
+          y: 30, 
+          text: 'Click, Hover, and Drag!', 
+          fontSize: 28,
+          fill: '#212529',
+          align: 'center',
+          baseline: 'middle'
+        }),
+
+        // Clickable rectangle
+        rectangle({ 
+          x: 100, 
+          y: 100, 
+          width: 200, 
+          height: 150, 
+          fill: state.rectangleColor,
+          stroke: '#c92a2a',
+          strokeWidth: 3,
+          cornerRadius: 10,
+          onClick: (e) => {
+            state.rectangleClicks++;
+            // Cycle through colors
+            const colors = ['#ff6b6b', '#51cf66', '#4dabf7', '#ffd43b'];
+            state.rectangleColor = colors[state.rectangleClicks % colors.length];
+            updateStatus(`Rectangle clicked ${state.rectangleClicks} times`);
+            render();
+          }
+        }),
+
+        text({ 
+          x: 200, 
+          y: 175, 
+          text: 'Click me!', 
+          fontSize: 18,
+          fill: 'white',
+          align: 'center',
+          baseline: 'middle'
+        }),
+
+        // Hoverable circle
+        circle({ 
+          x: 500, 
+          y: 175, 
+          radius: 75, 
+          fill: '#4dabf7',
+          stroke: '#1971c2',
+          strokeWidth: 3,
+          onHover: (e) => {
+            updateStatus('Hovering over blue circle');
+          }
+        }),
+
+        text({ 
+          x: 500, 
+          y: 175, 
+          text: 'Hover me!', 
+          fontSize: 16,
+          fill: 'white',
+          align: 'center',
+          baseline: 'middle'
+        }),
+
+        // Draggable square
+        group({ 
+          x: state.greenSquareX, 
+          y: state.greenSquareY, 
+          onPointerDown: (e) => {
+            state.isDragging = true;
+            updateStatus('Dragging green square...');
+          },
+          onDrag: (e) => {
+            const rect = canvas.getBoundingClientRect();
+            state.greenSquareX = e.clientX - rect.left;
+            state.greenSquareY = e.clientY - rect.top;
+            render();
+          }
+        }, [
+          rectangle({ 
+            x: -50, 
+            y: -50, 
+            width: 100, 
+            height: 100, 
+            fill: '#51cf66',
+            stroke: '#2f9e44',
+            strokeWidth: 3,
+            cornerRadius: 5
+          }),
+          text({ 
+            x: 0, 
+            y: 0, 
+            text: 'Drag me!', 
+            fontSize: 14,
+            fill: 'white',
+            align: 'center',
+            baseline: 'middle'
+          })
+        ]),
+
+        // Alert circle
+        circle({ 
+          x: 650, 
+          y: 450, 
+          radius: 60, 
+          fill: '#f59f00',
+          stroke: '#e67700',
+          strokeWidth: 3,
+          onClick: (e) => {
+            alert('🎉 You clicked the orange circle!');
+            updateStatus('Alert shown!');
+          }
+        }),
+
+        text({ 
+          x: 650, 
+          y: 450, 
+          text: 'Alert!', 
+          fontSize: 16,
+          fill: 'white',
+          align: 'center',
+          baseline: 'middle'
+        }),
+
+        // Instructions
+        text({ 
+          x: 400, 
+          y: 570, 
+          text: 'Events work with nested transforms and opacity!', 
+          fontSize: 14,
+          fill: '#666',
+          align: 'center',
+          baseline: 'middle'
+        })
+      ]);
+
+      renderer.render(scene);
+    }
+
+    // Handle drag end
+    canvas.addEventListener('pointerup', () => {
+      if (state.isDragging) {
+        state.isDragging = false;
+        updateStatus('Drag ended');
+      }
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>

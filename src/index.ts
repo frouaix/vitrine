@@ -12,6 +12,12 @@ export type { RenderContext } from './context';
 export { ImmediateRenderer } from './renderer-immediate';
 export type { RendererConfig } from './renderer-immediate';
 
+// Event system
+export { EventManager } from './events';
+export type { PointerEventData } from './events';
+export { HitTester } from './hit-test';
+export type { HitTestResult } from './hit-test';
+
 // Block factory functions
 export * from './blocks';
 

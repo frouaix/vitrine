@@ -3,12 +3,14 @@ import type { Block } from './types';
 import { BlockType } from './types';
 import type { RenderContext } from './context';
 import { Canvas2DContext } from './context';
+import { EventManager } from './events';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
   width?: number;
   height?: number;
   pixelRatio?: number;
+  enableEvents?: boolean;
 }
 
 export class ImmediateRenderer {
@@ -17,6 +19,7 @@ export class ImmediateRenderer {
   private width: number;
   private height: number;
   private pixelRatio: number;
+  private eventManager: EventManager | null = null;
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
@@ -29,6 +32,11 @@ export class ImmediateRenderer {
     const ctx = this.canvas.getContext('2d');
     if (!ctx) throw new Error('Failed to get 2D context');
     this.context = new Canvas2DContext(ctx);
+
+    // Enable event handling by default
+    if (config.enableEvents !== false) {
+      this.eventManager = new EventManager(this.canvas);
+    }
   }
 
   private setupCanvas(): void {
@@ -60,6 +68,17 @@ export class ImmediateRenderer {
     
     this.renderBlock(block);
     this.context.restore();
+
+    // Update event system with current scene
+    if (this.eventManager) {
+      this.eventManager.setScene(block);
+    }
+  }
+
+  destroy(): void {
+    if (this.eventManager) {
+      this.eventManager.destroy();
+    }
   }
 
   private renderBlock(block: Block): void {
