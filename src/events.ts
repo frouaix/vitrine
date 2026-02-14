@@ -1,5 +1,5 @@
 // Event system for handling user interactions
-import type { Block } from './types.js';
+import type { Block } from './core/types.js';
 import { HitTester, type HitTestResult } from './hit-test.js';
 import { Matrix2D } from './transform.js';
 
