@@ -14,6 +14,9 @@ import { demo as patternsDemo } from './demos/patterns.js';
 import { demo as clockDemo } from './demos/clock.js';
 import { demo as colorPickerDemo } from './demos/color-picker.js';
 import { demo as snakeDemo } from './demos/snake.js';
+import { demo as guiFormDemo } from './demos/gui-form.js';
+import { demo as guiDashboardDemo } from './demos/gui-dashboard.js';
+import { demo as guiGalleryDemo } from './demos/gui-gallery.js';
 
 // Demo registry
 const demos = [
@@ -28,6 +31,9 @@ const demos = [
   { ...patternsDemo, category: 'creative' },
   { ...clockDemo, category: 'creative' },
   { ...colorPickerDemo, category: 'ui' },
+  { ...guiFormDemo, category: 'ui' },
+  { ...guiDashboardDemo, category: 'ui' },
+  { ...guiGalleryDemo, category: 'ui' },
   { ...snakeDemo, category: 'games' }
 ];
 
