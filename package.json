@@ -17,9 +17,11 @@
   ],
   "scripts": {
     "build": "tsc",
+    "build:examples": "vite build",
     "dev": "vite",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-examples",
+    "deploy": "pnpm build:examples && gh-pages -d dist-examples",
     "gallery": "vite"
   },
   "keywords": [
@@ -34,6 +36,7 @@
   "packageManager": "pnpm@10.28.2",
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.7.3",
     "vite": "^7.3.1"
   }

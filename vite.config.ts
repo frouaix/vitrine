@@ -3,9 +3,15 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: 'examples',
+  base: '/vitrine/',
   build: {
     outDir: '../dist-examples',
-    emptyOutDir: true
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'examples/gallery.html')
+      }
+    }
   },
   resolve: {
     alias: {
