@@ -166,6 +166,8 @@ pnpm clean           # Remove build artifacts
 
 The demo gallery is automatically deployed to GitHub Pages at [https://frouaix.github.io/vitrine/](https://frouaix.github.io/vitrine/)
 
+This section was touched in a trivial docs-only change to validate the deployment path after push.
+
 To deploy manually:
 ```bash
 pnpm run deploy
