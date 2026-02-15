@@ -30,25 +30,25 @@ export const demo = {
   },
 
   render: (state) => {
-    const columnWidth = 240;
+    const dxColumn = 240;
     const columnSpacing = 20;
     const startX = 40;
 
     const columns = state.columns.map((col, colIndex) => {
-      const x = startX + colIndex * (columnWidth + columnSpacing);
+      const x = startX + colIndex * (dxColumn + columnSpacing);
       const cardsInColumn = state.cards.filter(c => c.column === col.id);
 
       return group({ x, y: 100 }, [
         // Column header
         rectangle({
-          dx: columnWidth,
+          dx: dxColumn,
           dy: 60,
           fill: col.color,
           cornerRadius: 8
         }),
 
         text({
-          x: columnWidth / 2,
+          x: dxColumn / 2,
           y: 20,
           text: col.title,
           fontSize: 16,
@@ -58,7 +58,7 @@ export const demo = {
         }),
 
         text({
-          x: columnWidth / 2,
+          x: dxColumn / 2,
           y: 40,
           text: `${cardsInColumn.length} tasks`,
           fontSize: 12,
@@ -70,7 +70,7 @@ export const demo = {
         // Column body
         rectangle({
           y: 70,
-          dx: columnWidth,
+          dx: dxColumn,
           dy: 400,
           fill: '#1a1a1a',
           stroke: '#333',
@@ -83,7 +83,7 @@ export const demo = {
         ...cardsInColumn.map((card, cardIndex) => 
           group({ y: 80 + cardIndex * 110 }, [
             rectangle({
-              dx: columnWidth - 20,
+              dx: dxColumn - 20,
               x: 10,
               dy: 100,
               fill: '#2a2a2a',
@@ -114,7 +114,7 @@ export const demo = {
             rectangle({
               x: 10,
               y: 70,
-              dx: columnWidth - 20,
+              dx: dxColumn - 20,
               dy: 1,
               fill: '#444'
             }),

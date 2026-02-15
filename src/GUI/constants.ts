@@ -4,12 +4,12 @@ export const GUI_TO_BLOCK_DEFAULTS = {
   common: {
     x: 0,
     y: 0,
-    spacing: 10,
-    padding: 0,
-    axisStart: 0,
-    emptyText: '',
-    multiplier2: 2,
-    one: 1
+    duSpacing: 10,
+    duPadding: 0,
+    duAxisStart: 0,
+    stEmpty: '',
+    duMultiplier2: 2,
+    duOne: 1
   },
   layout: {
     directionHorizontal: 'horizontal',
@@ -21,89 +21,89 @@ export const GUI_TO_BLOCK_DEFAULTS = {
   },
   controls: {
     textBox: {
-      width: 300,
-      height: 50,
-      textPadding: 12
+      dx: 300,
+      dy: 50,
+      duTextPadding: 12
     },
     button: {
-      width: 160,
-      height: 50
+      dx: 160,
+      dy: 50
     },
     checkBox: {
-      width: 200,
-      height: 28,
-      boxSize: 28,
-      labelSpacing: 12,
+      dx: 200,
+      dy: 28,
+      duBox: 28,
+      duLabelSpacing: 12,
       checkmark: {
-        text: '✓',
-        fill: '#ffffff',
-        fontSize: 18
+        stText: '✓',
+        colFill: '#ffffff',
+        duFont: 18
       }
     },
     radioButton: {
-      width: 200,
-      height: 28,
-      radius: 14,
-      innerDotRadius: 8,
-      labelSpacing: 12
+      dx: 200,
+      dy: 28,
+      duRadius: 14,
+      duInnerDotRadius: 8,
+      duLabelSpacing: 12
     },
     slider: {
-      width: 300,
-      height: 24,
+      dx: 300,
+      dy: 24,
       min: 0,
       max: 100,
-      trackHeight: 6,
-      thumbRadius: 12,
-      trackFill: '#4b5563',
-      trackStroke: '#888888',
-      trackStrokeWidth: 1,
-      thumbFill: '#3b82f6',
-      thumbStroke: '#ffffff',
-      thumbStrokeWidth: 3
+      duTrack: 6,
+      duThumbRadius: 12,
+      colTrackFill: '#4b5563',
+      colTrackStroke: '#888888',
+      duTrackStroke: 1,
+      colThumbFill: '#3b82f6',
+      colThumbStroke: '#ffffff',
+      duThumbStroke: 3
     },
     dropdown: {
-      width: 300,
-      height: 50,
-      textPadding: 12,
-      arrowText: '▼',
-      arrowFontSize: 14,
-      arrowOffsetX: 8,
-      placeholder: 'Select...'
+      dx: 300,
+      dy: 50,
+      duTextPadding: 12,
+      stArrow: '▼',
+      duArrowFont: 14,
+      duArrowOffsetX: 8,
+      stPlaceholder: 'Select...'
     },
     label: {
-      width: 200,
-      height: 20
+      dx: 200,
+      dy: 20
     },
     panel: {
-      width: 400,
-      height: 300,
-      padding: 16,
-      titleFontSize: 16,
-      titleGap: 10
+      dx: 400,
+      dy: 300,
+      duPadding: 16,
+      duTitleFont: 16,
+      duTitleGap: 10
     },
     image: {
-      width: 100,
-      height: 100
+      dx: 100,
+      dy: 100
     },
     stack: {
       direction: 'vertical'
     },
     carousel: {
-      width: 300,
-      height: 200,
+      dx: 300,
+      dy: 200,
       currentIndex: 0,
-      dotYOffset: 20,
-      dotSpacing: 15,
-      dotRadius: 4,
-      activeDotFill: '#3b82f6',
-      inactiveDotFill: '#d1d5db'
+      duDotOffsetY: 20,
+      duDotSpacing: 15,
+      duDotRadius: 4,
+      colActiveDotFill: '#3b82f6',
+      colInactiveDotFill: '#d1d5db'
     },
     grid: {
-      columns: 3
+      duColumns: 3
     },
     fallback: {
-      width: 100,
-      height: 40
+      dx: 100,
+      dy: 40
     }
   }
 } as const;

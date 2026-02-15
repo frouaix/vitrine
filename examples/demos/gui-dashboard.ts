@@ -11,12 +11,23 @@ import {
   darkTheme
 } from '../../src/GUI/index.ts';
 
+interface DashboardDemoState {
+  stats: {
+    users: number;
+    revenue: number;
+    orders: number;
+    growth: number;
+  };
+  refreshCount: number;
+  time: number;
+}
+
 export const demo = {
   id: 'gui-dashboard',
   name: 'GUI Dashboard',
   description: 'Dashboard layout with panels, grids, and statistics',
   
-  init: () => {
+  init: (): DashboardDemoState => {
     return {
       stats: {
         users: 1247,
@@ -29,7 +40,7 @@ export const demo = {
     };
   },
 
-  update: (state, dt) => {
+  update: (state: DashboardDemoState, dt: number): void => {
     state.time += dt;
     // Simulate live data updates
     if (Math.floor(state.time) !== Math.floor(state.time - dt)) {
@@ -38,7 +49,7 @@ export const demo = {
     }
   },
 
-  render: (state) => {
+  render: (state: DashboardDemoState) => {
     const context = { theme: darkTheme };
 
     // Build dashboard GUI
@@ -47,21 +58,21 @@ export const demo = {
       [
         // Header
         panel(
-          { width: 960, height: 100, padding: 25 },
+          { dx: 960, dy: 100, padding: 25 },
           [
             hstack(
               { spacing: 25, alignment: 'center' },
               [
                 label({ 
-                  text: '📊 Analytics Dashboard', 
+                  stText: '📊 Analytics Dashboard', 
                   fontSize: 28,
                   fontWeight: 'bold'
                 }),
                 button({
-                  label: `Refresh (${state.refreshCount})`,
+                  stLabel: `Refresh (${state.refreshCount})`,
                   variant: 'primary',
-                  width: 200,
-                  height: 50,
+                  dx: 200,
+                  dy: 50,
                   x: 520,
                   onClick: () => {
                     state.refreshCount++;
@@ -80,19 +91,19 @@ export const demo = {
           [
             // Users stat
             panel(
-              { width: 220, height: 150, padding: 20 },
+              { dx: 220, dy: 150, padding: 20 },
               [
                 vstack(
                   { spacing: 12 },
                   [
-                    label({ text: 'Total Users', fontSize: 15 }),
+                    label({ stText: 'Total Users', fontSize: 15 }),
                     label({ 
-                      text: state.stats.users.toLocaleString(), 
+                      stText: state.stats.users.toLocaleString(), 
                       fontSize: 32,
                       fontWeight: 'bold'
                     }),
                     label({ 
-                      text: '↑ +12.5%', 
+                      stText: '↑ +12.5%', 
                       fontSize: 14
                     })
                   ]
@@ -102,19 +113,19 @@ export const demo = {
 
             // Revenue stat
             panel(
-              { width: 220, height: 150, padding: 20 },
+              { dx: 220, dy: 150, padding: 20 },
               [
                 vstack(
                   { spacing: 12 },
                   [
-                    label({ text: 'Revenue', fontSize: 15 }),
+                    label({ stText: 'Revenue', fontSize: 15 }),
                     label({ 
-                      text: '$' + state.stats.revenue.toLocaleString(), 
+                      stText: '$' + state.stats.revenue.toLocaleString(), 
                       fontSize: 32,
                       fontWeight: 'bold'
                     }),
                     label({ 
-                      text: `↑ +${state.stats.growth}%`, 
+                      stText: `↑ +${state.stats.growth}%`, 
                       fontSize: 14
                     })
                   ]
@@ -124,19 +135,19 @@ export const demo = {
 
             // Orders stat
             panel(
-              { width: 220, height: 150, padding: 20 },
+              { dx: 220, dy: 150, padding: 20 },
               [
                 vstack(
                   { spacing: 12 },
                   [
-                    label({ text: 'Orders', fontSize: 15 }),
+                    label({ stText: 'Orders', fontSize: 15 }),
                     label({ 
-                      text: state.stats.orders.toLocaleString(), 
+                      stText: state.stats.orders.toLocaleString(), 
                       fontSize: 32,
                       fontWeight: 'bold'
                     }),
                     label({ 
-                      text: '↑ +8.2%', 
+                      stText: '↑ +8.2%', 
                       fontSize: 14
                     })
                   ]
@@ -146,19 +157,19 @@ export const demo = {
 
             // Growth stat
             panel(
-              { width: 220, height: 150, padding: 20 },
+              { dx: 220, dy: 150, padding: 20 },
               [
                 vstack(
                   { spacing: 12 },
                   [
-                    label({ text: 'Growth', fontSize: 15 }),
+                    label({ stText: 'Growth', fontSize: 15 }),
                     label({ 
-                      text: state.stats.growth + '%', 
+                      stText: state.stats.growth + '%', 
                       fontSize: 32,
                       fontWeight: 'bold'
                     }),
                     label({ 
-                      text: '↑ +3.1%', 
+                      stText: '↑ +3.1%', 
                       fontSize: 14
                     })
                   ]
@@ -174,18 +185,18 @@ export const demo = {
           [
             // Recent activity
             panel(
-              { width: 468, height: 360, padding: 20, title: 'Recent Activity' },
+              { dx: 468, dy: 360, padding: 20, stTitle: 'Recent Activity' },
               [
                 vstack(
                   { spacing: 14, y: 50 },
                   [
-                    label({ text: '• User john@example.com registered', fontSize: 15 }),
-                    label({ text: '• Order #1234 completed ($250)', fontSize: 15 }),
-                    label({ text: '• New payment received', fontSize: 15 }),
-                    label({ text: '• System backup completed', fontSize: 15 }),
-                    label({ text: '• 5 new support tickets', fontSize: 15 }),
-                    label({ text: '• Database optimized', fontSize: 15 }),
-                    label({ text: '• Email campaign sent', fontSize: 15 })
+                    label({ stText: '• User john@example.com registered', fontSize: 15 }),
+                    label({ stText: '• Order #1234 completed ($250)', fontSize: 15 }),
+                    label({ stText: '• New payment received', fontSize: 15 }),
+                    label({ stText: '• System backup completed', fontSize: 15 }),
+                    label({ stText: '• 5 new support tickets', fontSize: 15 }),
+                    label({ stText: '• Database optimized', fontSize: 15 }),
+                    label({ stText: '• Email campaign sent', fontSize: 15 })
                   ]
                 )
               ]
@@ -193,51 +204,51 @@ export const demo = {
 
             // Quick actions
             panel(
-              { width: 468, height: 360, padding: 20, title: 'Quick Actions' },
+              { dx: 468, dy: 360, padding: 20, stTitle: 'Quick Actions' },
               [
                 grid(
                   { columns: 2, spacing: 15, y: 50 },
                   [
                     button({
-                      label: 'New User',
+                      stLabel: 'New User',
                       variant: 'primary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('New user')
                     }),
                     button({
-                      label: 'New Order',
+                      stLabel: 'New Order',
                       variant: 'primary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('New order')
                     }),
                     button({
-                      label: 'Reports',
+                      stLabel: 'Reports',
                       variant: 'secondary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('Reports')
                     }),
                     button({
-                      label: 'Settings',
+                      stLabel: 'Settings',
                       variant: 'secondary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('Settings')
                     }),
                     button({
-                      label: 'Export Data',
+                      stLabel: 'Export Data',
                       variant: 'secondary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('Export')
                     }),
                     button({
-                      label: 'Help',
+                      stLabel: 'Help',
                       variant: 'secondary',
-                      width: 210,
-                      height: 55,
+                      dx: 210,
+                      dy: 55,
                       onClick: () => console.log('Help')
                     })
                   ]

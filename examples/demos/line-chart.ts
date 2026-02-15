@@ -36,10 +36,10 @@ export const demo = {
 
   render: (state) => {
     const padding = 60;
-    const chartWidth = 800 - padding * 2;
-    const chartHeight = 400;
-    const scaleX = chartWidth / 49;
-    const scaleY = chartHeight / 100;
+    const dxChart = 800 - padding * 2;
+    const dyChart = 400;
+    const scaleX = dxChart / 49;
+    const scaleY = dyChart / 100;
 
     // Create line segments
     const lineSegments = [];
@@ -84,7 +84,7 @@ export const demo = {
 
       // Grid
       ...Array.from({ length: 5 }, (_, i) => {
-        const y = 500 - (chartHeight / 4) * i;
+        const y = 500 - (dyChart / 4) * i;
         return line({
           x1: padding,
           y1: y,

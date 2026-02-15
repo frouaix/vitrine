@@ -12,40 +12,53 @@ import {
   colorfulTheme
 } from '../../src/GUI/index.ts';
 
+interface GalleryImageItem {
+  stTitle: string;
+  stDescription: string;
+  color: string;
+}
+
+interface GalleryDemoState {
+  currentIndex: number;
+  fAutoPlay: boolean;
+  images: GalleryImageItem[];
+  time: number;
+  autoPlayInterval: number;
+}
+
 export const demo = {
   id: 'gui-gallery',
   name: 'GUI Gallery',
   description: 'Image gallery with carousel navigation',
   
-  init: () => {
+  init: (): GalleryDemoState => {
     return {
       currentIndex: 0,
-      autoPlay: false,
+      fAutoPlay: false,
       images: [
-        { title: 'Mountain Landscape', description: 'Beautiful mountain vista', color: '#4dabf7' },
-        { title: 'Ocean Sunset', description: 'Stunning ocean view at sunset', color: '#ff6b6b' },
-        { title: 'Forest Path', description: 'Peaceful forest trail', color: '#51cf66' },
-        { title: 'Desert Dunes', description: 'Golden sand dunes', color: '#ffd43b' },
-        { title: 'City Lights', description: 'Urban skyline at night', color: '#8b5cf6' }
+        { stTitle: 'Mountain Landscape', stDescription: 'Beautiful mountain vista', color: '#4dabf7' },
+        { stTitle: 'Ocean Sunset', stDescription: 'Stunning ocean view at sunset', color: '#ff6b6b' },
+        { stTitle: 'Forest Path', stDescription: 'Peaceful forest trail', color: '#51cf66' },
+        { stTitle: 'Desert Dunes', stDescription: 'Golden sand dunes', color: '#ffd43b' },
+        { stTitle: 'City Lights', stDescription: 'Urban skyline at night', color: '#8b5cf6' }
       ],
       time: 0,
       autoPlayInterval: 3
     };
   },
 
-  update: (state, dt) => {
+  update: (state: GalleryDemoState, dt: number): void => {
     state.time += dt;
     
     // Auto-advance carousel if autoplay is enabled
-    if (state.autoPlay && state.time >= state.autoPlayInterval) {
+    if (state.fAutoPlay && state.time >= state.autoPlayInterval) {
       state.time = 0;
       state.currentIndex = (state.currentIndex + 1) % state.images.length;
     }
   },
 
-  render: (state) => {
+  render: (state: GalleryDemoState) => {
     const context = { theme: colorfulTheme };
-    const currentImage = state.images[state.currentIndex];
 
     // Build gallery GUI
     const gui = vstack(
@@ -53,24 +66,24 @@ export const demo = {
       [
         // Header
         panel(
-          { width: 900, height: 100, padding: 25 },
+          { dx: 900, dy: 100, padding: 25 },
           [
             hstack(
               { spacing: 25, alignment: 'center' },
               [
                 label({ 
-                  text: '🖼️ Image Gallery', 
+                  stText: '🖼️ Image Gallery', 
                   fontSize: 28,
                   fontWeight: 'bold'
                 }),
                 button({
-                  label: state.autoPlay ? '⏸ Pause' : '▶ Auto Play',
+                  stLabel: state.fAutoPlay ? '⏸ Pause' : '▶ Auto Play',
                   variant: 'primary',
-                  width: 180,
-                  height: 50,
+                  dx: 180,
+                  dy: 50,
                   x: 530,
                   onClick: () => {
-                    state.autoPlay = !state.autoPlay;
+                    state.fAutoPlay = !state.fAutoPlay;
                     state.time = 0;
                   }
                 })
@@ -81,30 +94,30 @@ export const demo = {
 
         // Main carousel area
         panel(
-          { width: 900, height: 450, padding: 25 },
+          { dx: 900, dy: 450, padding: 25 },
           [
             // Carousel with image placeholders
             carousel(
               {
-                width: 850,
-                height: 350,
+                dx: 850,
+                dy: 350,
                 currentIndex: state.currentIndex,
                 onIndexChange: (index) => { 
                   state.currentIndex = index;
                   state.time = 0;
                 }
               },
-              state.images.map((img, index) => 
+              state.images.map((img: GalleryImageItem, index: number) => 
                 vstack(
                   { spacing: 20, alignment: 'center' },
                   [
                     // Image placeholder (colored rectangle)
                     panel(
-                      { width: 850, height: 280, padding: 0 },
+                      { dx: 850, dy: 280, padding: 0 },
                       [
                         // We'll use a colored rectangle as image placeholder
                         label({ 
-                          text: `[Image ${index + 1}]`,
+                          stText: `[Image ${index + 1}]`,
                           fontSize: 40,
                           x: 425,
                           y: 140,
@@ -118,13 +131,13 @@ export const demo = {
                       { spacing: 8, alignment: 'center' },
                       [
                         label({ 
-                          text: img.title, 
+                          stText: img.stTitle, 
                           fontSize: 24,
                           fontWeight: 'bold',
                           align: 'center'
                         }),
                         label({ 
-                          text: img.description, 
+                          stText: img.stDescription, 
                           fontSize: 16,
                           align: 'center'
                         })
@@ -139,53 +152,53 @@ export const demo = {
 
         // Navigation controls
         panel(
-          { width: 900, height: 100, padding: 25 },
+          { dx: 900, dy: 100, padding: 25 },
           [
             hstack(
               { spacing: 18, alignment: 'center', x: 200 },
               [
                 button({
-                  label: '⏮ First',
+                  stLabel: '⏮ First',
                   variant: 'secondary',
-                  width: 130,
-                  height: 50,
+                  dx: 130,
+                  dy: 50,
                   onClick: () => { 
                     state.currentIndex = 0;
                     state.time = 0;
                   }
                 }),
                 button({
-                  label: '◀ Previous',
+                  stLabel: '◀ Previous',
                   variant: 'secondary',
-                  width: 150,
-                  height: 50,
+                  dx: 150,
+                  dy: 50,
                   onClick: () => { 
                     state.currentIndex = (state.currentIndex - 1 + state.images.length) % state.images.length;
                     state.time = 0;
                   }
                 }),
                 label({ 
-                  text: `${state.currentIndex + 1} / ${state.images.length}`,
+                  stText: `${state.currentIndex + 1} / ${state.images.length}`,
                   fontSize: 18,
                   fontWeight: 'bold',
-                  width: 70,
+                  dx: 70,
                   align: 'center'
                 }),
                 button({
-                  label: 'Next ▶',
+                  stLabel: 'Next ▶',
                   variant: 'secondary',
-                  width: 150,
-                  height: 50,
+                  dx: 150,
+                  dy: 50,
                   onClick: () => { 
                     state.currentIndex = (state.currentIndex + 1) % state.images.length;
                     state.time = 0;
                   }
                 }),
                 button({
-                  label: 'Last ⏭',
+                  stLabel: 'Last ⏭',
                   variant: 'secondary',
-                  width: 130,
-                  height: 50,
+                  dx: 130,
+                  dy: 50,
                   onClick: () => { 
                     state.currentIndex = state.images.length - 1;
                     state.time = 0;

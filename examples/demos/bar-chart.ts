@@ -42,22 +42,22 @@ export const demo = {
 
   render: (state) => {
     const padding = 60;
-    const chartWidth = 800 - padding * 2;
-    const chartHeight = 500;
+    const dxChart = 800 - padding * 2;
+    const dyChart = 500;
     const maxValue = 100;
-    const barWidth = chartWidth / state.data.length;
+    const dxBar = dxChart / state.data.length;
 
     const bars = state.data.map((item, i) => {
-      const barHeight = (state.animatedValues[i] / maxValue) * chartHeight;
-      const x = padding + i * barWidth;
-      const y = 550 - barHeight;
+      const dyBar = (state.animatedValues[i] / maxValue) * dyChart;
+      const x = padding + i * dxBar;
+      const y = 550 - dyBar;
       const isHovered = state.hoveredIndex === i;
 
       return group({ x, y }, [
         // Bar
         rectangle({
-          dx: barWidth - 10,
-          dy: barHeight,
+          dx: dxBar - 10,
+          dy: dyBar,
           fill: item.color,
           opacity: isHovered ? 1 : 0.8,
           cornerRadius: 4,
@@ -68,7 +68,7 @@ export const demo = {
         // Value label on hover
         ...(isHovered ? [
           text({
-            x: (barWidth - 10) / 2,
+            x: (dxBar - 10) / 2,
             y: -10,
             text: item.value.toString(),
             fontSize: 14,
@@ -79,8 +79,8 @@ export const demo = {
 
         // X-axis label
         text({
-          x: (barWidth - 10) / 2,
-          y: barHeight + 20,
+          x: (dxBar - 10) / 2,
+          y: dyBar + 20,
           text: item.label,
           fontSize: 12,
           fill: '#aaa',
@@ -125,7 +125,7 @@ export const demo = {
 
       // Grid lines
       ...Array.from({ length: 5 }, (_, i) => {
-        const y = 550 - (chartHeight / 4) * i;
+        const y = 550 - (dyChart / 4) * i;
         return group({ x: 0, y: 0 }, [
           line({
             x1: padding,
@@ -156,11 +156,11 @@ export const demo = {
 const data = [...]; // Monthly sales data
 
 state.data.map((item, i) => {
-  const barHeight = (value / maxValue) * chartHeight;
+  const dyBar = (value / maxValue) * dyChart;
   
   return rectangle({
-    dx: barWidth,
-    dy: barHeight,
+    dx: dxBar,
+    dy: dyBar,
     fill: item.color,
     opacity: isHovered ? 1 : 0.8,
     onHover: () => highlightBar(i)

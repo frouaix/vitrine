@@ -24,13 +24,13 @@ export const demo = {
 
   render: (state) => {
     const padding = 60;
-    const chartWidth = 800 - padding * 2;
-    const chartHeight = 500;
+    const dxChart = 800 - padding * 2;
+    const dyChart = 500;
 
     const dataPoints = state.points.map(p => 
       circle({
-        x: padding + (p.x / 100) * chartWidth,
-        y: 550 - (p.y / 100) * chartHeight,
+        x: padding + (p.x / 100) * dxChart,
+        y: 550 - (p.y / 100) * dyChart,
         radius: p.size,
         fill: p.color,
         opacity: 0.6
@@ -50,15 +50,15 @@ export const demo = {
       }),
 
       // Axes
-      rectangle({ x: padding, y: 50, dx: 2, dy: chartHeight, fill: '#333' }),
-      rectangle({ x: padding, y: 550, dx: chartWidth, dy: 2, fill: '#333' }),
+      rectangle({ x: padding, y: 50, dx: 2, dy: dyChart, fill: '#333' }),
+      rectangle({ x: padding, y: 550, dx: dxChart, dy: 2, fill: '#333' }),
 
       // Grid lines
       ...Array.from({ length: 5 }, (_, i) => 
         rectangle({
           x: padding,
-          y: 550 - (chartHeight / 4) * i,
-          dx: chartWidth,
+          y: 550 - (dyChart / 4) * i,
+          dx: dxChart,
           dy: 1,
           fill: '#1a1a1a'
         })

@@ -21,6 +21,16 @@
 ✅ **Hierarchical Transforms** - Relative coordinates with 2D matrix transforms  
 ✅ **Full TypeScript** - Type-safe API with complete type definitions
 
+## Naming Conventions
+
+This project uses Hungarian-style naming for geometry and style fields.
+- Use `dx`/`dy` for horizontal/vertical extents in Vitrine block and GUI props.
+- Use `du*` for scalar dimensions (e.g. spacing, padding, radius).
+- Use `col*` for color properties, fields, and variables.
+- Keep platform/system API names unchanged (for example DOM/canvas `width`/`height`).
+
+See [.github/hungarian-notation.md](.github/hungarian-notation.md) for the full convention.
+
 ## Installation
 
 ```bash

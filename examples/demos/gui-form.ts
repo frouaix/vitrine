@@ -17,17 +17,32 @@ import {
   colorfulTheme
 } from '../../src/GUI/index.ts';
 
+type ThemeKey = 'light' | 'dark' | 'colorful';
+
+interface FormDemoState {
+  formData: {
+    name: string;
+    email: string;
+    fSubscribe: boolean;
+    notifications: string;
+    volume: number;
+    country: string;
+  };
+  currentTheme: ThemeKey;
+  hoveredControl: string | null;
+}
+
 export const demo = {
   id: 'gui-form',
   name: 'GUI Form',
   description: 'Interactive form with textboxes, checkboxes, buttons, and more',
   
-  init: () => {
+  init: (): FormDemoState => {
     return {
       formData: {
         name: '',
         email: '',
-        subscribe: false,
+        fSubscribe: false,
         notifications: 'email',
         volume: 50,
         country: ''
@@ -37,18 +52,18 @@ export const demo = {
     };
   },
 
-  update: (state, dt) => {
+  update: (state: FormDemoState, dt: number): void => {
     // No continuous updates needed for this demo
   },
 
-  render: (state) => {
+  render: (state: FormDemoState) => {
     // Select theme
-    const themeMap = {
+    const themeMap: Record<ThemeKey, typeof lightTheme> = {
       light: lightTheme,
       dark: darkTheme,
       colorful: colorfulTheme
     };
-    const theme = themeMap[state.currentTheme] || lightTheme;
+    const theme = themeMap[state.currentTheme];
     const context = { theme };
 
     // Build GUI tree
@@ -56,9 +71,9 @@ export const demo = {
       {
         x: 50,
         y: 30,
-        width: 900,
-        height: 680,
-        title: 'User Registration Form',
+        dx: 900,
+        dy: 680,
+        stTitle: 'User Registration Form',
         padding: 25
       },
       [
@@ -69,12 +84,12 @@ export const demo = {
             vstack(
               { spacing: 8 },
               [
-                label({ text: 'Full Name:', fontSize: 16 }),
+                label({ stText: 'Full Name:', fontSize: 16 }),
                 textbox({
-                  width: 850,
-                  height: 50,
-                  value: state.formData.name,
-                  placeholder: 'Enter your full name',
+                  dx: 850,
+                  dy: 50,
+                  stValue: state.formData.name,
+                  stPlaceholder: 'Enter your full name',
                   onChange: (val) => { state.formData.name = val; }
                 })
               ]
@@ -84,12 +99,12 @@ export const demo = {
             vstack(
               { spacing: 8 },
               [
-                label({ text: 'Email Address:', fontSize: 16 }),
+                label({ stText: 'Email Address:', fontSize: 16 }),
                 textbox({
-                  width: 850,
-                  height: 50,
-                  value: state.formData.email,
-                  placeholder: 'your.email@example.com',
+                  dx: 850,
+                  dy: 50,
+                  stValue: state.formData.email,
+                  stPlaceholder: 'your.email@example.com',
                   onChange: (val) => { state.formData.email = val; }
                 })
               ]
@@ -97,35 +112,35 @@ export const demo = {
 
             // Subscribe checkbox
             checkbox({
-              label: 'Subscribe to newsletter',
-              checked: state.formData.subscribe,
-              onChange: (checked) => { state.formData.subscribe = checked; }
+              stLabel: 'Subscribe to newsletter',
+              fChecked: state.formData.fSubscribe,
+              onChange: (fChecked) => { state.formData.fSubscribe = fChecked; }
             }),
 
             // Notification preferences
             vstack(
               { spacing: 12 },
               [
-                label({ text: 'Notification Preferences:', fontSize: 16 }),
+                label({ stText: 'Notification Preferences:', fontSize: 16 }),
                 radiobutton({
-                  label: 'Email notifications',
+                  stLabel: 'Email notifications',
                   value: 'email',
                   group: 'notifications',
-                  checked: state.formData.notifications === 'email',
+                  fChecked: state.formData.notifications === 'email',
                   onChange: (val) => { state.formData.notifications = val; }
                 }),
                 radiobutton({
-                  label: 'SMS notifications',
+                  stLabel: 'SMS notifications',
                   value: 'sms',
                   group: 'notifications',
-                  checked: state.formData.notifications === 'sms',
+                  fChecked: state.formData.notifications === 'sms',
                   onChange: (val) => { state.formData.notifications = val; }
                 }),
                 radiobutton({
-                  label: 'No notifications',
+                  stLabel: 'No notifications',
                   value: 'none',
                   group: 'notifications',
-                  checked: state.formData.notifications === 'none',
+                  fChecked: state.formData.notifications === 'none',
                   onChange: (val) => { state.formData.notifications = val; }
                 })
               ]
@@ -135,9 +150,9 @@ export const demo = {
             vstack(
               { spacing: 12 },
               [
-                label({ text: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 16 }),
+                label({ stText: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 16 }),
                 slider({
-                  width: 850,
+                  dx: 850,
                   value: state.formData.volume,
                   min: 0,
                   max: 100,
@@ -150,20 +165,20 @@ export const demo = {
             vstack(
               { spacing: 8 },
               [
-                label({ text: 'Country:', fontSize: 16 }),
+                label({ stText: 'Country:', fontSize: 16 }),
                 dropdown({
-                  width: 850,
-                  height: 50,
+                  dx: 850,
+                  dy: 50,
                   value: state.formData.country,
-                  placeholder: 'Select your country',
+                  stPlaceholder: 'Select your country',
                   options: [
-                    { label: 'United States', value: 'us' },
-                    { label: 'United Kingdom', value: 'uk' },
-                    { label: 'Canada', value: 'ca' },
-                    { label: 'Australia', value: 'au' },
-                    { label: 'Germany', value: 'de' },
-                    { label: 'France', value: 'fr' },
-                    { label: 'Japan', value: 'jp' }
+                    { stLabel: 'United States', value: 'us' },
+                    { stLabel: 'United Kingdom', value: 'uk' },
+                    { stLabel: 'Canada', value: 'ca' },
+                    { stLabel: 'Australia', value: 'au' },
+                    { stLabel: 'Germany', value: 'de' },
+                    { stLabel: 'France', value: 'fr' },
+                    { stLabel: 'Japan', value: 'jp' }
                   ],
                   onChange: (val) => { state.formData.country = val; }
                 })
@@ -175,24 +190,24 @@ export const demo = {
               { spacing: 15, alignment: 'center' },
               [
                 button({
-                  label: 'Submit',
+                  stLabel: 'Submit',
                   variant: 'primary',
-                  width: 160,
-                  height: 50,
+                  dx: 160,
+                  dy: 50,
                   onClick: () => {
                     console.log('Form submitted:', state.formData);
                   }
                 }),
                 button({
-                  label: 'Reset',
+                  stLabel: 'Reset',
                   variant: 'secondary',
-                  width: 160,
-                  height: 50,
+                  dx: 160,
+                  dy: 50,
                   onClick: () => {
                     state.formData = {
                       name: '',
                       email: '',
-                      subscribe: false,
+                      fSubscribe: false,
                       notifications: 'email',
                       volume: 50,
                       country: ''
@@ -200,12 +215,12 @@ export const demo = {
                   }
                 }),
                 button({
-                  label: 'Theme: ' + state.currentTheme,
+                  stLabel: 'Theme: ' + state.currentTheme,
                   variant: 'secondary',
-                  width: 200,
-                  height: 50,
+                  dx: 200,
+                  dy: 50,
                   onClick: () => {
-                    const themes = ['light', 'dark', 'colorful'];
+                    const themes: ThemeKey[] = ['light', 'dark', 'colorful'];
                     const currentIndex = themes.indexOf(state.currentTheme);
                     state.currentTheme = themes[(currentIndex + 1) % themes.length];
                   }

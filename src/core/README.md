@@ -117,8 +117,8 @@ function render() {
     rectangle({ 
       x: 50, 
       y: 50, 
-      width: 100, 
-      height: 100, 
+      dx: 100, 
+      dy: 100, 
       fill: '#ff0000',
       onClick: () => console.log('clicked!')
     }),
@@ -146,3 +146,8 @@ The core module integrates with:
 - **Hit testing** (`../hit-test.ts`) - Pointer event detection
 
 These supporting modules remain in the parent `src/` directory to separate concerns.
+
+## Naming Notes
+
+- In block props, use `dx`/`dy` for dimensions.
+- Reserve `width`/`height` for platform/system APIs (for example canvas and DOM fields).

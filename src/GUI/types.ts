@@ -31,8 +31,12 @@ export enum GUIControlType {
 export interface GUIBaseProps {
   id?: string;
   className?: string;
+  fVisible?: boolean;
+  fEnabled?: boolean;
   visible?: boolean;
   enabled?: boolean;
+  dx?: number;
+  dy?: number;
   width?: number;
   height?: number;
   x?: number;
@@ -41,11 +45,14 @@ export interface GUIBaseProps {
 
 // Interactive control properties
 export interface TextBoxProps extends GUIBaseProps {
+  stValue?: string;
+  stPlaceholder?: string;
+  fMultiline?: boolean;
   value?: string;
   placeholder?: string;
   multiline?: boolean;
   maxLength?: number;
-  onChange?: (value: string) => void;
+  onChange?: (stValue: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
   onClick?: (event: PointerEvent) => void;
@@ -53,23 +60,28 @@ export interface TextBoxProps extends GUIBaseProps {
 }
 
 export interface CheckBoxProps extends GUIBaseProps {
+  fChecked?: boolean;
+  stLabel?: string;
   checked?: boolean;
   label?: string;
-  onChange?: (checked: boolean) => void;
+  onChange?: (fChecked: boolean) => void;
   onHover?: (event: PointerEvent) => void;
 }
 
 export interface RadioButtonProps extends GUIBaseProps {
+  fChecked?: boolean;
+  stLabel?: string;
   checked?: boolean;
   label?: string;
   value?: string;
   group?: string;
-  onChange?: (value: string) => void;
+  onChange?: (stValue: string) => void;
   onHover?: (event: PointerEvent) => void;
 }
 
 export interface ButtonProps extends GUIBaseProps {
-  label: string;
+  stLabel?: string;
+  label?: string;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
   onHover?: (event: PointerEvent) => void;
@@ -86,9 +98,10 @@ export interface SliderProps extends GUIBaseProps {
 
 export interface DropdownProps extends GUIBaseProps {
   value?: string;
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ stLabel?: string; label?: string; value: string }>;
+  stPlaceholder?: string;
   placeholder?: string;
-  onChange?: (value: string) => void;
+  onChange?: (stValue: string) => void;
   onClick?: (event: PointerEvent) => void;
   onHover?: (event: PointerEvent) => void;
 }
@@ -118,6 +131,7 @@ export interface VStackProps extends GUIBaseProps {
 
 export interface CarouselProps extends GUIBaseProps {
   currentIndex?: number;
+  fAutoPlay?: boolean;
   autoPlay?: boolean;
   interval?: number;
   onIndexChange?: (index: number) => void;
@@ -132,7 +146,8 @@ export interface GridProps extends GUIBaseProps {
 
 // Content control properties
 export interface LabelProps extends GUIBaseProps {
-  text: string;
+  stText?: string;
+  text?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
   align?: 'left' | 'center' | 'right';
@@ -144,6 +159,7 @@ export interface GUIImageProps extends GUIBaseProps {
 }
 
 export interface PanelProps extends GUIBaseProps {
+  stTitle?: string;
   title?: string;
   padding?: number;
 }
