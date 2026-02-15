@@ -32,7 +32,7 @@ export const demo = {
         volume: 50,
         country: ''
       },
-      currentTheme: 'light',
+      currentTheme: 'dark',
       hoveredControl: null
     };
   },

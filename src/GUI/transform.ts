@@ -39,6 +39,37 @@ function getControlStyle(
   return theme.defaults[control.type] || {};
 }
 
+// Helper to get the rendered dimensions of a control
+function getControlDimensions(control: GUIControl): { width: number; height: number } {
+  const props = control.props;
+  
+  // If dimensions are explicitly set, use them
+  if (props.width && props.height) {
+    return { width: props.width, height: props.height };
+  }
+  
+  // Otherwise, use type-specific defaults
+  switch (control.type) {
+    case GUIControlType.TextBox:
+    case GUIControlType.Dropdown:
+      return { width: props.width || 300, height: props.height || 50 };
+    case GUIControlType.Button:
+      return { width: props.width || 160, height: props.height || 50 };
+    case GUIControlType.CheckBox:
+      return { width: props.width || 200, height: props.height || 28 };
+    case GUIControlType.RadioButton:
+      return { width: props.width || 200, height: props.height || 28 };
+    case GUIControlType.Slider:
+      return { width: props.width || 300, height: props.height || 24 };
+    case GUIControlType.Label:
+      return { width: props.width || 200, height: props.height || 20 };
+    case GUIControlType.Panel:
+      return { width: props.width || 400, height: props.height || 300 };
+    default:
+      return { width: props.width || 100, height: props.height || 40 };
+  }
+}
+
 // Transform textbox to core blocks
 function transformTextBox(
   control: GUIControl,
@@ -172,7 +203,7 @@ function transformCheckBox(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.onChange ? () => props.onChange!(!props.checked) : undefined,
+      onClick: props.onChange ? (event: PointerEvent) => props.onChange!(!props.checked) : undefined,
       onHover: props.onHover
     },
     children
@@ -238,7 +269,7 @@ function transformRadioButton(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.onChange && props.value ? () => props.onChange!(props.value!) : undefined,
+      onClick: props.onChange && props.value ? (event: PointerEvent) => props.onChange!(props.value!) : undefined,
       onHover: props.onHover
     },
     children
@@ -310,7 +341,7 @@ function transformButton(
       y: props.y || 0,
       visible: props.visible !== false,
       id: props.id,
-      onClick: props.enabled !== false && props.onClick ? props.onClick : undefined,
+      onClick: props.enabled !== false && props.onClick ? (event: PointerEvent) => props.onClick!() : undefined,
       onHover: props.onHover
     },
     children
@@ -574,6 +605,7 @@ function transformStack(
   
   for (const child of control.children) {
     const transformed = transformGUIControl(child, context);
+    const childDims = getControlDimensions(child);
     
     // Create a new block with updated coordinates instead of mutating
     const positionedBlock: Block = {
@@ -585,9 +617,7 @@ function transformStack(
       }
     };
     
-    offset += (direction === 'horizontal' 
-      ? (child.props.width || 100) 
-      : (child.props.height || 40)) + spacing;
+    offset += (direction === 'horizontal' ? childDims.width : childDims.height) + spacing;
     
     children.push(positionedBlock);
   }
@@ -700,6 +730,7 @@ function transformGrid(
   control.children.forEach((child, index) => {
     const col = index % columns;
     const row = Math.floor(index / columns);
+    const childDims = getControlDimensions(child);
     
     const transformed = transformGUIControl(child, context);
     
@@ -708,8 +739,8 @@ function transformGrid(
       ...transformed,
       props: {
         ...transformed.props,
-        x: padding + col * ((child.props.width || 100) + spacing),
-        y: padding + row * ((child.props.height || 100) + spacing)
+        x: padding + col * (childDims.width + spacing),
+        y: padding + row * (childDims.height + spacing)
       }
     };
     
