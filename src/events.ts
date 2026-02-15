@@ -21,9 +21,28 @@ export class EventManager {
   private hoveredBlock: Block | null = null;
   private draggedBlock: Block | null = null;
   private dragStart: { x: number; y: number } | null = null;
+  
+  // Store bound event handlers so they can be properly removed
+  private boundHandlers: {
+    pointerdown: (e: PointerEvent) => void;
+    pointerup: (e: PointerEvent) => void;
+    pointermove: (e: PointerEvent) => void;
+    click: (e: PointerEvent) => void;
+    pointerleave: (e: PointerEvent) => void;
+  };
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
+    
+    // Bind event handlers once and store them
+    this.boundHandlers = {
+      pointerdown: this.handlePointerDown.bind(this),
+      pointerup: this.handlePointerUp.bind(this),
+      pointermove: this.handlePointerMove.bind(this),
+      click: this.handleClick.bind(this),
+      pointerleave: this.handlePointerLeave.bind(this)
+    };
+    
     this.setupEventListeners();
   }
 
@@ -32,19 +51,25 @@ export class EventManager {
   }
 
   private setupEventListeners(): void {
-    this.canvas.addEventListener('pointerdown', this.handlePointerDown.bind(this));
-    this.canvas.addEventListener('pointerup', this.handlePointerUp.bind(this));
-    this.canvas.addEventListener('pointermove', this.handlePointerMove.bind(this));
-    this.canvas.addEventListener('click', this.handleClick.bind(this));
-    this.canvas.addEventListener('pointerleave', this.handlePointerLeave.bind(this));
+    this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerdown);
+    this.canvas.addEventListener('pointerup', this.boundHandlers.pointerup);
+    this.canvas.addEventListener('pointermove', this.boundHandlers.pointermove);
+    this.canvas.addEventListener('click', this.boundHandlers.click);
+    this.canvas.addEventListener('pointerleave', this.boundHandlers.pointerleave);
   }
 
   destroy(): void {
-    this.canvas.removeEventListener('pointerdown', this.handlePointerDown.bind(this));
-    this.canvas.removeEventListener('pointerup', this.handlePointerUp.bind(this));
-    this.canvas.removeEventListener('pointermove', this.handlePointerMove.bind(this));
-    this.canvas.removeEventListener('click', this.handleClick.bind(this));
-    this.canvas.removeEventListener('pointerleave', this.handlePointerLeave.bind(this));
+    this.canvas.removeEventListener('pointerdown', this.boundHandlers.pointerdown);
+    this.canvas.removeEventListener('pointerup', this.boundHandlers.pointerup);
+    this.canvas.removeEventListener('pointermove', this.boundHandlers.pointermove);
+    this.canvas.removeEventListener('click', this.boundHandlers.click);
+    this.canvas.removeEventListener('pointerleave', this.boundHandlers.pointerleave);
+    
+    // Clear state
+    this.currentScene = null;
+    this.hoveredBlock = null;
+    this.draggedBlock = null;
+    this.dragStart = null;
   }
 
   private getCanvasCoordinates(event: PointerEvent): { x: number; y: number } {

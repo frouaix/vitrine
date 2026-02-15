@@ -4,6 +4,7 @@ package-lock.json
 
 # Build output
 dist/
+dist-examples/
 
 # Environment variables
 .env
@@ -29,3 +30,4 @@ pnpm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+test-*.html

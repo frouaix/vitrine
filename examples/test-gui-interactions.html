@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GUI Interaction Test</title>
+  <script type="module">
+    import { ImmediateRenderer } from '/vitrine/dist/index.js';
+    import {
+      button,
+      checkbox,
+      radiobutton,
+      vstack,
+      panel,
+      transformGUIControl,
+      lightTheme
+    } from '/vitrine/src/GUI/index.js';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new ImmediateRenderer(canvas);
+    const log = document.getElementById('log');
+
+    function addLog(message) {
+      const entry = document.createElement('div');
+      entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    // State
+    const state = {
+      checkboxChecked: false,
+      radioValue: 'option1',
+      buttonClickCount: 0
+    };
+
+    function render() {
+      const context = { theme: lightTheme };
+      
+      const gui = panel(
+        { x: 50, y: 50, width: 400, height: 400, title: 'Interaction Test', padding: 25 },
+        [
+          vstack(
+            { spacing: 25 },
+            [
+              checkbox({
+                label: 'Test Checkbox (click me!)',
+                checked: state.checkboxChecked,
+                onChange: (checked) => {
+                  state.checkboxChecked = checked;
+                  addLog(`Checkbox changed to: ${checked}`);
+                  render();
+                }
+              }),
+              radiobutton({
+                label: 'Option 1',
+                value: 'option1',
+                checked: state.radioValue === 'option1',
+                onChange: (val) => {
+                  state.radioValue = val;
+                  addLog(`Radio changed to: ${val}`);
+                  render();
+                }
+              }),
+              radiobutton({
+                label: 'Option 2',
+                value: 'option2',
+                checked: state.radioValue === 'option2',
+                onChange: (val) => {
+                  state.radioValue = val;
+                  addLog(`Radio changed to: ${val}`);
+                  render();
+                }
+              }),
+              button({
+                label: `Click Me! (${state.buttonClickCount})`,
+                variant: 'primary',
+                width: 350,
+                height: 50,
+                onClick: () => {
+                  state.buttonClickCount++;
+                  addLog(`Button clicked! Count: ${state.buttonClickCount}`);
+                  render();
+                }
+              })
+            ]
+          )
+        ]
+      );
+
+      const blocks = transformGUIControl(gui, context);
+      renderer.clear();
+      renderer.render(blocks);
+    }
+
+    // Initial render
+    addLog('Page loaded - try clicking controls!');
+    render();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      renderer.resize();
+      render();
+    });
+  </script>
+  <style>
+    body { margin: 0; padding: 20px; font-family: system-ui; background: #1a1a1a; color: white; }
+    #canvas { border: 1px solid #444; display: block; margin-bottom: 20px; }
+    #log { 
+      background: #2a2a2a; 
+      padding: 15px; 
+      border-radius: 8px; 
+      max-height: 200px; 
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    #log div { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>GUI Controls Interaction Test</h1>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <h2>Event Log:</h2>
+  <div id="log"></div>
+</body>
+</html>

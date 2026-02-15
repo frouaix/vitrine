@@ -68,7 +68,7 @@ export class Canvas2DContext implements RenderContext {
 
   drawRectangle(x: number, y: number, width: number, height: number, props: any): void {
     if (props.cornerRadius) {
-      this.roundRect(x, y, width, height, props.cornerRadius);
+      this.roundRect(x, y, width, height, props.cornerRadius, props);
     } else {
       if (props.fill) {
         this.ctx.fillStyle = props.fill;
@@ -82,7 +82,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  private roundRect(x: number, y: number, width: number, height: number, radius: number): void {
+  private roundRect(x: number, y: number, width: number, height: number, radius: number, props: any): void {
     this.ctx.beginPath();
     this.ctx.moveTo(x + radius, y);
     this.ctx.lineTo(x + width - radius, y);
@@ -95,8 +95,15 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.arcTo(x, y, x + radius, y, radius);
     this.ctx.closePath();
     
-    if (this.ctx.fillStyle) this.ctx.fill();
-    if (this.ctx.strokeStyle) this.ctx.stroke();
+    if (props.fill) {
+      this.ctx.fillStyle = props.fill;
+      this.ctx.fill();
+    }
+    if (props.stroke) {
+      this.ctx.strokeStyle = props.stroke;
+      this.ctx.lineWidth = props.strokeWidth ?? 1;
+      this.ctx.stroke();
+    }
   }
 
   drawCircle(x: number, y: number, radius: number, props: any): void {
