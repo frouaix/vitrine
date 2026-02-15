@@ -181,4 +181,4 @@ Vitrine uses an immediate-mode rendering model where the visual hierarchy is re-
 
 ## License
 
-MIT
+[MIT](LICENSE.md)

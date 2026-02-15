@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 import { Renderer, RendererOptions, RendererType } from './renderer.ts';
 
 export class Canvas2DRenderer extends Renderer {

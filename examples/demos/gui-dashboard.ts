@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // GUI Dashboard Demo - Layout with panels and content
 import { ImmediateRenderer } from 'vitrine';
 import {

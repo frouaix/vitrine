@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Demo Gallery Framework
 import { ImmediateRenderer, WebGLRenderer } from 'vitrine';
 

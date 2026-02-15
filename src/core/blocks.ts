@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Block factory functions for creating block descriptors
 import type {
   Block,

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Event system for handling user interactions
 import type { Block } from './core/types.ts';
 import { HitTester, type HitTestResult } from './hit-test.ts';

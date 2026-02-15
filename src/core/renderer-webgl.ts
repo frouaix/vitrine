@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 import type { ArcProps, Block, CircleProps, EllipseProps, LineProps, PathProps, RectangleProps, TextProps, ImageProps } from './types.ts';
 import { BlockType } from './types.ts';
 import { Renderer, RendererOptions, RendererType } from './renderer.ts';

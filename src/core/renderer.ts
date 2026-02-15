@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 export enum RendererType {
   Canvas2D = 'canvas2d',
   WebGL = 'webgl'

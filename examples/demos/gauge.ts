@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Gauge/Speedometer Demo
 import { group, rectangle, text, arc, circle, line } from 'vitrine';
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Hit testing utilities for event handling
 import type { Block, Rc } from './core/types.ts';
 import { BlockType } from './core/types.ts';

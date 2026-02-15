@@ -31,7 +31,7 @@
     "typescript",
     "graphics"
   ],
-  "author": "",
+  "author": "François Rouaix",
   "license": "MIT",
   "packageManager": "pnpm@10.28.2",
   "devDependencies": {

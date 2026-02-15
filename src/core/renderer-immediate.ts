@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Immediate-mode rendering engine
 import type { Block, BlockOfType } from './types.ts';
 import { BlockType } from './types.ts';

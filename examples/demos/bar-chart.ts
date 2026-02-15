@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Bar Chart Demo
 import { group, rectangle, text, line } from 'vitrine';
 

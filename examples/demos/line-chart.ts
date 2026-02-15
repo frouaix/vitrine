@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Line Chart Demo
 import { group, rectangle, text, line, circle } from 'vitrine';
 

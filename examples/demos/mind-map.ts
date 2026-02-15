@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Mind Map Demo
 import { group, rectangle, text, circle, line, ellipse } from 'vitrine';
 

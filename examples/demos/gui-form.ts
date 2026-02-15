@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // GUI Form Demo - Interactive form with various controls
 import { ImmediateRenderer } from 'vitrine';
 import {

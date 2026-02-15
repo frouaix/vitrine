@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Theme definitions for GUI controls
 
 import type { ThemeDefinition, ControlStyle } from './types.ts';

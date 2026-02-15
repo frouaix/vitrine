@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // GUI Gallery Demo - Carousel with images and content
 import { ImmediateRenderer } from 'vitrine';
 import {

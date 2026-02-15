@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // 2D transformation matrix utilities
 // Using 2x3 affine transformation matrix: [a, b, c, d, e, f]
 // | a  c  e |

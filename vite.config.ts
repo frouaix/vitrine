@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 

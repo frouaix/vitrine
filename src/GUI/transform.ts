@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Transform GUI DSL to Core DSL
 
 import type { Block } from '../core/types.ts';

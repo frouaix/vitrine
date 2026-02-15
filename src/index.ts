@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Core types and interfaces
 export * from './core/types.ts';
 

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Color Picker Demo
 import { group, rectangle, text, circle } from 'vitrine';
 

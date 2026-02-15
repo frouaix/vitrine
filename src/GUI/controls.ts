@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // GUI control factory functions
 
 import type {

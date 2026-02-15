@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Geometric Patterns Demo
 import { group, rectangle, text, circle, path } from 'vitrine';
 

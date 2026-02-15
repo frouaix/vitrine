@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Analog Clock Demo
 import { group, rectangle, text, circle, line } from 'vitrine';
 

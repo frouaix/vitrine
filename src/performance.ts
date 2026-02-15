@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Performance optimization utilities
 import type { Block, Rc } from './core/types.ts';
 import { HitTester } from './hit-test.ts';

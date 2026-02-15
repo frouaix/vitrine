@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Rendering context abstraction
 import { Matrix2D, TransformStack } from '../transform.ts';
 import type { Block, BaseBlockProps, Rc } from './types.ts';

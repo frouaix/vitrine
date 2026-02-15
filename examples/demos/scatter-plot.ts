@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Scatter Plot Demo - 10k points performance test
 import { group, rectangle, text, circle } from 'vitrine';
 

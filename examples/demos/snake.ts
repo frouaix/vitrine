@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Snake Game Demo
 import { group, rectangle, text, circle } from 'vitrine';
 

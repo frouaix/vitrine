@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Default constants for GUI DSL to Core block transformation
 
 export const GUI_TO_BLOCK_DEFAULTS = {

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Kanban Board Demo
 import { group, rectangle, text } from 'vitrine';
 

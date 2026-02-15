@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // GUI DSL type definitions for high-level UI controls
 
 import type { Block } from '../core/types.ts';

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Pie Chart Demo
 import { group, rectangle, text, arc, circle } from 'vitrine';
 

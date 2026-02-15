@@ -1,3 +1,5 @@
+// Copyright (c) 2026 François Rouaix
+
 // Core type definitions for the block system
 
 export type Color = string; // CSS color format
