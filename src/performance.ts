@@ -29,12 +29,8 @@ export class PerformanceOptimizer {
   ): boolean {
     if (block.props.visible === false) return false;
 
-    // Calculate block transform
-    const blockTransform = this.getBlockTransform(block.props);
-    const currentTransform = worldTransform.multiply(blockTransform);
-
-    // Get world bounds
-    const bounds = HitTester.getBounds(block, currentTransform);
+    // Get world bounds (getBounds will apply the block's transform)
+    const bounds = HitTester.getBounds(block, worldTransform);
     if (!bounds) {
       // If we can't calculate bounds, assume visible
       return true;

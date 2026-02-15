@@ -437,7 +437,7 @@ function transformButton(
 function transformSlider(
   control: GUIControl,
   context: TransformContext,
-  state: { hovered?: boolean; dragStartX?: number; dragStartValue?: number } = {}
+  state: { hovered?: boolean } = {}
 ): Block {
   const props = control.props as SliderProps;
   const style = getControlStyle(control, context);
@@ -446,11 +446,17 @@ function transformSlider(
   const trackHeight = 6;
   const thumbRadius = 12;
   
-  const min = props.min || 0;
-  const max = props.max || 100;
+  const min = props.min ?? 0;
+  const max = props.max ?? 100;
   const value = props.value ?? min;
   const normalizedValue = (value - min) / (max - min);
   const thumbX = normalizedValue * width;
+  
+  // Persistent drag state (stored on props to survive re-renders)
+  if (!(props as any)._dragState) {
+    (props as any)._dragState = { dragging: false, startX: 0, startValue: 0 };
+  }
+  const dragState = (props as any)._dragState;
   
   const children: Block[] = [];
   
@@ -461,39 +467,43 @@ function transformSlider(
       y: -trackHeight / 2,
       width,
       height: trackHeight,
-      fill: style.sliderTrackColor,
-      cornerRadius: trackHeight / 2
+      fill: style.sliderTrackColor || '#4b5563',
+      cornerRadius: trackHeight / 2,
+      stroke: '#888888',
+      strokeWidth: 1
     })
   );
   
-  // Thumb - draggable and clickable
+  // Thumb - draggable
   children.push(
     circle({
       x: thumbX,
       y: 0,
       radius: thumbRadius,
-      fill: style.sliderThumbColor,
+      fill: style.sliderThumbColor || '#3b82f6',
       stroke: '#ffffff',
-      strokeWidth: 2,
+      strokeWidth: 3,
+      onPointerDown: props.onChange ? (e: PointerEvent) => {
+        dragState.dragging = true;
+        dragState.startX = e.clientX;
+        dragState.startValue = value;
+      } : undefined,
       onDrag: props.onChange ? (e: PointerEvent) => {
-        if (state.dragStartX === undefined) {
-          state.dragStartX = e.clientX;
-          state.dragStartValue = value;
-        }
+        if (!dragState.dragging) return;
         
         const canvas = e.target as HTMLCanvasElement;
         const rect = canvas.getBoundingClientRect();
         const scaleX = canvas.width / rect.width;
         
-        const deltaX = (e.clientX - state.dragStartX) * scaleX;
+        // Calculate delta from drag start
+        const deltaX = (e.clientX - dragState.startX) * scaleX;
         const deltaValue = (deltaX / width) * (max - min);
-        const newValue = Math.max(min, Math.min(max, state.dragStartValue! + deltaValue));
+        const newValue = Math.max(min, Math.min(max, dragState.startValue + deltaValue));
         
-        props.onChange(newValue);
+        props.onChange?.(newValue);
       } : undefined,
       onPointerUp: () => {
-        state.dragStartX = undefined;
-        state.dragStartValue = undefined;
+        dragState.dragging = false;
       }
     })
   );
