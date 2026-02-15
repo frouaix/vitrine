@@ -43,38 +43,95 @@ export const demo = {
 
     const currentColor = hsvToRgb(state.hue, state.saturation, state.value);
 
-    // Hue spectrum bar
-    const hueBar = Array.from({ length: 360 }, (_, i) => 
+    // Hue spectrum bar (clickable)
+    const hueBar = [
+      // Visual spectrum (drawn first, on bottom)
+      ...Array.from({ length: 360 }, (_, i) => 
+        rectangle({
+          x: 100 + i,
+          y: 200,
+          width: 2,
+          height: 40,
+          fill: hsvToRgb(i, 100, 100)
+        })
+      ),
+      // Clickable area (drawn last, on top for hit testing)
       rectangle({
-        x: 100 + i,
+        x: 100,
         y: 200,
-        width: 2,
+        width: 360,
         height: 40,
-        fill: hsvToRgb(i, 100, 100)
+        fill: 'transparent',
+        onClick: (e) => {
+          const canvas = e.target;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const canvasX = (e.clientX - rect.left) * scaleX;
+          const hue = Math.max(0, Math.min(359, Math.floor(canvasX - 100)));
+          state.hue = hue;
+        }
       })
-    );
+    ];
 
-    // Saturation bar
-    const satBar = Array.from({ length: 100 }, (_, i) => 
+    // Saturation bar (clickable)
+    const satBar = [
+      // Visual gradient (drawn first, on bottom)
+      ...Array.from({ length: 100 }, (_, i) => 
+        rectangle({
+          x: 100 + i * 4,
+          y: 270,
+          width: 5,
+          height: 40,
+          fill: hsvToRgb(state.hue, i, state.value)
+        })
+      ),
+      // Clickable area (drawn last, on top for hit testing)
       rectangle({
-        x: 100 + i * 4,
+        x: 100,
         y: 270,
-        width: 5,
+        width: 400,
         height: 40,
-        fill: hsvToRgb(state.hue, i, state.value)
+        fill: 'transparent',
+        onClick: (e) => {
+          const canvas = e.target;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const canvasX = (e.clientX - rect.left) * scaleX;
+          const sat = Math.max(0, Math.min(100, Math.floor((canvasX - 100) / 4)));
+          state.saturation = sat;
+        }
       })
-    );
+    ];
 
-    // Value bar
-    const valBar = Array.from({ length: 100 }, (_, i) => 
+    // Value bar (clickable)
+    const valBar = [
+      // Visual gradient (drawn first, on bottom)
+      ...Array.from({ length: 100 }, (_, i) => 
+        rectangle({
+          x: 100 + i * 4,
+          y: 340,
+          width: 5,
+          height: 40,
+          fill: hsvToRgb(state.hue, state.saturation, i)
+        })
+      ),
+      // Clickable area (drawn last, on top for hit testing)
       rectangle({
-        x: 100 + i * 4,
+        x: 100,
         y: 340,
-        width: 5,
+        width: 400,
         height: 40,
-        fill: hsvToRgb(state.hue, state.saturation, i)
+        fill: 'transparent',
+        onClick: (e) => {
+          const canvas = e.target;
+          const rect = canvas.getBoundingClientRect();
+          const scaleX = canvas.width / rect.width;
+          const canvasX = (e.clientX - rect.left) * scaleX;
+          const val = Math.max(0, Math.min(100, Math.floor((canvasX - 100) / 4)));
+          state.value = val;
+        }
       })
-    );
+    ];
 
     // Preset colors
     const presets = state.presets.map((color, i) => 

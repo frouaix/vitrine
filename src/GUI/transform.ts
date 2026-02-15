@@ -248,7 +248,9 @@ function transformCheckBox(
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius
+      cornerRadius: style.borderRadius,
+      onClick: props.onChange ? (event: PointerEvent) => props.onChange!(!props.checked) : undefined,
+      onHover: props.onHover
     })
   );
   
@@ -287,9 +289,7 @@ function transformCheckBox(
       x: props.x || 0,
       y: props.y || 0,
       visible: props.visible !== false,
-      id: props.id,
-      onClick: props.onChange ? (event: PointerEvent) => props.onChange!(!props.checked) : undefined,
-      onHover: props.onHover
+      id: props.id
     },
     children
   );
@@ -319,7 +319,9 @@ function transformRadioButton(
       radius,
       fill: bgColor,
       stroke: style.borderColor,
-      strokeWidth: style.borderWidth
+      strokeWidth: style.borderWidth,
+      onClick: props.onChange && props.value ? (event: PointerEvent) => props.onChange!(props.value!) : undefined,
+      onHover: props.onHover
     })
   );
   
@@ -353,9 +355,7 @@ function transformRadioButton(
       x: props.x || 0,
       y: props.y || 0,
       visible: props.visible !== false,
-      id: props.id,
-      onClick: props.onChange && props.value ? (event: PointerEvent) => props.onChange!(props.value!) : undefined,
-      onHover: props.onHover
+      id: props.id
     },
     children
   );
@@ -437,7 +437,7 @@ function transformButton(
 function transformSlider(
   control: GUIControl,
   context: TransformContext,
-  state: { hovered?: boolean } = {}
+  state: { hovered?: boolean; dragStartX?: number; dragStartValue?: number } = {}
 ): Block {
   const props = control.props as SliderProps;
   const style = getControlStyle(control, context);
@@ -448,15 +448,16 @@ function transformSlider(
   
   const min = props.min || 0;
   const max = props.max || 100;
-  const value = props.value || min;
+  const value = props.value ?? min;
   const normalizedValue = (value - min) / (max - min);
   const thumbX = normalizedValue * width;
   
   const children: Block[] = [];
   
-  // Track
+  // Visual track
   children.push(
     rectangle({
+      x: 0,
       y: -trackHeight / 2,
       width,
       height: trackHeight,
@@ -465,14 +466,35 @@ function transformSlider(
     })
   );
   
-  // Thumb
+  // Thumb - draggable and clickable
   children.push(
     circle({
       x: thumbX,
+      y: 0,
       radius: thumbRadius,
       fill: style.sliderThumbColor,
-      stroke: state.hovered ? '#ffffff' : undefined,
-      strokeWidth: state.hovered ? 2 : undefined
+      stroke: '#ffffff',
+      strokeWidth: 2,
+      onDrag: props.onChange ? (e: PointerEvent) => {
+        if (state.dragStartX === undefined) {
+          state.dragStartX = e.clientX;
+          state.dragStartValue = value;
+        }
+        
+        const canvas = e.target as HTMLCanvasElement;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        
+        const deltaX = (e.clientX - state.dragStartX) * scaleX;
+        const deltaValue = (deltaX / width) * (max - min);
+        const newValue = Math.max(min, Math.min(max, state.dragStartValue! + deltaValue));
+        
+        props.onChange(newValue);
+      } : undefined,
+      onPointerUp: () => {
+        state.dragStartX = undefined;
+        state.dragStartValue = undefined;
+      }
     })
   );
   
