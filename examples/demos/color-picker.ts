@@ -3,6 +3,24 @@
 // Color Picker Demo
 import { group, rectangle, text, circle } from 'vitrine';
 
+interface ColorPickerState {
+  hue: number;
+  saturation: number;
+  value: number;
+  presets: string[];
+}
+
+function getCanvasX(event: PointerEvent): number | null {
+  const eventTarget = event.target;
+  if (!(eventTarget instanceof HTMLCanvasElement)) {
+    return null;
+  }
+
+  const canvasRect = eventTarget.getBoundingClientRect();
+  const scaleX = eventTarget.width / canvasRect.width;
+  return (event.clientX - canvasRect.left) * scaleX;
+}
+
 export const demo = {
   id: 'color-picker',
   name: 'Color Picker',
@@ -17,30 +35,32 @@ export const demo = {
         '#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b',
         '#ff8787', '#a9e34b', '#cc5de8', '#ff922b'
       ]
-    };
+    } as ColorPickerState;
   },
 
-  update: (state, dt) => {
+  update: (state: ColorPickerState, _dt: number) => {
     // Color picker is interactive
   },
 
-  render: (state) => {
-    const hsvToRgb = (h, s, v) => {
-      s /= 100;
-      v /= 100;
-      const c = v * s;
-      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-      const m = v - c;
-      let r, g, b;
+  render: (state: ColorPickerState) => {
+    const hsvToRgb = (hue: number, saturation: number, value: number): string => {
+      const normalizedSaturation = saturation / 100;
+      const normalizedValue = value / 100;
+      const chroma = normalizedValue * normalizedSaturation;
+      const secondary = chroma * (1 - Math.abs(((hue / 60) % 2) - 1));
+      const offset = normalizedValue - chroma;
+      let red: number;
+      let green: number;
+      let blue: number;
       
-      if (h < 60) { r = c; g = x; b = 0; }
-      else if (h < 120) { r = x; g = c; b = 0; }
-      else if (h < 180) { r = 0; g = c; b = x; }
-      else if (h < 240) { r = 0; g = x; b = c; }
-      else if (h < 300) { r = x; g = 0; b = c; }
-      else { r = c; g = 0; b = x; }
+      if (hue < 60) { red = chroma; green = secondary; blue = 0; }
+      else if (hue < 120) { red = secondary; green = chroma; blue = 0; }
+      else if (hue < 180) { red = 0; green = chroma; blue = secondary; }
+      else if (hue < 240) { red = 0; green = secondary; blue = chroma; }
+      else if (hue < 300) { red = secondary; green = 0; blue = chroma; }
+      else { red = chroma; green = 0; blue = secondary; }
       
-      return `rgb(${Math.round((r + m) * 255)}, ${Math.round((g + m) * 255)}, ${Math.round((b + m) * 255)})`;
+      return `rgb(${Math.round((red + offset) * 255)}, ${Math.round((green + offset) * 255)}, ${Math.round((blue + offset) * 255)})`;
     };
 
     const currentColor = hsvToRgb(state.hue, state.saturation, state.value);
@@ -64,11 +84,12 @@ export const demo = {
         dx: 360,
         dy: 40,
         fill: 'transparent',
-        onClick: (e) => {
-          const canvas = e.target;
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const canvasX = (e.clientX - rect.left) * scaleX;
+        onClick: (event: PointerEvent) => {
+          const canvasX = getCanvasX(event);
+          if (canvasX === null) {
+            return;
+          }
+
           const hue = Math.max(0, Math.min(359, Math.floor(canvasX - 100)));
           state.hue = hue;
         }
@@ -94,11 +115,12 @@ export const demo = {
         dx: 400,
         dy: 40,
         fill: 'transparent',
-        onClick: (e) => {
-          const canvas = e.target;
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const canvasX = (e.clientX - rect.left) * scaleX;
+        onClick: (event: PointerEvent) => {
+          const canvasX = getCanvasX(event);
+          if (canvasX === null) {
+            return;
+          }
+
           const sat = Math.max(0, Math.min(100, Math.floor((canvasX - 100) / 4)));
           state.saturation = sat;
         }
@@ -124,11 +146,12 @@ export const demo = {
         dx: 400,
         dy: 40,
         fill: 'transparent',
-        onClick: (e) => {
-          const canvas = e.target;
-          const rect = canvas.getBoundingClientRect();
-          const scaleX = canvas.width / rect.width;
-          const canvasX = (e.clientX - rect.left) * scaleX;
+        onClick: (event: PointerEvent) => {
+          const canvasX = getCanvasX(event);
+          if (canvasX === null) {
+            return;
+          }
+
           const val = Math.max(0, Math.min(100, Math.floor((canvasX - 100) / 4)));
           state.value = val;
         }
@@ -136,7 +159,7 @@ export const demo = {
     ];
 
     // Preset colors
-    const presets = state.presets.map((color, i) => 
+    const presets = state.presets.map((color: string, i: number) => 
       circle({
         x: 150 + i * 60,
         y: 470,
