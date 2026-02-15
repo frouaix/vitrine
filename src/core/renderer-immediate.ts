@@ -110,7 +110,9 @@ export class ImmediateRenderer {
   }
 
   private renderBlock(block: Block): void {
-    if (block.props.visible === false) return;
+    const { props, children } = block;
+    const { visible, opacity: fOpacity = 1, shadow } = props;
+    if (visible === false) return;
 
     // Frustum culling
     if (this.enableCulling) {
@@ -131,22 +133,22 @@ export class ImmediateRenderer {
     
     // Apply transform
     this.context.transformStack.save();
-    this.context.transformStack.apply(block.props);
+    this.context.transformStack.apply(props);
     this.context.applyTransform(this.context.transformStack.getCurrent());
 
     // Apply opacity
     const parentOpacity = this.context.opacity;
-    const blockOpacity = block.props.opacity ?? 1;
-    this.context.setOpacity(parentOpacity * blockOpacity);
+    this.context.setOpacity(parentOpacity * fOpacity);
 
     // Apply shadow if present
-    if (block.props.shadow) {
+    if (shadow) {
+      const { offsetX, offsetY, blur, color } = shadow;
       const ctx = (this.context as any).ctx;
       if (ctx) {
-        ctx.shadowOffsetX = block.props.shadow.offsetX;
-        ctx.shadowOffsetY = block.props.shadow.offsetY;
-        ctx.shadowBlur = block.props.shadow.blur;
-        ctx.shadowColor = block.props.shadow.color;
+        ctx.shadowOffsetX = offsetX;
+        ctx.shadowOffsetY = offsetY;
+        ctx.shadowBlur = blur;
+        ctx.shadowColor = color;
       }
     }
 
@@ -183,8 +185,8 @@ export class ImmediateRenderer {
     }
 
     // Render children if any
-    if (block.children) {
-      for (const child of block.children) {
+    if (children) {
+      for (const child of children) {
         this.renderBlock(child);
       }
     }
@@ -195,45 +197,53 @@ export class ImmediateRenderer {
 
   private renderRectangle(block: BlockOfType<BlockType.Rectangle>): void {
     const { props } = block;
-    this.context.drawRectangle(0, 0, props.dx, props.dy, props);
+    const { dx, dy } = props;
+    this.context.drawRectangle(0, 0, dx, dy, props);
   }
 
   private renderCircle(block: BlockOfType<BlockType.Circle>): void {
     const { props } = block;
-    this.context.drawCircle(0, 0, props.radius, props);
+    const { radius } = props;
+    this.context.drawCircle(0, 0, radius, props);
   }
 
   private renderEllipse(block: BlockOfType<BlockType.Ellipse>): void {
     const { props } = block;
-    this.context.drawEllipse(0, 0, props.radiusX, props.radiusY, props);
+    const { radiusX, radiusY } = props;
+    this.context.drawEllipse(0, 0, radiusX, radiusY, props);
   }
 
   private renderPath(block: BlockOfType<BlockType.Path>): void {
     const { props } = block;
-    this.context.drawPath(props.pathData, props);
+    const { pathData } = props;
+    this.context.drawPath(pathData, props);
   }
 
   private renderLine(block: BlockOfType<BlockType.Line>): void {
     const { props } = block;
-    this.context.drawLine(props.x1, props.y1, props.x2, props.y2, props);
+    const { x1, y1, x2, y2 } = props;
+    this.context.drawLine(x1, y1, x2, y2, props);
   }
 
   private renderText(block: BlockOfType<BlockType.Text>): void {
     const { props } = block;
-    this.context.drawText(props.text, 0, 0, props);
+    const { text } = props;
+    this.context.drawText(text, 0, 0, props);
   }
 
   private renderImage(block: BlockOfType<BlockType.Image>): void {
     const { props } = block;
-    const img = typeof props.src === 'string' ? new Image() : props.src;
-    if (typeof props.src === 'string' && img instanceof HTMLImageElement) {
-      img.src = props.src;
+    const { src, dx, dy } = props;
+    const img = typeof src === 'string' ? new Image() : src;
+    if (typeof src === 'string' && img instanceof HTMLImageElement) {
+      img.src = src;
     }
-    this.context.drawImage(img as HTMLImageElement, 0, 0, props.dx, props.dy, props);
+    this.context.drawImage(img as HTMLImageElement, 0, 0, dx, dy, props);
   }
 
   private renderArc(block: BlockOfType<BlockType.Arc>): void {
     const { props } = block;
-    this.context.drawArc(0, 0, props.radius, props.startAngle, props.endAngle, props);
+    const { radius, startAngle, endAngle } = props;
+    this.context.drawArc(0, 0, radius, startAngle, endAngle, props);
   }
 }

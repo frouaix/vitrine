@@ -67,22 +67,24 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: any): void {
-    if (props.cornerRadius) {
-      this.roundRect(xl, yl, dxl, dyl, props.cornerRadius, props);
+    const { cornerRadius: duCornerRadius, fill, stroke, strokeWidth } = props;
+    if (duCornerRadius) {
+      this.roundRect(xl, yl, dxl, dyl, duCornerRadius, props);
     } else {
-      if (props.fill) {
-        this.ctx.fillStyle = props.fill;
+      if (fill) {
+        this.ctx.fillStyle = fill;
         this.ctx.fillRect(xl, yl, dxl, dyl);
       }
-      if (props.stroke) {
-        this.ctx.strokeStyle = props.stroke;
-        this.ctx.lineWidth = props.strokeWidth ?? 1;
+      if (stroke) {
+        this.ctx.strokeStyle = stroke;
+        this.ctx.lineWidth = strokeWidth ?? 1;
         this.ctx.strokeRect(xl, yl, dxl, dyl);
       }
     }
   }
 
   private roundRect(xl: number, yl: number, dxl: number, dyl: number, rl: number, props: any): void {
+    const { fill, stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.moveTo(xl + rl, yl);
     this.ctx.lineTo(xl + dxl - rl, yl);
@@ -95,80 +97,85 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.arcTo(xl, yl, xl + rl, yl, rl);
     this.ctx.closePath();
     
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fill();
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawCircle(xl: number, yl: number, rl: number, props: any): void {
+    const { fill, stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, 0, Math.PI * 2);
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fill();
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void {
+    const { fill, stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.ellipse(xl, yl, rxl, ryl, 0, 0, Math.PI * 2);
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fill();
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawPath(pathData: string, props: any): void {
+    const { fill, stroke, strokeWidth } = props;
     const path = new Path2D(pathData);
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fill(path);
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke(path);
     }
   }
 
   drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: any): void {
+    const { stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.moveTo(xl1, yl1);
     this.ctx.lineTo(xl2, yl2);
-    this.ctx.strokeStyle = props.stroke;
-    this.ctx.lineWidth = props.strokeWidth ?? 1;
+    this.ctx.strokeStyle = stroke;
+    this.ctx.lineWidth = strokeWidth ?? 1;
     this.ctx.stroke();
   }
 
   drawText(text: string, xl: number, yl: number, props: any): void {
-    if (props.font) this.ctx.font = props.font;
-    if (props.fontSize) this.ctx.font = `${props.fontSize}px sans-serif`;
-    if (props.align) this.ctx.textAlign = props.align;
-    if (props.baseline) this.ctx.textBaseline = props.baseline;
+    const { font, fontSize, align, baseline, fill, stroke, strokeWidth } = props;
+    if (font) this.ctx.font = font;
+    if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
+    if (align) this.ctx.textAlign = align;
+    if (baseline) this.ctx.textBaseline = baseline;
     
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fillText(text, xl, yl);
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.strokeText(text, xl, yl);
     }
   }
@@ -178,15 +185,16 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {
+    const { fill, stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, startAngle, endAngle);
-    if (props.fill) {
-      this.ctx.fillStyle = props.fill;
+    if (fill) {
+      this.ctx.fillStyle = fill;
       this.ctx.fill();
     }
-    if (props.stroke) {
-      this.ctx.strokeStyle = props.stroke;
-      this.ctx.lineWidth = props.strokeWidth ?? 1;
+    if (stroke) {
+      this.ctx.strokeStyle = stroke;
+      this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }

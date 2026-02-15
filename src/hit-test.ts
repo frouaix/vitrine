@@ -19,10 +19,12 @@ export class HitTester {
     worldY: number,
     worldTransform: Matrix2D = Matrix2D.identity()
   ): HitTestResult | null {
-    if (block.props.visible === false) return null;
+    const { props, children } = block;
+    const { visible } = props;
+    if (visible === false) return null;
 
     // Calculate this block's world transform
-    const blockTransform = this.getBlockTransform(block.props);
+    const blockTransform = this.getBlockTransform(props);
     const currentTransform = worldTransform.multiply(blockTransform);
 
     // Transform world coordinates to local space
@@ -32,10 +34,10 @@ export class HitTester {
     const local = inverse.transformPoint(worldX, worldY);
 
     // Test children first (reverse order for top-to-bottom)
-    if (block.children) {
-      for (let i = block.children.length - 1; i >= 0; i--) {
+    if (children) {
+      for (let i = children.length - 1; i >= 0; i--) {
         const childHit = this.hitTest(
-          block.children[i],
+          children[i],
           worldX,
           worldY,
           currentTransform
@@ -60,18 +62,19 @@ export class HitTester {
 
   private static getBlockTransform(props: any): Matrix2D {
     let transform = Matrix2D.identity();
+    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
-    if (props.x !== undefined || props.y !== undefined) {
-      transform = transform.translate(props.x ?? 0, props.y ?? 0);
+    if (x !== undefined || y !== undefined) {
+      transform = transform.translate(x ?? 0, y ?? 0);
     }
-    if (props.rotation !== undefined) {
-      transform = transform.rotate(props.rotation);
+    if (rotation !== undefined) {
+      transform = transform.rotate(rotation);
     }
-    if (props.scaleX !== undefined || props.scaleY !== undefined) {
-      transform = transform.scaleXY(props.scaleX ?? 1, props.scaleY ?? 1);
+    if (scaleX !== undefined || scaleY !== undefined) {
+      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
     }
-    if (props.skewX !== undefined || props.skewY !== undefined) {
-      transform = transform.skewXY(props.skewX ?? 0, props.skewY ?? 0);
+    if (skewX !== undefined || skewY !== undefined) {
+      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
     }
 
     return transform;
@@ -80,29 +83,40 @@ export class HitTester {
   private static hitTestShape(block: Block, x: number, y: number): boolean {
     const xl = x;
     const yl = y;
-    const props = block.props as any;
+    const { props } = block as { props: any };
 
     switch (block.type) {
-      case BlockType.Rectangle:
-        return this.hitTestRectangle(xl, yl, props.dx, props.dy);
+      case BlockType.Rectangle: {
+        const { dx, dy } = props;
+        return this.hitTestRectangle(xl, yl, dx, dy);
+      }
 
-      case BlockType.Circle:
-        return this.hitTestCircle(xl, yl, props.radius);
+      case BlockType.Circle: {
+        const { radius } = props;
+        return this.hitTestCircle(xl, yl, radius);
+      }
 
-      case BlockType.Ellipse:
-        return this.hitTestEllipse(xl, yl, props.radiusX, props.radiusY);
+      case BlockType.Ellipse: {
+        const { radiusX, radiusY } = props;
+        return this.hitTestEllipse(xl, yl, radiusX, radiusY);
+      }
 
-      case BlockType.Line:
-        return this.hitTestLine(xl, yl, props.x1, props.y1, props.x2, props.y2, props.strokeWidth ?? 1);
+      case BlockType.Line: {
+        const { x1, y1, x2, y2, strokeWidth } = props;
+        return this.hitTestLine(xl, yl, x1, y1, x2, y2, strokeWidth ?? 1);
+      }
 
       case BlockType.Text:
         // Approximate text bounds - can be improved with actual text metrics
-        const fontSize = props.fontSize ?? 16;
-        const textWidth = props.text.length * fontSize * 0.6; // rough estimate
+        const { fontSize: duFont, text: stText } = props;
+        const fontSize = duFont ?? 16;
+        const textWidth = stText.length * fontSize * 0.6; // rough estimate
         return this.hitTestRectangle(xl, yl, textWidth, fontSize);
 
-      case BlockType.Arc:
-        return this.hitTestArc(xl, yl, props.radius, props.startAngle, props.endAngle);
+      case BlockType.Arc: {
+        const { radius, startAngle, endAngle } = props;
+        return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
+      }
 
       case BlockType.Group:
       case BlockType.Layer:
@@ -210,39 +224,49 @@ export class HitTester {
   }
 
   private static getLocalBounds(block: Block): Rc | null {
-    const props = block.props as any;
+    const { props } = block as { props: any };
 
     switch (block.type) {
-      case BlockType.Rectangle:
-        return { x: 0, y: 0, width: props.dx, height: props.dy };
+      case BlockType.Rectangle: {
+        const { dx, dy } = props;
+        return { x: 0, y: 0, width: dx, height: dy };
+      }
 
-      case BlockType.Circle:
+      case BlockType.Circle: {
+        const { radius } = props;
         return {
-          x: -props.radius,
-          y: -props.radius,
-          width: props.radius * 2,
-          height: props.radius * 2
+          x: -radius,
+          y: -radius,
+          width: radius * 2,
+          height: radius * 2
         };
+      }
 
-      case BlockType.Ellipse:
+      case BlockType.Ellipse: {
+        const { radiusX, radiusY } = props;
         return {
-          x: -props.radiusX,
-          y: -props.radiusY,
-          width: props.radiusX * 2,
-          height: props.radiusY * 2
+          x: -radiusX,
+          y: -radiusY,
+          width: radiusX * 2,
+          height: radiusY * 2
         };
+      }
 
-      case BlockType.Line:
-        const xlMin = Math.min(props.x1, props.x2);
-        const xlMax = Math.max(props.x1, props.x2);
-        const ylMin = Math.min(props.y1, props.y2);
-        const ylMax = Math.max(props.y1, props.y2);
+      case BlockType.Line: {
+        const { x1, x2, y1, y2 } = props;
+        const xlMin = Math.min(x1, x2);
+        const xlMax = Math.max(x1, x2);
+        const ylMin = Math.min(y1, y2);
+        const ylMax = Math.max(y1, y2);
         return { x: xlMin, y: ylMin, width: xlMax - xlMin, height: ylMax - ylMin };
+      }
 
-      case BlockType.Text:
-        const fontSize = props.fontSize ?? 16;
-        const textWidth = props.text.length * fontSize * 0.6;
+      case BlockType.Text: {
+        const { fontSize: duFont, text: stText } = props;
+        const fontSize = duFont ?? 16;
+        const textWidth = stText.length * fontSize * 0.6;
         return { x: 0, y: 0, width: textWidth, height: fontSize };
+      }
 
       default:
         return null;

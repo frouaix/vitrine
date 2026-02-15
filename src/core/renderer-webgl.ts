@@ -245,18 +245,19 @@ export class WebGLRenderer extends Renderer {
 
   private getBlockTransform(props: any): Matrix2D {
     let transform = Matrix2D.identity();
+    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
-    if (props.x !== undefined || props.y !== undefined) {
-      transform = transform.translate(props.x ?? 0, props.y ?? 0);
+    if (x !== undefined || y !== undefined) {
+      transform = transform.translate(x ?? 0, y ?? 0);
     }
-    if (props.rotation !== undefined) {
-      transform = transform.rotate(props.rotation);
+    if (rotation !== undefined) {
+      transform = transform.rotate(rotation);
     }
-    if (props.scaleX !== undefined || props.scaleY !== undefined) {
-      transform = transform.scaleXY(props.scaleX ?? 1, props.scaleY ?? 1);
+    if (scaleX !== undefined || scaleY !== undefined) {
+      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
     }
-    if (props.skewX !== undefined || props.skewY !== undefined) {
-      transform = transform.skewXY(props.skewX ?? 0, props.skewY ?? 0);
+    if (skewX !== undefined || skewY !== undefined) {
+      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
     }
 
     return transform;
@@ -310,54 +311,56 @@ export class WebGLRenderer extends Renderer {
   }
 
   private drawRectangle(props: RectangleProps, matrix: Matrix2D, opacity: number): void {
-    const fillColor = this.parseColor(props.fill, opacity);
-    if (props.fill) {
+    const { fill, stroke, strokeWidth, dx, dy } = props;
+    const fillColor = this.parseColor(fill, opacity);
+    if (fill) {
       const [x0, y0] = this.toCanvasPixels(matrix, 0, 0);
-      const [x1, y1] = this.toCanvasPixels(matrix, props.dx, 0);
-      const [x2, y2] = this.toCanvasPixels(matrix, props.dx, props.dy);
-      const [x3, y3] = this.toCanvasPixels(matrix, 0, props.dy);
+      const [x1, y1] = this.toCanvasPixels(matrix, dx, 0);
+      const [x2, y2] = this.toCanvasPixels(matrix, dx, dy);
+      const [x3, y3] = this.toCanvasPixels(matrix, 0, dy);
       this.drawTriangles([
         x0, y0, x1, y1, x2, y2,
         x0, y0, x2, y2, x3, y3
       ], fillColor);
     }
 
-    if (props.stroke) {
-      const strokeColor = this.parseColor(props.stroke, opacity);
-      const sw = props.strokeWidth ?? 1;
-      this.drawLineSegment(matrix, 0, 0, props.dx, 0, sw, strokeColor);
-      this.drawLineSegment(matrix, props.dx, 0, props.dx, props.dy, sw, strokeColor);
-      this.drawLineSegment(matrix, props.dx, props.dy, 0, props.dy, sw, strokeColor);
-      this.drawLineSegment(matrix, 0, props.dy, 0, 0, sw, strokeColor);
+    if (stroke) {
+      const strokeColor = this.parseColor(stroke, opacity);
+      const sw = strokeWidth ?? 1;
+      this.drawLineSegment(matrix, 0, 0, dx, 0, sw, strokeColor);
+      this.drawLineSegment(matrix, dx, 0, dx, dy, sw, strokeColor);
+      this.drawLineSegment(matrix, dx, dy, 0, dy, sw, strokeColor);
+      this.drawLineSegment(matrix, 0, dy, 0, 0, sw, strokeColor);
     }
   }
 
   private drawCircle(props: CircleProps, matrix: Matrix2D, opacity: number): void {
-    const segments = Math.max(20, Math.ceil(props.radius * 0.8));
+    const { radius, fill, stroke, strokeWidth } = props;
+    const segments = Math.max(20, Math.ceil(radius * 0.8));
 
-    if (props.fill) {
-      const fillColor = this.parseColor(props.fill, opacity);
+    if (fill) {
+      const fillColor = this.parseColor(fill, opacity);
       const vertices: number[] = [];
       const [cx, cy] = this.toCanvasPixels(matrix, 0, 0);
       for (let i = 0; i < segments; i++) {
         const a1 = (i / segments) * Math.PI * 2;
         const a2 = ((i + 1) / segments) * Math.PI * 2;
-        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * props.radius, Math.sin(a1) * props.radius);
-        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * props.radius, Math.sin(a2) * props.radius);
+        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * radius, Math.sin(a1) * radius);
+        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * radius, Math.sin(a2) * radius);
         vertices.push(cx, cy, x1, y1, x2, y2);
       }
       this.drawTriangles(vertices, fillColor);
     }
 
-    if (props.stroke) {
-      const strokeColor = this.parseColor(props.stroke, opacity);
-      const sw = props.strokeWidth ?? 1;
-      let px = props.radius;
+    if (stroke) {
+      const strokeColor = this.parseColor(stroke, opacity);
+      const sw = strokeWidth ?? 1;
+      let px = radius;
       let py = 0;
       for (let i = 1; i <= segments; i++) {
         const a = (i / segments) * Math.PI * 2;
-        const x = Math.cos(a) * props.radius;
-        const y = Math.sin(a) * props.radius;
+        const x = Math.cos(a) * radius;
+        const y = Math.sin(a) * radius;
         this.drawLineSegment(matrix, px, py, x, y, sw, strokeColor);
         px = x;
         py = y;
@@ -366,31 +369,32 @@ export class WebGLRenderer extends Renderer {
   }
 
   private drawEllipse(props: EllipseProps, matrix: Matrix2D, opacity: number): void {
-    const segments = Math.max(24, Math.ceil(Math.max(props.radiusX, props.radiusY) * 0.8));
+    const { radiusX, radiusY, fill, stroke, strokeWidth } = props;
+    const segments = Math.max(24, Math.ceil(Math.max(radiusX, radiusY) * 0.8));
 
-    if (props.fill) {
-      const fillColor = this.parseColor(props.fill, opacity);
+    if (fill) {
+      const fillColor = this.parseColor(fill, opacity);
       const vertices: number[] = [];
       const [cx, cy] = this.toCanvasPixels(matrix, 0, 0);
       for (let i = 0; i < segments; i++) {
         const a1 = (i / segments) * Math.PI * 2;
         const a2 = ((i + 1) / segments) * Math.PI * 2;
-        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * props.radiusX, Math.sin(a1) * props.radiusY);
-        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * props.radiusX, Math.sin(a2) * props.radiusY);
+        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * radiusX, Math.sin(a1) * radiusY);
+        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * radiusX, Math.sin(a2) * radiusY);
         vertices.push(cx, cy, x1, y1, x2, y2);
       }
       this.drawTriangles(vertices, fillColor);
     }
 
-    if (props.stroke) {
-      const strokeColor = this.parseColor(props.stroke, opacity);
-      const sw = props.strokeWidth ?? 1;
-      let px = props.radiusX;
+    if (stroke) {
+      const strokeColor = this.parseColor(stroke, opacity);
+      const sw = strokeWidth ?? 1;
+      let px = radiusX;
       let py = 0;
       for (let i = 1; i <= segments; i++) {
         const a = (i / segments) * Math.PI * 2;
-        const x = Math.cos(a) * props.radiusX;
-        const y = Math.sin(a) * props.radiusY;
+        const x = Math.cos(a) * radiusX;
+        const y = Math.sin(a) * radiusY;
         this.drawLineSegment(matrix, px, py, x, y, sw, strokeColor);
         px = x;
         py = y;
@@ -399,41 +403,43 @@ export class WebGLRenderer extends Renderer {
   }
 
   private drawLine(props: LineProps, matrix: Matrix2D, opacity: number): void {
-    const strokeColor = this.parseColor(props.stroke, opacity);
-    const sw = props.strokeWidth ?? 1;
-    this.drawLineSegment(matrix, props.x1, props.y1, props.x2, props.y2, sw, strokeColor);
+    const { stroke, strokeWidth, x1, y1, x2, y2 } = props;
+    const strokeColor = this.parseColor(stroke, opacity);
+    const sw = strokeWidth ?? 1;
+    this.drawLineSegment(matrix, x1, y1, x2, y2, sw, strokeColor);
   }
 
   private drawArc(props: ArcProps, matrix: Matrix2D, opacity: number): void {
-    const delta = props.endAngle - props.startAngle;
-    const segments = Math.max(16, Math.ceil(Math.abs(delta) * props.radius * 0.5));
+    const { radius, startAngle, endAngle, fill, stroke, strokeWidth } = props;
+    const delta = endAngle - startAngle;
+    const segments = Math.max(16, Math.ceil(Math.abs(delta) * radius * 0.5));
 
-    if (props.fill) {
-      const fillColor = this.parseColor(props.fill, opacity);
+    if (fill) {
+      const fillColor = this.parseColor(fill, opacity);
       const vertices: number[] = [];
       const [cx, cy] = this.toCanvasPixels(matrix, 0, 0);
 
       for (let i = 0; i < segments; i++) {
-        const a1 = props.startAngle + (delta * i) / segments;
-        const a2 = props.startAngle + (delta * (i + 1)) / segments;
-        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * props.radius, Math.sin(a1) * props.radius);
-        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * props.radius, Math.sin(a2) * props.radius);
+        const a1 = startAngle + (delta * i) / segments;
+        const a2 = startAngle + (delta * (i + 1)) / segments;
+        const [x1, y1] = this.toCanvasPixels(matrix, Math.cos(a1) * radius, Math.sin(a1) * radius);
+        const [x2, y2] = this.toCanvasPixels(matrix, Math.cos(a2) * radius, Math.sin(a2) * radius);
         vertices.push(cx, cy, x1, y1, x2, y2);
       }
 
       this.drawTriangles(vertices, fillColor);
     }
 
-    if (props.stroke) {
-      const strokeColor = this.parseColor(props.stroke, opacity);
-      const sw = props.strokeWidth ?? 1;
-      let px = Math.cos(props.startAngle) * props.radius;
-      let py = Math.sin(props.startAngle) * props.radius;
+    if (stroke) {
+      const strokeColor = this.parseColor(stroke, opacity);
+      const sw = strokeWidth ?? 1;
+      let px = Math.cos(startAngle) * radius;
+      let py = Math.sin(startAngle) * radius;
 
       for (let i = 1; i <= segments; i++) {
-        const a = props.startAngle + (delta * i) / segments;
-        const x = Math.cos(a) * props.radius;
-        const y = Math.sin(a) * props.radius;
+        const a = startAngle + (delta * i) / segments;
+        const x = Math.cos(a) * radius;
+        const y = Math.sin(a) * radius;
         this.drawLineSegment(matrix, px, py, x, y, sw, strokeColor);
         px = x;
         py = y;
@@ -454,7 +460,7 @@ export class WebGLRenderer extends Renderer {
       matrix.f * this.pixelRatio
     );
 
-    const props = block.props as any;
+    const { props } = block as { props: any };
 
     if (block.type === BlockType.Path) {
       const pathProps = props as PathProps;
@@ -555,20 +561,30 @@ export class WebGLRenderer extends Renderer {
   }
 
   private getTextTextureEntry(props: TextProps): TextTextureEntry {
-    const font = props.font || `${props.fontSize ?? 16}px sans-serif`;
-    const align = props.align || 'left';
-    const baseline = props.baseline || 'alphabetic';
-    const strokeWidth = props.strokeWidth ?? 1;
-    const key = [props.text, font, props.fill || '', props.stroke || '', strokeWidth, align, baseline].join('|');
+    const {
+      font: fontProp,
+      fontSize: duFont,
+      align: alignProp,
+      baseline: baselineProp,
+      strokeWidth: duStrokeWidth,
+      text: stText,
+      fill,
+      stroke
+    } = props;
+    const font = fontProp || `${duFont ?? 16}px sans-serif`;
+    const align = alignProp || 'left';
+    const baseline = baselineProp || 'alphabetic';
+    const strokeWidth = duStrokeWidth ?? 1;
+    const key = [stText, font, fill || '', stroke || '', strokeWidth, align, baseline].join('|');
 
     const cached = this.textTextureCache.get(key);
     if (cached) return cached;
 
     this.textMeasureCtx.font = font;
-    const metrics = this.textMeasureCtx.measureText(props.text);
+    const metrics = this.textMeasureCtx.measureText(stText);
     const textWidth = Math.max(1, Math.ceil(metrics.width));
-    const ascent = Math.max(1, Math.ceil(metrics.actualBoundingBoxAscent || (props.fontSize ?? 16) * 0.8));
-    const descent = Math.max(1, Math.ceil(metrics.actualBoundingBoxDescent || (props.fontSize ?? 16) * 0.2));
+    const ascent = Math.max(1, Math.ceil(metrics.actualBoundingBoxAscent || (duFont ?? 16) * 0.8));
+    const descent = Math.max(1, Math.ceil(metrics.actualBoundingBoxDescent || (duFont ?? 16) * 0.2));
     const textHeight = ascent + descent;
 
     let xMin = 0;
@@ -614,14 +630,14 @@ export class WebGLRenderer extends Renderer {
     const anchorX = -xMin + pad;
     const anchorY = -yMin + pad;
 
-    if (props.fill) {
-      ctx.fillStyle = props.fill;
-      ctx.fillText(props.text, anchorX, anchorY);
+    if (fill) {
+      ctx.fillStyle = fill;
+      ctx.fillText(stText, anchorX, anchorY);
     }
-    if (props.stroke) {
-      ctx.strokeStyle = props.stroke;
+    if (stroke) {
+      ctx.strokeStyle = stroke;
       ctx.lineWidth = strokeWidth;
-      ctx.strokeText(props.text, anchorX, anchorY);
+      ctx.strokeText(stText, anchorX, anchorY);
     }
 
     const texture = this.createTextureFromCanvas(canvas);
@@ -639,7 +655,8 @@ export class WebGLRenderer extends Renderer {
   }
 
   private drawText(props: TextProps, matrix: Matrix2D, opacity: number): void {
-    if (!props.fill && !props.stroke) return;
+    const { fill, stroke } = props;
+    if (!fill && !stroke) return;
 
     const entry = this.getTextTextureEntry(props);
 
@@ -659,7 +676,9 @@ export class WebGLRenderer extends Renderer {
   }
 
   private renderBlock(block: Block, parentTransform: Matrix2D, parentOpacity: number): void {
-    if (block.props.visible === false) return;
+    const { props, type, children } = block;
+    const { visible, opacity = 1 } = props;
+    if (visible === false) return;
 
     if (this.enableCulling) {
       const inView = PerformanceOptimizer.cullBlocks(block, this.viewport, parentTransform);
@@ -671,28 +690,28 @@ export class WebGLRenderer extends Renderer {
 
     PerformanceOptimizer.stats.blocksRendered++;
 
-    const blockTransform = this.getBlockTransform(block.props);
+    const blockTransform = this.getBlockTransform(props);
     const worldTransform = parentTransform.multiply(blockTransform);
-    const blockOpacity = parentOpacity * (block.props.opacity ?? 1);
+    const blockOpacity = parentOpacity * opacity;
 
-    switch (block.type) {
+    switch (type) {
       case BlockType.Rectangle:
-        this.drawRectangle(block.props as RectangleProps, worldTransform, blockOpacity);
+        this.drawRectangle(props as RectangleProps, worldTransform, blockOpacity);
         break;
       case BlockType.Circle:
-        this.drawCircle(block.props as CircleProps, worldTransform, blockOpacity);
+        this.drawCircle(props as CircleProps, worldTransform, blockOpacity);
         break;
       case BlockType.Ellipse:
-        this.drawEllipse(block.props as EllipseProps, worldTransform, blockOpacity);
+        this.drawEllipse(props as EllipseProps, worldTransform, blockOpacity);
         break;
       case BlockType.Line:
-        this.drawLine(block.props as LineProps, worldTransform, blockOpacity);
+        this.drawLine(props as LineProps, worldTransform, blockOpacity);
         break;
       case BlockType.Arc:
-        this.drawArc(block.props as ArcProps, worldTransform, blockOpacity);
+        this.drawArc(props as ArcProps, worldTransform, blockOpacity);
         break;
       case BlockType.Text:
-        this.drawText(block.props as TextProps, worldTransform, blockOpacity);
+        this.drawText(props as TextProps, worldTransform, blockOpacity);
         break;
       case BlockType.Image:
       case BlockType.Path:
@@ -703,8 +722,8 @@ export class WebGLRenderer extends Renderer {
         break;
     }
 
-    if (block.children) {
-      for (const child of block.children) {
+    if (children) {
+      for (const child of children) {
         this.renderBlock(child, worldTransform, blockOpacity);
       }
     }

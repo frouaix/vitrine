@@ -104,8 +104,12 @@ export class EventManager {
     const coords = this.getCanvasCoordinates(event);
     const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
-    if (hit && hit.block.props.onClick) {
-      hit.block.props.onClick(event);
+    if (hit) {
+      const { props } = hit.block;
+      const { onClick } = props;
+      if (onClick) {
+        onClick(event);
+      }
     }
   }
 
@@ -116,13 +120,17 @@ export class EventManager {
     const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
     if (hit) {
-      if (hit.block.props.onPointerDown) {
-        hit.block.props.onPointerDown(event);
+      const { block } = hit;
+      const { props } = block;
+      const { onPointerDown, onDrag } = props;
+
+      if (onPointerDown) {
+        onPointerDown(event);
       }
 
       // Start drag if handler exists
-      if (hit.block.props.onDrag) {
-        this.draggedBlock = hit.block;
+      if (onDrag) {
+        this.draggedBlock = block;
         this.dragStart = coords;
       }
     }
@@ -134,8 +142,12 @@ export class EventManager {
     const coords = this.getCanvasCoordinates(event);
     const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
-    if (hit && hit.block.props.onPointerUp) {
-      hit.block.props.onPointerUp(event);
+    if (hit) {
+      const { props } = hit.block;
+      const { onPointerUp } = props;
+      if (onPointerUp) {
+        onPointerUp(event);
+      }
     }
 
     // End drag
@@ -149,8 +161,12 @@ export class EventManager {
     const coords = this.getCanvasCoordinates(event);
 
     // Handle dragging
-    if (this.draggedBlock && this.dragStart && this.draggedBlock.props.onDrag) {
-      this.draggedBlock.props.onDrag(event);
+    if (this.draggedBlock && this.dragStart) {
+      const { props } = this.draggedBlock;
+      const { onDrag } = props;
+      if (onDrag) {
+        onDrag(event);
+      }
     }
 
     // Handle hover
@@ -159,14 +175,22 @@ export class EventManager {
 
     if (newHoveredBlock !== this.hoveredBlock) {
       // Hover state changed
-      if (this.hoveredBlock && this.hoveredBlock.props.onHover) {
+      if (this.hoveredBlock) {
+        const { props } = this.hoveredBlock;
+        const { onHover } = props;
+        if (onHover) {
         // Trigger hover end (could add onHoverEnd if needed)
+        }
       }
 
       this.hoveredBlock = newHoveredBlock;
 
-      if (this.hoveredBlock && this.hoveredBlock.props.onHover) {
-        this.hoveredBlock.props.onHover(event);
+      if (this.hoveredBlock) {
+        const { props } = this.hoveredBlock;
+        const { onHover } = props;
+        if (onHover) {
+          onHover(event);
+        }
       }
 
       // Update cursor
@@ -174,8 +198,12 @@ export class EventManager {
     }
 
     // Always trigger pointer move if handler exists
-    if (hit && hit.block.props.onPointerMove) {
-      hit.block.props.onPointerMove(event);
+    if (hit) {
+      const { props } = hit.block;
+      const { onPointerMove } = props;
+      if (onPointerMove) {
+        onPointerMove(event);
+      }
     }
   }
 
@@ -188,13 +216,15 @@ export class EventManager {
 
   // Utility to check if a block has any event handlers
   static hasEventHandlers(block: Block): boolean {
+    const { props } = block;
+    const { onClick, onPointerDown, onPointerUp, onPointerMove, onHover, onDrag } = props;
     return !!(
-      block.props.onClick ||
-      block.props.onPointerDown ||
-      block.props.onPointerUp ||
-      block.props.onPointerMove ||
-      block.props.onHover ||
-      block.props.onDrag
+      onClick ||
+      onPointerDown ||
+      onPointerUp ||
+      onPointerMove ||
+      onHover ||
+      onDrag
     );
   }
 }

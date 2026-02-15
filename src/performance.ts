@@ -27,7 +27,9 @@ export class PerformanceOptimizer {
     viewport: Viewport,
     worldTransform: Matrix2D = Matrix2D.identity()
   ): boolean {
-    if (block.props.visible === false) return false;
+    const { props } = block;
+    const { visible } = props;
+    if (visible === false) return false;
 
     // Get world bounds (getBounds will apply the block's transform)
     const boundsWorld = HitTester.getBounds(block, worldTransform);
@@ -42,18 +44,19 @@ export class PerformanceOptimizer {
 
   private static getBlockTransform(props: any): Matrix2D {
     let transform = Matrix2D.identity();
+    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
-    if (props.x !== undefined || props.y !== undefined) {
-      transform = transform.translate(props.x ?? 0, props.y ?? 0);
+    if (x !== undefined || y !== undefined) {
+      transform = transform.translate(x ?? 0, y ?? 0);
     }
-    if (props.rotation !== undefined) {
-      transform = transform.rotate(props.rotation);
+    if (rotation !== undefined) {
+      transform = transform.rotate(rotation);
     }
-    if (props.scaleX !== undefined || props.scaleY !== undefined) {
-      transform = transform.scaleXY(props.scaleX ?? 1, props.scaleY ?? 1);
+    if (scaleX !== undefined || scaleY !== undefined) {
+      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
     }
-    if (props.skewX !== undefined || props.skewY !== undefined) {
-      transform = transform.skewXY(props.skewX ?? 0, props.skewY ?? 0);
+    if (skewX !== undefined || skewY !== undefined) {
+      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
     }
 
     return transform;
