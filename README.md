@@ -7,12 +7,7 @@
 
 ## 🎨 [Interactive Demo Gallery](https://frouaix.github.io/vitrine/)
 
-**[🚀 View Live Demos](https://frouaix.github.io/vitrine/)** - 12 interactive examples showcasing:
-- 📊 Data Visualization (charts, gauges, scatter plots with 5k points)
-- 📋 Productivity Apps (kanban boards, mind maps)
-- 🎨 Creative Graphics (2k particle systems, tessellations, animated clock)
-- 🎮 Interactive Games (snake with keyboard controls)
-- 🎨 UI Components (HSV color picker)
+Explore 12 interactive examples including data visualization, productivity apps, particle systems, UI components, and games.
 
 ## Features
 
@@ -24,15 +19,11 @@
 ✅ **Hierarchical Transforms** - Relative coordinates with 2D matrix transforms  
 ✅ **Full TypeScript** - Type-safe API with complete type definitions
 
+> **Note**: The WebGL renderer is currently non-functional. Use `ImmediateRenderer` (Canvas 2D) for all rendering.
+
 ## Naming Conventions
 
-This project uses Hungarian-style naming for geometry and style fields.
-- Use `dx`/`dy` for horizontal/vertical extents in Vitrine block and GUI props.
-- Use `du*` for scalar dimensions (e.g. spacing, padding, radius).
-- Use `col*` for color properties, fields, and variables.
-- Keep platform/system API names unchanged (for example DOM/canvas `width`/`height`).
-
-See [.github/hungarian-notation.md](.github/hungarian-notation.md) for the full convention.
+This project uses Hungarian-style naming for geometry and style fields. See [.github/hungarian-notation.md](.github/hungarian-notation.md) for details.
 
 ## Installation
 
@@ -85,20 +76,11 @@ render();
 
 ## Examples
 
-**[🎨 Interactive Demo Gallery](examples/gallery.html)** - Comprehensive showcase with 12 diverse demos
-
-Individual examples:
+Run `pnpm dev` to explore the [demo gallery](examples/gallery.html) with 12 interactive examples, or try individual demos:
 - **[basic.html](examples/basic.html)** - Basic shapes and hierarchy
 - **[events.html](examples/events.html)** - Interactive events (click, hover, drag)
 - **[primitives.html](examples/primitives.html)** - All primitive types
 - **[performance.html](examples/performance.html)** - 10k+ blocks performance test
-
-Demo categories:
-- **Data Visualization**: Bar charts, line charts, pie charts, scatter plots, gauges
-- **Productivity**: Kanban boards, mind maps with node connections
-- **Creative**: Particle systems (2k particles), geometric patterns, analog clock
-- **UI Components**: HSV color picker with sliders
-- **Games**: Snake game with keyboard controls
 
 ## API Overview
 
