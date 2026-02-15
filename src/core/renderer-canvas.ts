@@ -1,4 +1,4 @@
-import { Renderer, RendererOptions, RendererType } from './renderer.js';
+import { Renderer, RendererOptions, RendererType } from './renderer.ts';
 
 export class Canvas2DRenderer extends Renderer {
   private ctx: CanvasRenderingContext2D;

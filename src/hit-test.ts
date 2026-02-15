@@ -1,7 +1,7 @@
 // Hit testing utilities for event handling
-import type { Block, Rc } from './core/types.js';
-import { BlockType } from './core/types.js';
-import { Matrix2D } from './transform.js';
+import type { Block, Rc } from './core/types.ts';
+import { BlockType } from './core/types.ts';
+import { Matrix2D } from './transform.ts';
 
 export interface HitTestResult {
   block: Block;

@@ -2,21 +2,21 @@
 import { ImmediateRenderer, WebGLRenderer } from 'vitrine';
 
 // Import all demos statically
-import { demo as barChartDemo } from './demos/bar-chart.js';
-import { demo as lineChartDemo } from './demos/line-chart.js';
-import { demo as pieChartDemo } from './demos/pie-chart.js';
-import { demo as scatterPlotDemo } from './demos/scatter-plot.js';
-import { demo as gaugeDemo } from './demos/gauge.js';
-import { demo as kanbanDemo } from './demos/kanban.js';
-import { demo as mindMapDemo } from './demos/mind-map.js';
-import { demo as particlesDemo } from './demos/particles.js';
-import { demo as patternsDemo } from './demos/patterns.js';
-import { demo as clockDemo } from './demos/clock.js';
-import { demo as colorPickerDemo } from './demos/color-picker.js';
-import { demo as snakeDemo } from './demos/snake.js';
-import { demo as guiFormDemo } from './demos/gui-form.js';
-import { demo as guiDashboardDemo } from './demos/gui-dashboard.js';
-import { demo as guiGalleryDemo } from './demos/gui-gallery.js';
+import { demo as barChartDemo } from './demos/bar-chart.ts';
+import { demo as lineChartDemo } from './demos/line-chart.ts';
+import { demo as pieChartDemo } from './demos/pie-chart.ts';
+import { demo as scatterPlotDemo } from './demos/scatter-plot.ts';
+import { demo as gaugeDemo } from './demos/gauge.ts';
+import { demo as kanbanDemo } from './demos/kanban.ts';
+import { demo as mindMapDemo } from './demos/mind-map.ts';
+import { demo as particlesDemo } from './demos/particles.ts';
+import { demo as patternsDemo } from './demos/patterns.ts';
+import { demo as clockDemo } from './demos/clock.ts';
+import { demo as colorPickerDemo } from './demos/color-picker.ts';
+import { demo as snakeDemo } from './demos/snake.ts';
+import { demo as guiFormDemo } from './demos/gui-form.ts';
+import { demo as guiDashboardDemo } from './demos/gui-dashboard.ts';
+import { demo as guiGalleryDemo } from './demos/gui-gallery.ts';
 
 // Demo registry
 const demos = [

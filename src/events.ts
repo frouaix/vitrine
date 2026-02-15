@@ -1,7 +1,7 @@
 // Event system for handling user interactions
-import type { Block } from './core/types.js';
-import { HitTester, type HitTestResult } from './hit-test.js';
-import { Matrix2D } from './transform.js';
+import type { Block } from './core/types.ts';
+import { HitTester, type HitTestResult } from './hit-test.ts';
+import { Matrix2D } from './transform.ts';
 
 export interface PointerEventData {
   x: number;

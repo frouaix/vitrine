@@ -1,7 +1,7 @@
 // Theme definitions for GUI controls
 
-import type { ThemeDefinition, ControlStyle } from './types.js';
-import { GUIControlType } from './types.js';
+import type { ThemeDefinition, ControlStyle } from './types.ts';
+import { GUIControlType } from './types.ts';
 
 // Light theme
 const lightButtonStyle: ControlStyle = {

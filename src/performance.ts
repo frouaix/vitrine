@@ -1,7 +1,7 @@
 // Performance optimization utilities
-import type { Block, Rc } from './core/types.js';
-import { HitTester } from './hit-test.js';
-import { Matrix2D } from './transform.js';
+import type { Block, Rc } from './core/types.ts';
+import { HitTester } from './hit-test.ts';
+import { Matrix2D } from './transform.ts';
 
 export interface Viewport {
   x: number;

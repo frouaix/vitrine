@@ -16,8 +16,8 @@ import type {
   LabelProps,
   GUIImageProps,
   PanelProps
-} from './types.js';
-import { GUIControlType } from './types.js';
+} from './types.ts';
+import { GUIControlType } from './types.ts';
 
 // Interactive controls
 export function textbox(props: TextBoxProps): GUIControl {

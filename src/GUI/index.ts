@@ -1,6 +1,6 @@
 // GUI DSL public API
 
-export * from './types.js';
-export * from './controls.js';
-export * from './themes.js';
-export * from './transform.js';
+export * from './types.ts';
+export * from './controls.ts';
+export * from './themes.ts';
+export * from './transform.ts';

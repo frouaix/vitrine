@@ -9,7 +9,7 @@ import {
   grid,
   transformGUIControl,
   darkTheme
-} from '../../src/GUI/index.js';
+} from '../../src/GUI/index.ts';
 
 export const demo = {
   id: 'gui-dashboard',

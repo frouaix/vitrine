@@ -10,7 +10,7 @@ import {
   guiImage,
   transformGUIControl,
   colorfulTheme
-} from '../../src/GUI/index.js';
+} from '../../src/GUI/index.ts';
 
 export const demo = {
   id: 'gui-gallery',

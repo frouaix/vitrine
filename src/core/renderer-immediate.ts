@@ -1,10 +1,10 @@
 // Immediate-mode rendering engine
-import type { Block, BlockOfType } from './types.js';
-import { BlockType } from './types.js';
-import type { RenderContext } from './context.js';
-import { Canvas2DContext } from './context.js';
-import { EventManager } from '../events.js';
-import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.js';
+import type { Block, BlockOfType } from './types.ts';
+import { BlockType } from './types.ts';
+import type { RenderContext } from './context.ts';
+import { Canvas2DContext } from './context.ts';
+import { EventManager } from '../events.ts';
+import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;

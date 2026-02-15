@@ -1,7 +1,7 @@
 // Transform GUI DSL to Core DSL
 
-import type { Block } from '../core/types.js';
-import { rectangle, circle, text, group, image } from '../core/blocks.js';
+import type { Block } from '../core/types.ts';
+import { rectangle, circle, text, group, image } from '../core/blocks.ts';
 import type {
   GUIControl,
   TransformContext,
@@ -20,8 +20,8 @@ import type {
   LabelProps,
   GUIImageProps,
   PanelProps
-} from './types.js';
-import { GUIControlType } from './types.js';
+} from './types.ts';
+import { GUIControlType } from './types.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {

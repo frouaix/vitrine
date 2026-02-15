@@ -1,6 +1,6 @@
 // GUI DSL type definitions for high-level UI controls
 
-import type { Block } from '../core/types.js';
+import type { Block } from '../core/types.ts';
 
 export type GUIColor = string; // CSS color format
 

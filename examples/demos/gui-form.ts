@@ -15,7 +15,7 @@ import {
   lightTheme,
   darkTheme,
   colorfulTheme
-} from '../../src/GUI/index.js';
+} from '../../src/GUI/index.ts';
 
 export const demo = {
   id: 'gui-form',

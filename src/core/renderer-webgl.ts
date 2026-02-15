@@ -1,9 +1,9 @@
-import type { ArcProps, Block, CircleProps, EllipseProps, LineProps, PathProps, RectangleProps, TextProps, ImageProps } from './types.js';
-import { BlockType } from './types.js';
-import { Renderer, RendererOptions, RendererType } from './renderer.js';
-import { EventManager } from '../events.js';
-import { Matrix2D } from '../transform.js';
-import { PerformanceMonitor, PerformanceOptimizer, Viewport } from '../performance.js';
+import type { ArcProps, Block, CircleProps, EllipseProps, LineProps, PathProps, RectangleProps, TextProps, ImageProps } from './types.ts';
+import { BlockType } from './types.ts';
+import { Renderer, RendererOptions, RendererType } from './renderer.ts';
+import { EventManager } from '../events.ts';
+import { Matrix2D } from '../transform.ts';
+import { PerformanceMonitor, PerformanceOptimizer, Viewport } from '../performance.ts';
 
 export interface WebGLRendererOptions extends Omit<RendererOptions, 'type'> {
   pixelRatio?: number;

@@ -4,8 +4,8 @@ import type {
   BlockForType,
   BlockPropsByType,
   BlockOfType,
-} from './types.js';
-import { BlockType } from './types.js';
+} from './types.ts';
+import { BlockType } from './types.ts';
 
 type ContainerBlockType = BlockType.Group | BlockType.Layer;
 type LeafBlockType = Exclude<BlockType, ContainerBlockType>;
