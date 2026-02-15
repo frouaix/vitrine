@@ -1,5 +1,5 @@
 // Immediate-mode rendering engine
-import type { Block } from './types.js';
+import type { Block, BlockOfType } from './types.js';
 import { BlockType } from './types.js';
 import type { RenderContext } from './context.js';
 import { Canvas2DContext } from './context.js';
@@ -193,38 +193,38 @@ export class ImmediateRenderer {
     this.context.restore();
   }
 
-  private renderRectangle(block: Block): void {
-    const props = block.props as any;
+  private renderRectangle(block: BlockOfType<BlockType.Rectangle>): void {
+    const { props } = block;
     this.context.drawRectangle(0, 0, props.width, props.height, props);
   }
 
-  private renderCircle(block: Block): void {
-    const props = block.props as any;
+  private renderCircle(block: BlockOfType<BlockType.Circle>): void {
+    const { props } = block;
     this.context.drawCircle(0, 0, props.radius, props);
   }
 
-  private renderEllipse(block: Block): void {
-    const props = block.props as any;
+  private renderEllipse(block: BlockOfType<BlockType.Ellipse>): void {
+    const { props } = block;
     this.context.drawEllipse(0, 0, props.radiusX, props.radiusY, props);
   }
 
-  private renderPath(block: Block): void {
-    const props = block.props as any;
+  private renderPath(block: BlockOfType<BlockType.Path>): void {
+    const { props } = block;
     this.context.drawPath(props.pathData, props);
   }
 
-  private renderLine(block: Block): void {
-    const props = block.props as any;
+  private renderLine(block: BlockOfType<BlockType.Line>): void {
+    const { props } = block;
     this.context.drawLine(props.x1, props.y1, props.x2, props.y2, props);
   }
 
-  private renderText(block: Block): void {
-    const props = block.props as any;
+  private renderText(block: BlockOfType<BlockType.Text>): void {
+    const { props } = block;
     this.context.drawText(props.text, 0, 0, props);
   }
 
-  private renderImage(block: Block): void {
-    const props = block.props as any;
+  private renderImage(block: BlockOfType<BlockType.Image>): void {
+    const { props } = block;
     const img = typeof props.src === 'string' ? new Image() : props.src;
     if (typeof props.src === 'string' && img instanceof HTMLImageElement) {
       img.src = props.src;
@@ -232,8 +232,8 @@ export class ImmediateRenderer {
     this.context.drawImage(img as HTMLImageElement, 0, 0, props.width, props.height, props);
   }
 
-  private renderArc(block: Block): void {
-    const props = block.props as any;
+  private renderArc(block: BlockOfType<BlockType.Arc>): void {
+    const { props } = block;
     this.context.drawArc(0, 0, props.radius, props.startAngle, props.endAngle, props);
   }
 }

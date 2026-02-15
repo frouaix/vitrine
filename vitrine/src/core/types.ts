@@ -1,5 +1,3 @@
-// Core type definitions for the block system
-
 export type Color = string; // CSS color format
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 
@@ -54,30 +52,11 @@ export enum BlockType {
   Layer = 'layer'
 }
 
-export type BlockPropsByType = {
-  [BlockType.Rectangle]: RectangleProps;
-  [BlockType.Circle]: CircleProps;
-  [BlockType.Ellipse]: EllipseProps;
-  [BlockType.Path]: PathProps;
-  [BlockType.Line]: LineProps;
-  [BlockType.Text]: TextProps;
-  [BlockType.Image]: ImageProps;
-  [BlockType.Arc]: ArcProps;
-  [BlockType.Group]: GroupProps;
-  [BlockType.Layer]: LayerProps;
-};
-
-export type BlockForType<T extends BlockType = BlockType> = {
-  type: T;
-  props: BlockPropsByType[T];
+export interface Block {
+  type: BlockType;
+  props: BaseBlockProps;
   children?: Block[];
-};
-
-export type Block = {
-  [T in BlockType]: BlockForType<T>;
-}[BlockType];
-
-export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
+}
 
 export interface RectangleProps extends BaseBlockProps, StrokeProps {
   width: number;

@@ -23,6 +23,17 @@ import type {
 } from './types.js';
 import { GUIControlType } from './types.js';
 
+function repositionBlock<T extends Block>(block: T, x: number, y: number): T {
+  return {
+    ...block,
+    props: {
+      ...block.props,
+      x,
+      y
+    }
+  } as T;
+}
+
 // Helper to get style for a control
 function getControlStyle(
   control: GUIControl,
@@ -726,14 +737,11 @@ function transformStack(
     const childDims = getControlDimensions(child);
     
     // Create a new block with updated coordinates instead of mutating
-    const positionedBlock: Block = {
-      ...transformed,
-      props: {
-        ...transformed.props,
-        x: direction === 'horizontal' ? offset : padding,
-        y: direction === 'horizontal' ? padding : offset
-      }
-    };
+    const positionedBlock = repositionBlock(
+      transformed,
+      direction === 'horizontal' ? offset : padding,
+      direction === 'horizontal' ? padding : offset
+    );
     
     offset += (direction === 'horizontal' ? childDims.width : childDims.height) + spacing;
     
@@ -893,14 +901,7 @@ function transformGrid(
     const transformed = transformGUIControl(child, context);
     
     // Create a new block with updated coordinates instead of mutating
-    const positionedBlock: Block = {
-      ...transformed,
-      props: {
-        ...transformed.props,
-        x: xPos,
-        y: yPos
-      }
-    };
+    const positionedBlock = repositionBlock(transformed, xPos, yPos);
     
     children.push(positionedBlock);
   });
@@ -931,15 +932,11 @@ function transformGUIChildren(
 ): Block[] {
   return children.map(child => {
     const transformed = transformGUIControl(child, context);
-    // Create a new block with updated coordinates instead of mutating
-    return {
-      ...transformed,
-      props: {
-        ...transformed.props,
-        x: (transformed.props.x || 0) + offsetX,
-        y: (transformed.props.y || 0) + offsetY
-      }
-    };
+    return repositionBlock(
+      transformed,
+      (transformed.props.x || 0) + offsetX,
+      (transformed.props.y || 0) + offsetY
+    );
   });
 }
 
