@@ -1,6 +1,32 @@
 // Demo Gallery Framework
 import { ImmediateRenderer, WebGLRenderer } from 'vitrine';
 
+type RendererInstance = ImmediateRenderer | WebGLRenderer;
+
+interface DemoDefinition<S = unknown> {
+  id: string;
+  name: string;
+  description: string;
+  category?: string;
+  code?: string;
+  size?: { width: number; height: number };
+  enableCulling?: boolean;
+  init: (renderer: RendererInstance) => S;
+  update?: (state: S, dt: number) => void;
+  render: (state: S) => unknown;
+  cleanup?: () => void;
+}
+
+type GalleryDemo = DemoDefinition<unknown> & { category: string };
+
+function getRequiredElement<T extends HTMLElement>(id: string): T {
+  const element = document.getElementById(id);
+  if (!element) {
+    throw new Error(`Missing required element: #${id}`);
+  }
+  return element as T;
+}
+
 // Import all demos statically
 import { demo as barChartDemo } from './demos/bar-chart.ts';
 import { demo as lineChartDemo } from './demos/line-chart.ts';
@@ -19,7 +45,7 @@ import { demo as guiDashboardDemo } from './demos/gui-dashboard.ts';
 import { demo as guiGalleryDemo } from './demos/gui-gallery.ts';
 
 // Demo registry
-const demos = [
+const demos: GalleryDemo[] = [
   { ...barChartDemo, category: 'data-viz' },
   { ...lineChartDemo, category: 'data-viz' },
   { ...pieChartDemo, category: 'data-viz' },
@@ -35,33 +61,39 @@ const demos = [
   { ...guiDashboardDemo, category: 'ui' },
   { ...guiGalleryDemo, category: 'ui' },
   { ...snakeDemo, category: 'games' }
-];
+] as GalleryDemo[];
 
-let currentDemo = null;
-let renderer = null;
-let animationId = null;
-let canvas = null;
+let currentDemo: GalleryDemo | null = null;
+let renderer: RendererInstance | null = null;
+let animationId: number | null = null;
+let canvas: HTMLCanvasElement;
 let rendererMode = 'canvas2d';
 
 // UI Elements
-let demoListEl, demoNameEl, demoDescEl, codePanelEl, codeContentEl, statsOverlayEl;
+let demoListEl: HTMLElement;
+let demoNameEl: HTMLElement;
+let demoDescEl: HTMLElement;
+let codePanelEl: HTMLElement;
+let codeContentEl: HTMLElement;
+let statsOverlayEl: HTMLElement;
 
 // Initialize gallery
 function init() {
-  canvas = document.getElementById('canvas');
-  demoListEl = document.getElementById('demo-list');
-  demoNameEl = document.getElementById('demo-name');
-  demoDescEl = document.getElementById('demo-description');
-  codePanelEl = document.getElementById('codePanel');
-  codeContentEl = document.getElementById('codeContent');
-  statsOverlayEl = document.getElementById('statsOverlay');
+  canvas = getRequiredElement<HTMLCanvasElement>('canvas');
+  demoListEl = getRequiredElement<HTMLElement>('demo-list');
+  demoNameEl = getRequiredElement<HTMLElement>('demo-name');
+  demoDescEl = getRequiredElement<HTMLElement>('demo-description');
+  codePanelEl = getRequiredElement<HTMLElement>('codePanel');
+  codeContentEl = getRequiredElement<HTMLElement>('codeContent');
+  statsOverlayEl = getRequiredElement<HTMLElement>('statsOverlay');
 
   // Setup controls
-  document.getElementById('toggleCode').addEventListener('click', toggleCodePanel);
-  document.getElementById('toggleStats').addEventListener('click', toggleStats);
-  document.getElementById('resetDemo').addEventListener('click', resetDemo);
-  document.getElementById('rendererMode').addEventListener('change', (event) => {
-    rendererMode = event.target.value;
+  getRequiredElement<HTMLElement>('toggleCode').addEventListener('click', toggleCodePanel);
+  getRequiredElement<HTMLElement>('toggleStats').addEventListener('click', toggleStats);
+  getRequiredElement<HTMLElement>('resetDemo').addEventListener('click', resetDemo);
+  getRequiredElement<HTMLSelectElement>('rendererMode').addEventListener('change', (event: Event) => {
+    const select = event.currentTarget as HTMLSelectElement;
+    rendererMode = select.value;
     if (currentDemo) {
       loadDemo(currentDemo);
     }
@@ -109,7 +141,7 @@ function renderDemoList() {
   demoListEl.innerHTML = html;
 
   // Add click handlers
-  document.querySelectorAll('.demo-item').forEach(item => {
+  document.querySelectorAll<HTMLElement>('.demo-item').forEach(item => {
     item.addEventListener('click', () => {
       const demoId = item.dataset.demoId;
       const demo = demos.find(d => d.id === demoId);
@@ -119,7 +151,7 @@ function renderDemoList() {
 }
 
 // Load and run a demo
-function loadDemo(demo) {
+function loadDemo(demo: GalleryDemo): void {
   // Cleanup previous demo
   if (currentDemo && currentDemo.cleanup) {
     currentDemo.cleanup();
@@ -139,7 +171,7 @@ function loadDemo(demo) {
   codeContentEl.textContent = demo.code || '// Code not available';
 
   // Highlight active demo
-  document.querySelectorAll('.demo-item').forEach(item => {
+  document.querySelectorAll<HTMLElement>('.demo-item').forEach(item => {
     item.classList.toggle('active', item.dataset.demoId === demo.id);
   });
 
@@ -162,7 +194,8 @@ function loadDemo(demo) {
 
   // Initialize demo
   currentDemo = demo;
-  const state = demo.init(renderer);
+  const activeRenderer = renderer;
+  const state = demo.init(activeRenderer);
 
   // Animation loop
   let lastTime = performance.now();
@@ -178,7 +211,7 @@ function loadDemo(demo) {
 
     // Render
     const scene = demo.render(state);
-    renderer.render(scene);
+    activeRenderer.render(scene as never);
 
     // Update stats
     updateStats();
@@ -190,26 +223,26 @@ function loadDemo(demo) {
 }
 
 // Update performance stats
-function updateStats() {
+function updateStats(): void {
   if (!renderer) return;
   const stats = renderer.getPerformanceStats();
-  document.getElementById('statFPS').textContent = stats.fps || 0;
-  document.getElementById('statBlocks').textContent = stats.blocksRendered.toLocaleString();
-  document.getElementById('statCulled').textContent = stats.blocksCulled.toLocaleString();
-  document.getElementById('statRenderTime').textContent = stats.renderTime.toFixed(2);
+  getRequiredElement<HTMLElement>('statFPS').textContent = String(stats.fps || 0);
+  getRequiredElement<HTMLElement>('statBlocks').textContent = stats.blocksRendered.toLocaleString();
+  getRequiredElement<HTMLElement>('statCulled').textContent = stats.blocksCulled.toLocaleString();
+  getRequiredElement<HTMLElement>('statRenderTime').textContent = stats.renderTime.toFixed(2);
 }
 
 // UI Controls
-function toggleCodePanel() {
+function toggleCodePanel(): void {
   codePanelEl.classList.toggle('hidden');
 }
 
-function toggleStats() {
+function toggleStats(): void {
   statsOverlayEl.style.display = 
     statsOverlayEl.style.display === 'none' ? 'block' : 'none';
 }
 
-function resetDemo() {
+function resetDemo(): void {
   if (currentDemo) {
     loadDemo(currentDemo);
   }
