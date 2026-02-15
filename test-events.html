@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Test</title>
+  <style>
+    body { margin: 0; padding: 20px; background: #111; color: #fff; font-family: sans-serif; }
+    canvas { border: 1px solid #333; display: block; margin: 20px 0; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+    #log { background: #222; padding: 10px; margin-top: 20px; max-height: 200px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>Event Handler Test</h1>
+  <p>Click the rectangles to test event handlers</p>
+  <button id="demo1">Load Demo 1 (Red)</button>
+  <button id="demo2">Load Demo 2 (Blue)</button>
+  <button id="clear">Clear Log</button>
+  <canvas id="canvas" width="800" height="400"></canvas>
+  <div id="log"></div>
+
+  <script type="module">
+    import { ImmediateRenderer, rectangle, group } from './dist/index.js';
+    
+    const canvas = document.getElementById('canvas');
+    const logEl = document.getElementById('log');
+    let renderer = null;
+    
+    function log(msg) {
+      const p = document.createElement('p');
+      p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      p.style.margin = '2px 0';
+      logEl.prepend(p);
+    }
+    
+    function loadDemo1() {
+      log('Loading Demo 1 (Red)...');
+      if (renderer) {
+        log('Destroying old renderer...');
+        renderer.destroy();
+      }
+      
+      log('Creating new renderer...');
+      renderer = new ImmediateRenderer({ canvas, width: 800, height: 400 });
+      
+      const scene = group({ x: 0, y: 0 }, [
+        rectangle({
+          x: 50,
+          y: 50,
+          width: 200,
+          height: 100,
+          fill: '#ff0000',
+          onClick: () => log('Demo 1: RED clicked!')
+        }),
+        rectangle({
+          x: 300,
+          y: 50,
+          width: 200,
+          height: 100,
+          fill: '#ff6666',
+          onClick: () => log('Demo 1: LIGHT RED clicked!')
+        })
+      ]);
+      
+      renderer.render(scene);
+      log('Demo 1 loaded and rendered');
+    }
+    
+    function loadDemo2() {
+      log('Loading Demo 2 (Blue)...');
+      if (renderer) {
+        log('Destroying old renderer...');
+        renderer.destroy();
+      }
+      
+      log('Creating new renderer...');
+      renderer = new ImmediateRenderer({ canvas, width: 800, height: 400 });
+      
+      const scene = group({ x: 0, y: 0 }, [
+        rectangle({
+          x: 50,
+          y: 200,
+          width: 200,
+          height: 100,
+          fill: '#0000ff',
+          onClick: () => log('Demo 2: BLUE clicked!')
+        }),
+        rectangle({
+          x: 300,
+          y: 200,
+          width: 200,
+          height: 100,
+          fill: '#6666ff',
+          onClick: () => log('Demo 2: LIGHT BLUE clicked!')
+        })
+      ]);
+      
+      renderer.render(scene);
+      log('Demo 2 loaded and rendered');
+    }
+    
+    document.getElementById('demo1').addEventListener('click', loadDemo1);
+    document.getElementById('demo2').addEventListener('click', loadDemo2);
+    document.getElementById('clear').addEventListener('click', () => {
+      logEl.innerHTML = '';
+      log('Log cleared');
+    });
+    
+    // Load demo 1 initially
+    loadDemo1();
+  </script>
+</body>
+</html>
