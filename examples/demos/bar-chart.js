@@ -56,8 +56,8 @@ export const demo = {
       return group({ x, y }, [
         // Bar
         rectangle({
-          width: barWidth - 10,
-          height: barHeight,
+          dx: barWidth - 10,
+          dy: barHeight,
           fill: item.color,
           opacity: isHovered ? 1 : 0.8,
           cornerRadius: 4,
@@ -91,7 +91,7 @@ export const demo = {
 
     return group({ x: 0, y: 0 }, [
       // Background
-      rectangle({ width: 800, height: 600, fill: '#1a1a1a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#1a1a1a' }),
 
       // Title
       text({
@@ -159,8 +159,8 @@ state.data.map((item, i) => {
   const barHeight = (value / maxValue) * chartHeight;
   
   return rectangle({
-    width: barWidth,
-    height: barHeight,
+    dx: barWidth,
+    dy: barHeight,
     fill: item.color,
     opacity: isHovered ? 1 : 0.8,
     onHover: () => highlightBar(i)

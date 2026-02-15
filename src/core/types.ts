@@ -41,6 +41,15 @@ export interface StrokeProps {
   strokeWidth?: number;
 }
 
+export interface FillProps {
+  fill?: Color;
+}
+
+export interface Rs {
+  dx: number;
+  dy: number;
+}
+
 export enum BlockType {
   Rectangle = 'rectangle',
   Circle = 'circle',
@@ -79,22 +88,17 @@ export type Block = {
 
 export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
 
-export interface RectangleProps extends BaseBlockProps, StrokeProps {
-  width: number;
-  height: number;
-  fill?: Color;
+export interface RectangleProps extends BaseBlockProps, StrokeProps, FillProps, Rs {
   cornerRadius?: number;
 }
 
-export interface CircleProps extends BaseBlockProps, StrokeProps {
+export interface CircleProps extends BaseBlockProps, StrokeProps, FillProps {
   radius: number;
-  fill?: Color;
 }
 
-export interface EllipseProps extends BaseBlockProps, StrokeProps {
+export interface EllipseProps extends BaseBlockProps, StrokeProps, FillProps {
   radiusX: number;
   radiusY: number;
-  fill?: Color;
 }
 
 export interface LineProps extends BaseBlockProps, StrokeProps {
@@ -105,32 +109,27 @@ export interface LineProps extends BaseBlockProps, StrokeProps {
   stroke: Color;
 }
 
-export interface TextProps extends BaseBlockProps, StrokeProps {
+export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   text: string;
   font?: string;
   fontSize?: number;
-  fill?: Color;
   align?: 'left' | 'center' | 'right' | 'start' | 'end';
   baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
 }
 
-export interface PathProps extends BaseBlockProps, StrokeProps {
+export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
   pathData: string; // SVG path format
-  fill?: Color;
   closed?: boolean;
 }
 
-export interface ArcProps extends BaseBlockProps, StrokeProps {
+export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
   radius: number;
   startAngle: number;
   endAngle: number;
-  fill?: Color;
 }
 
-export interface ImageProps extends BaseBlockProps {
+export interface ImageProps extends BaseBlockProps, Rs {
   src: string | HTMLImageElement;
-  width: number;
-  height: number;
 }
 
 export interface GroupProps extends BaseBlockProps {
@@ -142,7 +141,7 @@ export interface LayerProps extends BaseBlockProps {
   cache?: boolean;
 }
 
-export interface Bounds {
+export interface Rc {
   x: number;
   y: number;
   width: number;

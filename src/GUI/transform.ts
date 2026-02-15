@@ -193,8 +193,8 @@ function transformTextBox(
   // Background
   children.push(
     rectangle({
-      width: dxp,
-      height: dyp,
+      dx: dxp,
+      dy: dyp,
       fill: bgColor,
       stroke: borderColor,
       strokeWidth: style.borderWidth,
@@ -254,8 +254,8 @@ function transformCheckBox(
   
   children.push(
     rectangle({
-      width: dypBox,
-      height: dypBox,
+      dx: dypBox,
+      dy: dypBox,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -408,8 +408,8 @@ function transformButton(
   // Background
   children.push(
     rectangle({
-      width: dxp,
-      height: dyp,
+      dx: dxp,
+      dy: dyp,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -476,8 +476,8 @@ function transformSlider(
     rectangle({
       x: 0,
       y: -dypTrack / 2,
-      width: dxp,
-      height: dypTrack,
+      dx: dxp,
+      dy: dypTrack,
       fill: style.sliderTrackColor || '#4b5563',
       cornerRadius: dypTrack / 2,
       stroke: '#888888',
@@ -552,8 +552,8 @@ function transformDropdown(
   // Background
   children.push(
     rectangle({
-      width: dxp,
-      height: dyp,
+      dx: dxp,
+      dy: dyp,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -649,8 +649,8 @@ function transformGUIImage(
     [
       image({
         src: props.src,
-        width: dxp,
-        height: dyp
+        dx: dxp,
+        dy: dyp
       })
     ]
   );
@@ -673,8 +673,8 @@ function transformPanel(
   // Background
   children.push(
     rectangle({
-      width: dxp,
-      height: dyp,
+      dx: dxp,
+      dy: dyp,
       fill: style.backgroundColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,

@@ -41,8 +41,8 @@ export const demo = {
       return group({ x, y: 100 }, [
         // Column header
         rectangle({
-          width: columnWidth,
-          height: 60,
+          dx: columnWidth,
+          dy: 60,
           fill: col.color,
           cornerRadius: 8
         }),
@@ -70,8 +70,8 @@ export const demo = {
         // Column body
         rectangle({
           y: 70,
-          width: columnWidth,
-          height: 400,
+          dx: columnWidth,
+          dy: 400,
           fill: '#1a1a1a',
           stroke: '#333',
           strokeWidth: 2,
@@ -83,9 +83,9 @@ export const demo = {
         ...cardsInColumn.map((card, cardIndex) => 
           group({ y: 80 + cardIndex * 110 }, [
             rectangle({
-              width: columnWidth - 20,
+              dx: columnWidth - 20,
               x: 10,
-              height: 100,
+              dy: 100,
               fill: '#2a2a2a',
               stroke: '#444',
               strokeWidth: 2,
@@ -114,8 +114,8 @@ export const demo = {
             rectangle({
               x: 10,
               y: 70,
-              width: columnWidth - 20,
-              height: 1,
+              dx: columnWidth - 20,
+              dy: 1,
               fill: '#444'
             }),
 
@@ -132,7 +132,7 @@ export const demo = {
     });
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,

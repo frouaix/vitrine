@@ -95,7 +95,7 @@ export const demo = {
     });
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,
@@ -143,8 +143,8 @@ export const demo = {
       ...state.data.map((item, i) => 
         group({ x: 550, y: 150 + i * 40 }, [
           rectangle({
-            width: 20,
-            height: 20,
+            dx: 20,
+            dy: 20,
             fill: item.color,
             cornerRadius: 4
           }),

@@ -44,7 +44,7 @@ These functions provide the declarative API for describing visual hierarchies.
 
 ```typescript
 const scene = group({ x: 100, y: 100 }, [
-  rectangle({ width: 50, height: 50, fill: 'red' }),
+  rectangle({ dx: 50, dy: 50, fill: 'red' }),
   circle({ x: 60, y: 0, radius: 25, fill: 'blue' })
 ]);
 ```

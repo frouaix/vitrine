@@ -50,8 +50,8 @@ export const demo = {
         rectangle({
           x: 100 + i,
           y: 200,
-          width: 2,
-          height: 40,
+          dx: 2,
+          dy: 40,
           fill: hsvToRgb(i, 100, 100)
         })
       ),
@@ -59,8 +59,8 @@ export const demo = {
       rectangle({
         x: 100,
         y: 200,
-        width: 360,
-        height: 40,
+        dx: 360,
+        dy: 40,
         fill: 'transparent',
         onClick: (e) => {
           const canvas = e.target;
@@ -80,8 +80,8 @@ export const demo = {
         rectangle({
           x: 100 + i * 4,
           y: 270,
-          width: 5,
-          height: 40,
+          dx: 5,
+          dy: 40,
           fill: hsvToRgb(state.hue, i, state.value)
         })
       ),
@@ -89,8 +89,8 @@ export const demo = {
       rectangle({
         x: 100,
         y: 270,
-        width: 400,
-        height: 40,
+        dx: 400,
+        dy: 40,
         fill: 'transparent',
         onClick: (e) => {
           const canvas = e.target;
@@ -110,8 +110,8 @@ export const demo = {
         rectangle({
           x: 100 + i * 4,
           y: 340,
-          width: 5,
-          height: 40,
+          dx: 5,
+          dy: 40,
           fill: hsvToRgb(state.hue, state.saturation, i)
         })
       ),
@@ -119,8 +119,8 @@ export const demo = {
       rectangle({
         x: 100,
         y: 340,
-        width: 400,
-        height: 40,
+        dx: 400,
+        dy: 40,
         fill: 'transparent',
         onClick: (e) => {
           const canvas = e.target;
@@ -149,7 +149,7 @@ export const demo = {
     );
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,
@@ -163,8 +163,8 @@ export const demo = {
       // Color preview
       group({ x: 250, y: 90 }, [
         rectangle({
-          width: 300,
-          height: 80,
+          dx: 300,
+          dy: 80,
           fill: currentColor,
           cornerRadius: 12,
           stroke: '#444',
@@ -246,7 +246,7 @@ export const demo = {
 const hueBar = Array.from({ length: 360 }, i => 
   rectangle({
     x: i, y: 0,
-    width: 1, height: 40,
+    dx: 1, dy: 40,
     fill: hsvToRgb(i, 100, 100)
   })
 );

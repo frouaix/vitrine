@@ -1,5 +1,5 @@
 // Hit testing utilities for event handling
-import type { Block, Bounds } from './core/types.js';
+import type { Block, Rc } from './core/types.js';
 import { BlockType } from './core/types.js';
 import { Matrix2D } from './transform.js';
 
@@ -84,7 +84,7 @@ export class HitTester {
 
     switch (block.type) {
       case BlockType.Rectangle:
-        return this.hitTestRectangle(xl, yl, props.width, props.height);
+        return this.hitTestRectangle(xl, yl, props.dx, props.dy);
 
       case BlockType.Circle:
         return this.hitTestCircle(xl, yl, props.radius);
@@ -181,7 +181,7 @@ export class HitTester {
   }
 
   // Get bounding box for a block in world coordinates
-  static getBounds(block: Block, worldTransform: Matrix2D = Matrix2D.identity()): Bounds | null {
+  static getBounds(block: Block, worldTransform: Matrix2D = Matrix2D.identity()): Rc | null {
     const blockTransform = this.getBlockTransform(block.props);
     const currentTransform = worldTransform.multiply(blockTransform);
 
@@ -209,12 +209,12 @@ export class HitTester {
     };
   }
 
-  private static getLocalBounds(block: Block): Bounds | null {
+  private static getLocalBounds(block: Block): Rc | null {
     const props = block.props as any;
 
     switch (block.type) {
       case BlockType.Rectangle:
-        return { x: 0, y: 0, width: props.width, height: props.height };
+        return { x: 0, y: 0, width: props.dx, height: props.dy };
 
       case BlockType.Circle:
         return {

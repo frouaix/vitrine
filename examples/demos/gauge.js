@@ -42,7 +42,7 @@ export const demo = {
     };
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,

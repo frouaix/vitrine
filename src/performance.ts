@@ -1,5 +1,5 @@
 // Performance optimization utilities
-import type { Block, Bounds } from './core/types.js';
+import type { Block, Rc } from './core/types.js';
 import { HitTester } from './hit-test.js';
 import { Matrix2D } from './transform.js';
 
@@ -12,7 +12,7 @@ export interface Viewport {
 
 export class PerformanceOptimizer {
   // Check if bounds intersect viewport (frustum culling)
-  static isInViewport(bounds: Bounds, viewport: Viewport): boolean {
+  static isInViewport(bounds: Rc, viewport: Viewport): boolean {
     return !(
       bounds.x + bounds.width < viewport.x ||
       bounds.x > viewport.x + viewport.width ||

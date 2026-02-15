@@ -38,7 +38,7 @@ export const demo = {
     );
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,
@@ -50,16 +50,16 @@ export const demo = {
       }),
 
       // Axes
-      rectangle({ x: padding, y: 50, width: 2, height: chartHeight, fill: '#333' }),
-      rectangle({ x: padding, y: 550, width: chartWidth, height: 2, fill: '#333' }),
+      rectangle({ x: padding, y: 50, dx: 2, dy: chartHeight, fill: '#333' }),
+      rectangle({ x: padding, y: 550, dx: chartWidth, dy: 2, fill: '#333' }),
 
       // Grid lines
       ...Array.from({ length: 5 }, (_, i) => 
         rectangle({
           x: padding,
           y: 550 - (chartHeight / 4) * i,
-          width: chartWidth,
-          height: 1,
+          dx: chartWidth,
+          dy: 1,
           fill: '#1a1a1a'
         })
       ),

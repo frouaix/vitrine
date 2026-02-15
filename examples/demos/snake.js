@@ -102,8 +102,8 @@ export const demo = {
           rectangle({
             x: offsetX + i * state.cellSize,
             y: offsetY + j * state.cellSize,
-            width: state.cellSize - 1,
-            height: state.cellSize - 1,
+            dx: state.cellSize - 1,
+            dy: state.cellSize - 1,
             fill: '#1a1a1a',
             stroke: '#2a2a2a',
             strokeWidth: 1
@@ -117,8 +117,8 @@ export const demo = {
       rectangle({
         x: offsetX + segment.x * state.cellSize,
         y: offsetY + segment.y * state.cellSize,
-        width: state.cellSize - 1,
-        height: state.cellSize - 1,
+        dx: state.cellSize - 1,
+        dy: state.cellSize - 1,
         fill: i === 0 ? '#51cf66' : '#4dabf7',
         cornerRadius: 3
       })
@@ -133,7 +133,7 @@ export const demo = {
     });
 
     return group({ x: 0, y: 0 }, [
-      rectangle({ width: 800, height: 600, fill: '#0a0a0a' }),
+      rectangle({ dx: 800, dy: 600, fill: '#0a0a0a' }),
 
       text({
         x: 400,
@@ -177,8 +177,8 @@ export const demo = {
         rectangle({
           x: 250,
           y: 250,
-          width: 300,
-          height: 150,
+          dx: 300,
+          dy: 150,
           fill: 'rgba(0, 0, 0, 0.9)',
           stroke: '#ff6b6b',
           strokeWidth: 3,

@@ -170,8 +170,8 @@
           blocks.push(rectangle({
             x,
             y,
-            width: 20 + Math.random() * 30,
-            height: 20 + Math.random() * 30,
+            dx: 20 + Math.random() * 30,
+            dy: 20 + Math.random() * 30,
             fill: color,
             opacity: 0.7 + Math.random() * 0.3,
             rotation: Math.random() * Math.PI * 2
@@ -201,8 +201,8 @@
       const scene = group({ x: 0, y: 0 }, [
         // Background
         rectangle({ 
-          width: 900, 
-          height: 600, 
+          dx: 900, 
+          dy: 600, 
           fill: '#0d0d0d' 
         }),
 

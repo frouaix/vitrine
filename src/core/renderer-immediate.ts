@@ -195,7 +195,7 @@ export class ImmediateRenderer {
 
   private renderRectangle(block: BlockOfType<BlockType.Rectangle>): void {
     const { props } = block;
-    this.context.drawRectangle(0, 0, props.width, props.height, props);
+    this.context.drawRectangle(0, 0, props.dx, props.dy, props);
   }
 
   private renderCircle(block: BlockOfType<BlockType.Circle>): void {
@@ -229,7 +229,7 @@ export class ImmediateRenderer {
     if (typeof props.src === 'string' && img instanceof HTMLImageElement) {
       img.src = props.src;
     }
-    this.context.drawImage(img as HTMLImageElement, 0, 0, props.width, props.height, props);
+    this.context.drawImage(img as HTMLImageElement, 0, 0, props.dx, props.dy, props);
   }
 
   private renderArc(block: BlockOfType<BlockType.Arc>): void {

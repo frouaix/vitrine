@@ -43,8 +43,8 @@ function render() {
     rectangle({ 
       x: 100, 
       y: 100, 
-      width: 200, 
-      height: 150, 
+      dx: 200, 
+      dy: 150, 
       fill: '#ff6b6b',
       cornerRadius: 10,
       onClick: () => console.log('Clicked!')
@@ -59,7 +59,7 @@ function render() {
     }),
     
     group({ x: 400, y: 400, rotation: Math.PI / 4 }, [
-      rectangle({ x: -50, y: -50, width: 100, height: 100, fill: '#51cf66' })
+      rectangle({ x: -50, y: -50, dx: 100, dy: 100, fill: '#51cf66' })
     ])
   ]);
 
@@ -93,7 +93,7 @@ Demo categories:
 
 ```typescript
 // Shapes
-rectangle({ x, y, width, height, fill, stroke, cornerRadius, ... })
+rectangle({ x, y, dx, dy, fill, stroke, cornerRadius, ... })
 circle({ x, y, radius, fill, stroke, ... })
 ellipse({ x, y, radiusX, radiusY, fill, stroke, ... })
 line({ x1, y1, x2, y2, stroke, strokeWidth, ... })
@@ -102,7 +102,7 @@ path({ x, y, pathData, fill, stroke, ... })
 
 // Content
 text({ x, y, text, fontSize, font, fill, align, ... })
-image({ x, y, src, width, height, ... })
+image({ x, y, src, dx, dy, ... })
 
 // Containers
 group({ x, y, rotation, scaleX, scaleY, opacity, ... }, children)
