@@ -148,12 +148,34 @@ export interface PanelProps extends GUIBaseProps {
   padding?: number;
 }
 
-// GUI control descriptor
-export interface GUIControl {
-  type: GUIControlType;
-  props: GUIBaseProps;
+export type GUIPropsByType = {
+  [GUIControlType.TextBox]: TextBoxProps;
+  [GUIControlType.CheckBox]: CheckBoxProps;
+  [GUIControlType.RadioButton]: RadioButtonProps;
+  [GUIControlType.Button]: ButtonProps;
+  [GUIControlType.Slider]: SliderProps;
+  [GUIControlType.Dropdown]: DropdownProps;
+  [GUIControlType.Stack]: StackProps;
+  [GUIControlType.HStack]: HStackProps;
+  [GUIControlType.VStack]: VStackProps;
+  [GUIControlType.Carousel]: CarouselProps;
+  [GUIControlType.Grid]: GridProps;
+  [GUIControlType.Label]: LabelProps;
+  [GUIControlType.Image]: GUIImageProps;
+  [GUIControlType.Panel]: PanelProps;
+};
+
+export type GUIControlForType<T extends GUIControlType = GUIControlType> = {
+  type: T;
+  props: GUIPropsByType[T];
   children?: GUIControl[];
-}
+};
+
+export type GUIControl = {
+  [T in GUIControlType]: GUIControlForType<T>;
+}[GUIControlType];
+
+export type GUIControlOfType<T extends GUIControlType> = Extract<GUIControl, { type: T }>;
 
 // Theme system
 export interface ControlStyle {

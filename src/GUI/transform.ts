@@ -386,7 +386,7 @@ function transformButton(
     className = `${props.variant}-button`;
   }
   
-  const style = getControlStyle({ ...control, props: { ...props, className } }, context);
+  const style = getControlStyle({ ...control, props: { ...props, className } } as GUIControl, context);
   
   const dxp = props.width || 160;
   const dyp = props.height || 50;
@@ -976,7 +976,7 @@ export function transformGUIControl(
     case GUIControlType.Grid:
       return transformGrid(control, context);
     default:
-      // Fallback for unknown types
-      return group({ x: control.props.x || 0, y: control.props.y || 0 }, []);
+      // Exhaustive check
+      return group({}, []);
   }
 }
