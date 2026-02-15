@@ -1,5 +1,8 @@
 # Vitrine
 
+[![CI](https://github.com/frouaix/vitrine/actions/workflows/ci.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/ci.yml)
+[![Deploy to GitHub Pages](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml)
+
 **Immediate-mode graphics library for TypeScript** with declarative block-based DSL, optimized for rendering tens of thousands of visual elements in productivity applications.
 
 ## 🎨 [Interactive Demo Gallery](https://frouaix.github.io/vitrine/)
@@ -170,6 +173,16 @@ pnpm run deploy
 
 This builds the examples with Vite and pushes to the `gh-pages` branch.
 
+### Branch Protection
+
+The `main` branch should be protected with the following rules:
+- ✅ **Required CI checks**: `test / Build Library and Examples`, `lint / Type Check`
+- 🚫 **Force pushes blocked**
+- 🚫 **Branch deletion blocked**
+- 🔀 **Pull request required before merge**
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming and PR workflow.
+
 ## Architecture
 
 Vitrine uses an immediate-mode rendering model where the visual hierarchy is re-described each frame. This provides:
@@ -178,6 +191,13 @@ Vitrine uses an immediate-mode rendering model where the visual hierarchy is re-
 - **Flexibility** - Easy integration with any state management (React, Vue, etc.)
 - **Performance** - Optimized rendering pipeline with culling
 - **Predictability** - What you describe is what you get
+
+## Contributing
+
+Contributions are welcome.
+
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow, validation, and branch policy
+- See [.github/copilot-instructions.md](.github/copilot-instructions.md) for coding conventions
 
 ## License
 
