@@ -48,6 +48,17 @@ function getControlDimensions(control: GUIControl): { width: number; height: num
     return { width: props.width, height: props.height };
   }
   
+  // For layout controls, compute size from children
+  if (control.type === GUIControlType.Stack || 
+      control.type === GUIControlType.VStack || 
+      control.type === GUIControlType.HStack) {
+    return computeStackDimensions(control);
+  }
+  
+  if (control.type === GUIControlType.Grid) {
+    return computeGridDimensions(control);
+  }
+  
   // Otherwise, use type-specific defaults
   switch (control.type) {
     case GUIControlType.TextBox:
@@ -68,6 +79,80 @@ function getControlDimensions(control: GUIControl): { width: number; height: num
     default:
       return { width: props.width || 100, height: props.height || 40 };
   }
+}
+
+// Compute dimensions for stack-based layouts
+function computeStackDimensions(control: GUIControl): { width: number; height: number } {
+  const props = control.props as StackProps;
+  const direction = (control.type === GUIControlType.HStack) ? 'horizontal' :
+                    (control.type === GUIControlType.VStack) ? 'vertical' :
+                    (props.direction || 'vertical');
+  const spacing = props.spacing || 10;
+  const padding = props.padding || 0;
+  
+  if (!control.children || control.children.length === 0) {
+    return { width: 2 * padding, height: 2 * padding };
+  }
+  
+  let totalMainAxis = padding;
+  let maxCrossAxis = 0;
+  
+  control.children.forEach((child, index) => {
+    const childDims = getControlDimensions(child);
+    
+    if (direction === 'horizontal') {
+      totalMainAxis += childDims.width;
+      maxCrossAxis = Math.max(maxCrossAxis, childDims.height);
+    } else {
+      totalMainAxis += childDims.height;
+      maxCrossAxis = Math.max(maxCrossAxis, childDims.width);
+    }
+    
+    // Add spacing between children (but not after the last one)
+    if (index < control.children!.length - 1) {
+      totalMainAxis += spacing;
+    }
+  });
+  
+  totalMainAxis += padding;
+  const totalCrossAxis = maxCrossAxis + 2 * padding;
+  
+  return direction === 'horizontal' 
+    ? { width: totalMainAxis, height: totalCrossAxis }
+    : { width: totalCrossAxis, height: totalMainAxis };
+}
+
+// Compute dimensions for grid layout
+function computeGridDimensions(control: GUIControl): { width: number; height: number } {
+  const props = control.props as GridProps;
+  const columns = props.columns || 3;
+  const spacing = props.spacing || 10;
+  const padding = props.padding || 0;
+  
+  if (!control.children || control.children.length === 0) {
+    return { width: 2 * padding, height: 2 * padding };
+  }
+  
+  const maxColWidth: number[] = [];
+  const maxRowHeight: number[] = [];
+  
+  control.children.forEach((child, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    const childDims = getControlDimensions(child);
+    
+    maxColWidth[col] = Math.max(maxColWidth[col] || 0, childDims.width);
+    maxRowHeight[row] = Math.max(maxRowHeight[row] || 0, childDims.height);
+  });
+  
+  const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + 
+                     Math.max(0, maxColWidth.length - 1) * spacing + 
+                     2 * padding;
+  const totalHeight = maxRowHeight.reduce((sum, h) => sum + h, 0) + 
+                      Math.max(0, maxRowHeight.length - 1) * spacing + 
+                      2 * padding;
+  
+  return { width: totalWidth, height: totalHeight };
 }
 
 // Transform textbox to core blocks
@@ -602,6 +687,7 @@ function transformStack(
   
   const children: Block[] = [];
   let offset = padding;
+  let maxCrossAxis = 0; // Track maximum width (for vstack) or height (for hstack)
   
   for (const child of control.children) {
     const transformed = transformGUIControl(child, context);
@@ -619,8 +705,24 @@ function transformStack(
     
     offset += (direction === 'horizontal' ? childDims.width : childDims.height) + spacing;
     
+    // Track the maximum size in the cross-axis direction
+    if (direction === 'horizontal') {
+      maxCrossAxis = Math.max(maxCrossAxis, childDims.height);
+    } else {
+      maxCrossAxis = Math.max(maxCrossAxis, childDims.width);
+    }
+    
     children.push(positionedBlock);
   }
+  
+  // Remove the trailing spacing from the last child
+  const totalMainAxis = offset - spacing + padding;
+  const totalCrossAxis = maxCrossAxis + 2 * padding;
+  
+  // Calculate the container's computed size (for documentation/debugging purposes)
+  // Note: Group blocks don't have explicit size; they're sized by their children
+  const computedWidth = direction === 'horizontal' ? totalMainAxis : totalCrossAxis;
+  const computedHeight = direction === 'horizontal' ? totalCrossAxis : totalMainAxis;
   
   return group(
     {
@@ -726,11 +828,35 @@ function transformGrid(
   }
   
   const children: Block[] = [];
+  let maxRowHeight: number[] = []; // Track height of each row
+  let maxColWidth: number[] = []; // Track width of each column
   
+  // First pass: determine the maximum dimensions for each row and column
   control.children.forEach((child, index) => {
     const col = index % columns;
     const row = Math.floor(index / columns);
     const childDims = getControlDimensions(child);
+    
+    maxColWidth[col] = Math.max(maxColWidth[col] || 0, childDims.width);
+    maxRowHeight[row] = Math.max(maxRowHeight[row] || 0, childDims.height);
+  });
+  
+  // Second pass: position children
+  control.children.forEach((child, index) => {
+    const col = index % columns;
+    const row = Math.floor(index / columns);
+    
+    // Calculate x position based on previous column widths
+    let xPos = padding;
+    for (let c = 0; c < col; c++) {
+      xPos += maxColWidth[c] + spacing;
+    }
+    
+    // Calculate y position based on previous row heights
+    let yPos = padding;
+    for (let r = 0; r < row; r++) {
+      yPos += maxRowHeight[r] + spacing;
+    }
     
     const transformed = transformGUIControl(child, context);
     
@@ -739,13 +865,19 @@ function transformGrid(
       ...transformed,
       props: {
         ...transformed.props,
-        x: padding + col * (childDims.width + spacing),
-        y: padding + row * (childDims.height + spacing)
+        x: xPos,
+        y: yPos
       }
     };
     
     children.push(positionedBlock);
   });
+  
+  // Calculate total grid size (for documentation/debugging purposes)
+  // Note: Group blocks don't have explicit size; they're sized by their children
+  const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + (columns - 1) * spacing + 2 * padding;
+  const numRows = Math.ceil(control.children.length / columns);
+  const totalHeight = maxRowHeight.reduce((sum, h) => sum + h, 0) + (numRows - 1) * spacing + 2 * padding;
   
   return group(
     {
