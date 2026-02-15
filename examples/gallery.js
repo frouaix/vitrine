@@ -178,12 +178,7 @@ function loadDemo(demo) {
 
     // Render
     const scene = demo.render(state);
-    if (rendererMode === 'webgl') {
-      renderer.clear();
-      renderer.render();
-    } else {
-      renderer.render(scene);
-    }
+    renderer.render(scene);
 
     // Update stats
     updateStats();
@@ -197,14 +192,6 @@ function loadDemo(demo) {
 // Update performance stats
 function updateStats() {
   if (!renderer) return;
-  if (rendererMode === 'webgl') {
-    document.getElementById('statFPS').textContent = 'N/A';
-    document.getElementById('statBlocks').textContent = 'N/A';
-    document.getElementById('statCulled').textContent = 'N/A';
-    document.getElementById('statRenderTime').textContent = 'N/A';
-    return;
-  }
-
   const stats = renderer.getPerformanceStats();
   document.getElementById('statFPS').textContent = stats.fps || 0;
   document.getElementById('statBlocks').textContent = stats.blocksRendered.toLocaleString();
