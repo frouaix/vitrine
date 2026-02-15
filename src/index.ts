@@ -27,3 +27,5 @@ export * from './core/blocks.js';
 
 // Legacy exports (for backwards compatibility)
 export * from './core/renderer.js';
+export * from './core/renderer-canvas.js';
+export * from './core/renderer-webgl.js';

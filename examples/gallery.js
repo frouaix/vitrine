@@ -1,5 +1,5 @@
 // Demo Gallery Framework
-import { ImmediateRenderer } from 'vitrine';
+import { ImmediateRenderer, WebGLRenderer } from 'vitrine';
 
 // Import all demos statically
 import { demo as barChartDemo } from './demos/bar-chart.js';
@@ -41,6 +41,7 @@ let currentDemo = null;
 let renderer = null;
 let animationId = null;
 let canvas = null;
+let rendererMode = 'canvas2d';
 
 // UI Elements
 let demoListEl, demoNameEl, demoDescEl, codePanelEl, codeContentEl, statsOverlayEl;
@@ -59,6 +60,12 @@ function init() {
   document.getElementById('toggleCode').addEventListener('click', toggleCodePanel);
   document.getElementById('toggleStats').addEventListener('click', toggleStats);
   document.getElementById('resetDemo').addEventListener('click', resetDemo);
+  document.getElementById('rendererMode').addEventListener('change', (event) => {
+    rendererMode = event.target.value;
+    if (currentDemo) {
+      loadDemo(currentDemo);
+    }
+  });
 
   // Render demo list
   renderDemoList();
@@ -121,7 +128,9 @@ function loadDemo(demo) {
     cancelAnimationFrame(animationId);
   }
   if (renderer) {
-    renderer.destroy();
+    if (renderer.destroy) {
+      renderer.destroy();
+    }
   }
 
   // Update UI
@@ -136,12 +145,20 @@ function loadDemo(demo) {
 
   // Initialize renderer
   const size = demo.size || { width: 800, height: 600 };
-  renderer = new ImmediateRenderer({
-    canvas,
-    width: size.width,
-    height: size.height,
-    enableCulling: demo.enableCulling !== false
-  });
+  if (rendererMode === 'webgl') {
+    renderer = new WebGLRenderer({
+      canvas,
+      width: size.width,
+      height: size.height
+    });
+  } else {
+    renderer = new ImmediateRenderer({
+      canvas,
+      width: size.width,
+      height: size.height,
+      enableCulling: demo.enableCulling !== false
+    });
+  }
 
   // Initialize demo
   currentDemo = demo;
@@ -161,7 +178,12 @@ function loadDemo(demo) {
 
     // Render
     const scene = demo.render(state);
-    renderer.render(scene);
+    if (rendererMode === 'webgl') {
+      renderer.clear();
+      renderer.render();
+    } else {
+      renderer.render(scene);
+    }
 
     // Update stats
     updateStats();
@@ -175,6 +197,14 @@ function loadDemo(demo) {
 // Update performance stats
 function updateStats() {
   if (!renderer) return;
+  if (rendererMode === 'webgl') {
+    document.getElementById('statFPS').textContent = 'N/A';
+    document.getElementById('statBlocks').textContent = 'N/A';
+    document.getElementById('statCulled').textContent = 'N/A';
+    document.getElementById('statRenderTime').textContent = 'N/A';
+    return;
+  }
+
   const stats = renderer.getPerformanceStats();
   document.getElementById('statFPS').textContent = stats.fps || 0;
   document.getElementById('statBlocks').textContent = stats.blocksRendered.toLocaleString();
