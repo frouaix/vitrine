@@ -21,6 +21,14 @@ Examples:
 - `dxp`, `dyp`: size in parent coordinates.
 - `duRadius`, `duPadding`, `duSpacing`, `duBorderWidth`.
 
+## Unitless numbers
+
+- Unitless numeric intermediates should NOT use geometric prefixes (`x*`, `y*`, `dx*`, `dy*`, `du*`).
+- Use conventional math names for unitless values.
+
+Examples:
+- `cos`, `sin`, `det`, `invDet`, `t`, `scale`.
+
 ## Colors
 
 - All color properties, fields, and variables must start with `col`.

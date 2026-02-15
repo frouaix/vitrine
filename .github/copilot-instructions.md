@@ -91,6 +91,7 @@ Events flow through the transform hierarchy:
 - **Use explicit return types** for functions
 - **Prefer destructuring** over direct property access
 - **Hungarian notation** for geometric variables (see `hungarian-notation.md`)
+- **Guard Clause / Early Return** pattern for better readability
 - **No console.log** in production code
 - **No inline CSS** - use CSS Modules or styled components
 
