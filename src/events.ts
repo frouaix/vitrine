@@ -1,9 +1,14 @@
 // Copyright (c) 2026 François Rouaix
 
 // Event system for handling user interactions
-import type { Block } from './core/types.ts';
+import { BlockType, type Block } from './core/types.ts';
 import { HitTester, type HitTestResult } from './hit-test.ts';
-import { Matrix2D } from './transform.ts';
+
+const EMPTY_SCENE: Block = {
+  type: BlockType.Group,
+  props: {},
+  children: []
+};
 
 export interface PointerEventData {
   x: number;
@@ -19,10 +24,10 @@ export interface PointerEventData {
 
 export class EventManager {
   private canvas: HTMLCanvasElement;
-  private currentScene: Block | null = null;
+  private currentScene: Block = EMPTY_SCENE;
   private hoveredBlock: Block | null = null;
   private draggedBlock: Block | null = null;
-  private dragStart: { xc: number; yc: number } | null = null;
+  private ptcDragStart: { xc: number; yc: number } | null = null;
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -68,118 +73,104 @@ export class EventManager {
     this.canvas.removeEventListener('pointerleave', this.boundHandlers.pointerleave);
     
     // Clear state
-    this.currentScene = null;
+    this.currentScene = EMPTY_SCENE;
     this.hoveredBlock = null;
     this.draggedBlock = null;
-    this.dragStart = null;
+    this.ptcDragStart = null;
   }
 
   private getCanvasCoordinates(event: PointerEvent): { xc: number; yc: number } {
-    const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
+    const { canvas } = this;
+    const { width: dxcCanvas, height: dycCanvas } = canvas;
+    const { left: xwCanvas, top: ywCanvas, width: dxwCanvas, height: dywCanvas } = canvas.getBoundingClientRect();
+    const { clientX: xwPointer, clientY: ywPointer } = event;
+    const scaleX = dxcCanvas / dxwCanvas;
+    const scaleY = dycCanvas / dywCanvas;
     
     return {
-      xc: (event.clientX - rect.left) * scaleX,
-      yc: (event.clientY - rect.top) * scaleY
+      xc: (xwPointer - xwCanvas) * scaleX,
+      yc: (ywPointer - ywCanvas) * scaleY
     };
   }
 
   private createEventData(event: PointerEvent): PointerEventData {
-    const coords = this.getCanvasCoordinates(event);
+    const { xc, yc } = this.getCanvasCoordinates(event);
+    const { button, buttons, ctrlKey, shiftKey, altKey, metaKey } = event;
     return {
-      x: coords.xc,
-      y: coords.yc,
-      button: event.button,
-      buttons: event.buttons,
-      ctrlKey: event.ctrlKey,
-      shiftKey: event.shiftKey,
-      altKey: event.altKey,
-      metaKey: event.metaKey,
+      x: xc,
+      y: yc,
+      button,
+      buttons,
+      ctrlKey,
+      shiftKey,
+      altKey,
+      metaKey,
       originalEvent: event
     };
   }
 
+  private withPointerHit(
+    event: PointerEvent,
+    handler: (hit: HitTestResult) => void
+  ): void {
+    const { currentScene } = this;
+
+    const { xc, yc } = this.getCanvasCoordinates(event);
+    const hit = HitTester.hitTest(currentScene, xc, yc);
+    if (!hit) return;
+
+    handler(hit);
+  }
+
   private handleClick(event: PointerEvent): void {
-    if (!this.currentScene) return;
-
-    const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
-
-    if (hit) {
-      const { props } = hit.block;
-      const { onClick } = props;
-      if (onClick) {
-        onClick(event);
-      }
-    }
+    this.withPointerHit(event, (hit) => {
+      hit.block.props.onClick?.(event);
+    });
   }
 
   private handlePointerDown(event: PointerEvent): void {
-    if (!this.currentScene) return;
-
-    const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
-
-    if (hit) {
+    this.withPointerHit(event, (hit) => {
       const { block } = hit;
-      const { props } = block;
-      const { onPointerDown, onDrag } = props;
-
-      if (onPointerDown) {
-        onPointerDown(event);
-      }
+      const { onPointerDown, onDrag } = block.props;
+      onPointerDown?.(event);
 
       // Start drag if handler exists
       if (onDrag) {
         this.draggedBlock = block;
-        this.dragStart = coords;
+        this.ptcDragStart = { xc: hit.worldX, yc: hit.worldY };
       }
-    }
+    });
   }
 
   private handlePointerUp(event: PointerEvent): void {
-    if (!this.currentScene) return;
-
-    const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
-
-    if (hit) {
-      const { props } = hit.block;
-      const { onPointerUp } = props;
-      if (onPointerUp) {
-        onPointerUp(event);
-      }
-    }
+    this.withPointerHit(event, (hit) => {
+      hit.block.props.onPointerUp?.(event);
+    });
 
     // End drag
     this.draggedBlock = null;
-    this.dragStart = null;
+    this.ptcDragStart = null;
   }
 
   private handlePointerMove(event: PointerEvent): void {
-    if (!this.currentScene) return;
+    const { currentScene, draggedBlock, ptcDragStart, canvas } = this;
 
-    const coords = this.getCanvasCoordinates(event);
+    const { xc, yc } = this.getCanvasCoordinates(event);
+    const hit = HitTester.hitTest(currentScene, xc, yc);
 
     // Handle dragging
-    if (this.draggedBlock && this.dragStart) {
-      const { props } = this.draggedBlock;
-      const { onDrag } = props;
-      if (onDrag) {
-        onDrag(event);
-      }
+    if (draggedBlock && ptcDragStart) {
+      draggedBlock.props.onDrag?.(event);
     }
 
     // Handle hover
-    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
     const newHoveredBlock = hit ? hit.block : null;
+    const { hoveredBlock } = this;
 
-    if (newHoveredBlock !== this.hoveredBlock) {
+    if (newHoveredBlock !== hoveredBlock) {
       // Hover state changed
-      if (this.hoveredBlock) {
-        const { props } = this.hoveredBlock;
-        const { onHover } = props;
+      if (hoveredBlock) {
+        const { onHover } = hoveredBlock.props;
         if (onHover) {
         // Trigger hover end (could add onHoverEnd if needed)
         }
@@ -187,32 +178,25 @@ export class EventManager {
 
       this.hoveredBlock = newHoveredBlock;
 
-      if (this.hoveredBlock) {
-        const { props } = this.hoveredBlock;
-        const { onHover } = props;
+      if (newHoveredBlock) {
+        const { onHover } = newHoveredBlock.props;
         if (onHover) {
           onHover(event);
         }
       }
 
       // Update cursor
-      this.canvas.style.cursor = this.hoveredBlock ? 'pointer' : 'default';
+      canvas.style.cursor = newHoveredBlock ? 'pointer' : 'default';
     }
 
     // Always trigger pointer move if handler exists
-    if (hit) {
-      const { props } = hit.block;
-      const { onPointerMove } = props;
-      if (onPointerMove) {
-        onPointerMove(event);
-      }
-    }
+    hit?.block.props.onPointerMove?.(event);
   }
 
   private handlePointerLeave(event: PointerEvent): void {
     this.hoveredBlock = null;
     this.draggedBlock = null;
-    this.dragStart = null;
+    this.ptcDragStart = null;
     this.canvas.style.cursor = 'default';
   }
 

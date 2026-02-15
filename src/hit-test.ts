@@ -154,21 +154,21 @@ export class HitTester {
     // Distance from point to line segment
     const dxl = xl2 - xl1;
     const dyl = yl2 - yl1;
-    const lengthSquared = dxl * dxl + dyl * dyl;
+    const duLengthSquared = dxl * dxl + dyl * dyl;
 
-    if (lengthSquared === 0) {
+    if (duLengthSquared === 0) {
       // Line is a point
-      const dist = Math.sqrt((xl - xl1) * (xl - xl1) + (yl - yl1) * (yl - yl1));
-      return dist <= strokeWidth / 2;
+      const duDistance = Math.sqrt((xl - xl1) * (xl - xl1) + (yl - yl1) * (yl - yl1));
+      return duDistance <= strokeWidth / 2;
     }
 
     // Project point onto line
-    const t = Math.max(0, Math.min(1, ((xl - xl1) * dxl + (yl - yl1) * dyl) / lengthSquared));
+    const t = Math.max(0, Math.min(1, ((xl - xl1) * dxl + (yl - yl1) * dyl) / duLengthSquared));
     const xlProj = xl1 + t * dxl;
     const ylProj = yl1 + t * dyl;
 
-    const dist = Math.sqrt((xl - xlProj) * (xl - xlProj) + (yl - ylProj) * (yl - ylProj));
-    return dist <= strokeWidth / 2;
+    const duDistance = Math.sqrt((xl - xlProj) * (xl - xlProj) + (yl - ylProj) * (yl - ylProj));
+    return duDistance <= strokeWidth / 2;
   }
 
   private static hitTestArc(
@@ -178,8 +178,8 @@ export class HitTester {
     startAngle: number,
     endAngle: number
   ): boolean {
-    const distance = Math.sqrt(xl * xl + yl * yl);
-    if (Math.abs(distance - rl) > 5) return false; // 5px tolerance for arc stroke
+    const duDistance = Math.sqrt(xl * xl + yl * yl);
+    if (Math.abs(duDistance - rl) > 5) return false; // 5px tolerance for arc stroke
 
     const angle = Math.atan2(yl, xl);
     let normalizedAngle = angle;
