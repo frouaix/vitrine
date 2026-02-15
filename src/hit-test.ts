@@ -78,29 +78,31 @@ export class HitTester {
   }
 
   private static hitTestShape(block: Block, x: number, y: number): boolean {
+    const xl = x;
+    const yl = y;
     const props = block.props as any;
 
     switch (block.type) {
       case BlockType.Rectangle:
-        return this.hitTestRectangle(x, y, props.width, props.height);
+        return this.hitTestRectangle(xl, yl, props.width, props.height);
 
       case BlockType.Circle:
-        return this.hitTestCircle(x, y, props.radius);
+        return this.hitTestCircle(xl, yl, props.radius);
 
       case BlockType.Ellipse:
-        return this.hitTestEllipse(x, y, props.radiusX, props.radiusY);
+        return this.hitTestEllipse(xl, yl, props.radiusX, props.radiusY);
 
       case BlockType.Line:
-        return this.hitTestLine(x, y, props.x1, props.y1, props.x2, props.y2, props.strokeWidth ?? 1);
+        return this.hitTestLine(xl, yl, props.x1, props.y1, props.x2, props.y2, props.strokeWidth ?? 1);
 
       case BlockType.Text:
         // Approximate text bounds - can be improved with actual text metrics
         const fontSize = props.fontSize ?? 16;
         const textWidth = props.text.length * fontSize * 0.6; // rough estimate
-        return this.hitTestRectangle(x, y, textWidth, fontSize);
+        return this.hitTestRectangle(xl, yl, textWidth, fontSize);
 
       case BlockType.Arc:
-        return this.hitTestArc(x, y, props.radius, props.startAngle, props.endAngle);
+        return this.hitTestArc(xl, yl, props.radius, props.startAngle, props.endAngle);
 
       case BlockType.Group:
       case BlockType.Layer:
@@ -112,58 +114,58 @@ export class HitTester {
     }
   }
 
-  private static hitTestRectangle(x: number, y: number, width: number, height: number): boolean {
-    return x >= 0 && x <= width && y >= 0 && y <= height;
+  private static hitTestRectangle(xl: number, yl: number, dxl: number, dyl: number): boolean {
+    return xl >= 0 && xl <= dxl && yl >= 0 && yl <= dyl;
   }
 
-  private static hitTestCircle(x: number, y: number, radius: number): boolean {
-    return x * x + y * y <= radius * radius;
+  private static hitTestCircle(xl: number, yl: number, rl: number): boolean {
+    return xl * xl + yl * yl <= rl * rl;
   }
 
-  private static hitTestEllipse(x: number, y: number, radiusX: number, radiusY: number): boolean {
-    return (x * x) / (radiusX * radiusX) + (y * y) / (radiusY * radiusY) <= 1;
+  private static hitTestEllipse(xl: number, yl: number, rxl: number, ryl: number): boolean {
+    return (xl * xl) / (rxl * rxl) + (yl * yl) / (ryl * ryl) <= 1;
   }
 
   private static hitTestLine(
-    x: number,
-    y: number,
-    x1: number,
-    y1: number,
-    x2: number,
-    y2: number,
+    xl: number,
+    yl: number,
+    xl1: number,
+    yl1: number,
+    xl2: number,
+    yl2: number,
     strokeWidth: number
   ): boolean {
     // Distance from point to line segment
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const lengthSquared = dx * dx + dy * dy;
+    const dxl = xl2 - xl1;
+    const dyl = yl2 - yl1;
+    const lengthSquared = dxl * dxl + dyl * dyl;
 
     if (lengthSquared === 0) {
       // Line is a point
-      const dist = Math.sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1));
+      const dist = Math.sqrt((xl - xl1) * (xl - xl1) + (yl - yl1) * (yl - yl1));
       return dist <= strokeWidth / 2;
     }
 
     // Project point onto line
-    const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / lengthSquared));
-    const projX = x1 + t * dx;
-    const projY = y1 + t * dy;
+    const t = Math.max(0, Math.min(1, ((xl - xl1) * dxl + (yl - yl1) * dyl) / lengthSquared));
+    const xlProj = xl1 + t * dxl;
+    const ylProj = yl1 + t * dyl;
 
-    const dist = Math.sqrt((x - projX) * (x - projX) + (y - projY) * (y - projY));
+    const dist = Math.sqrt((xl - xlProj) * (xl - xlProj) + (yl - ylProj) * (yl - ylProj));
     return dist <= strokeWidth / 2;
   }
 
   private static hitTestArc(
-    x: number,
-    y: number,
-    radius: number,
+    xl: number,
+    yl: number,
+    rl: number,
     startAngle: number,
     endAngle: number
   ): boolean {
-    const distance = Math.sqrt(x * x + y * y);
-    if (Math.abs(distance - radius) > 5) return false; // 5px tolerance for arc stroke
+    const distance = Math.sqrt(xl * xl + yl * yl);
+    if (Math.abs(distance - rl) > 5) return false; // 5px tolerance for arc stroke
 
-    const angle = Math.atan2(y, x);
+    const angle = Math.atan2(yl, xl);
     let normalizedAngle = angle;
     if (normalizedAngle < 0) normalizedAngle += Math.PI * 2;
 
@@ -194,16 +196,16 @@ export class HitTester {
       currentTransform.transformPoint(localBounds.x + localBounds.width, localBounds.y + localBounds.height)
     ];
 
-    const minX = Math.min(...corners.map(c => c.x));
-    const maxX = Math.max(...corners.map(c => c.x));
-    const minY = Math.min(...corners.map(c => c.y));
-    const maxY = Math.max(...corners.map(c => c.y));
+    const xcMin = Math.min(...corners.map(c => c.x));
+    const xcMax = Math.max(...corners.map(c => c.x));
+    const ycMin = Math.min(...corners.map(c => c.y));
+    const ycMax = Math.max(...corners.map(c => c.y));
 
     return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY
+      x: xcMin,
+      y: ycMin,
+      width: xcMax - xcMin,
+      height: ycMax - ycMin
     };
   }
 
@@ -231,11 +233,11 @@ export class HitTester {
         };
 
       case BlockType.Line:
-        const minX = Math.min(props.x1, props.x2);
-        const maxX = Math.max(props.x1, props.x2);
-        const minY = Math.min(props.y1, props.y2);
-        const maxY = Math.max(props.y1, props.y2);
-        return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
+        const xlMin = Math.min(props.x1, props.x2);
+        const xlMax = Math.max(props.x1, props.x2);
+        const ylMin = Math.min(props.y1, props.y2);
+        const ylMax = Math.max(props.y1, props.y2);
+        return { x: xlMin, y: ylMin, width: xlMax - xlMin, height: ylMax - ylMin };
 
       case BlockType.Text:
         const fontSize = props.fontSize ?? 16;

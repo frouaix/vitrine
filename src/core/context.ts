@@ -14,14 +14,14 @@ export interface RenderContext {
   
   // Drawing primitives - to be implemented by concrete renderers
   clear(): void;
-  drawRectangle(x: number, y: number, width: number, height: number, props: any): void;
-  drawCircle(x: number, y: number, radius: number, props: any): void;
-  drawEllipse(x: number, y: number, radiusX: number, radiusY: number, props: any): void;
+  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: any): void;
+  drawCircle(xl: number, yl: number, rl: number, props: any): void;
+  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void;
   drawPath(pathData: string, props: any): void;
-  drawLine(x1: number, y1: number, x2: number, y2: number, props: any): void;
-  drawText(text: string, x: number, y: number, props: any): void;
-  drawImage(image: HTMLImageElement, x: number, y: number, width: number, height: number, props: any): void;
-  drawArc(x: number, y: number, radius: number, startAngle: number, endAngle: number, props: any): void;
+  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: any): void;
+  drawText(text: string, xl: number, yl: number, props: any): void;
+  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void;
+  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void;
 }
 
 export class Canvas2DContext implements RenderContext {
@@ -66,33 +66,33 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.restore();
   }
 
-  drawRectangle(x: number, y: number, width: number, height: number, props: any): void {
+  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: any): void {
     if (props.cornerRadius) {
-      this.roundRect(x, y, width, height, props.cornerRadius, props);
+      this.roundRect(xl, yl, dxl, dyl, props.cornerRadius, props);
     } else {
       if (props.fill) {
         this.ctx.fillStyle = props.fill;
-        this.ctx.fillRect(x, y, width, height);
+        this.ctx.fillRect(xl, yl, dxl, dyl);
       }
       if (props.stroke) {
         this.ctx.strokeStyle = props.stroke;
         this.ctx.lineWidth = props.strokeWidth ?? 1;
-        this.ctx.strokeRect(x, y, width, height);
+        this.ctx.strokeRect(xl, yl, dxl, dyl);
       }
     }
   }
 
-  private roundRect(x: number, y: number, width: number, height: number, radius: number, props: any): void {
+  private roundRect(xl: number, yl: number, dxl: number, dyl: number, rl: number, props: any): void {
     this.ctx.beginPath();
-    this.ctx.moveTo(x + radius, y);
-    this.ctx.lineTo(x + width - radius, y);
-    this.ctx.arcTo(x + width, y, x + width, y + radius, radius);
-    this.ctx.lineTo(x + width, y + height - radius);
-    this.ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
-    this.ctx.lineTo(x + radius, y + height);
-    this.ctx.arcTo(x, y + height, x, y + height - radius, radius);
-    this.ctx.lineTo(x, y + radius);
-    this.ctx.arcTo(x, y, x + radius, y, radius);
+    this.ctx.moveTo(xl + rl, yl);
+    this.ctx.lineTo(xl + dxl - rl, yl);
+    this.ctx.arcTo(xl + dxl, yl, xl + dxl, yl + rl, rl);
+    this.ctx.lineTo(xl + dxl, yl + dyl - rl);
+    this.ctx.arcTo(xl + dxl, yl + dyl, xl + dxl - rl, yl + dyl, rl);
+    this.ctx.lineTo(xl + rl, yl + dyl);
+    this.ctx.arcTo(xl, yl + dyl, xl, yl + dyl - rl, rl);
+    this.ctx.lineTo(xl, yl + rl);
+    this.ctx.arcTo(xl, yl, xl + rl, yl, rl);
     this.ctx.closePath();
     
     if (props.fill) {
@@ -106,9 +106,9 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawCircle(x: number, y: number, radius: number, props: any): void {
+  drawCircle(xl: number, yl: number, rl: number, props: any): void {
     this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+    this.ctx.arc(xl, yl, rl, 0, Math.PI * 2);
     if (props.fill) {
       this.ctx.fillStyle = props.fill;
       this.ctx.fill();
@@ -120,9 +120,9 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawEllipse(x: number, y: number, radiusX: number, radiusY: number, props: any): void {
+  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void {
     this.ctx.beginPath();
-    this.ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+    this.ctx.ellipse(xl, yl, rxl, ryl, 0, 0, Math.PI * 2);
     if (props.fill) {
       this.ctx.fillStyle = props.fill;
       this.ctx.fill();
@@ -147,16 +147,16 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawLine(x1: number, y1: number, x2: number, y2: number, props: any): void {
+  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: any): void {
     this.ctx.beginPath();
-    this.ctx.moveTo(x1, y1);
-    this.ctx.lineTo(x2, y2);
+    this.ctx.moveTo(xl1, yl1);
+    this.ctx.lineTo(xl2, yl2);
     this.ctx.strokeStyle = props.stroke;
     this.ctx.lineWidth = props.strokeWidth ?? 1;
     this.ctx.stroke();
   }
 
-  drawText(text: string, x: number, y: number, props: any): void {
+  drawText(text: string, xl: number, yl: number, props: any): void {
     if (props.font) this.ctx.font = props.font;
     if (props.fontSize) this.ctx.font = `${props.fontSize}px sans-serif`;
     if (props.align) this.ctx.textAlign = props.align;
@@ -164,22 +164,22 @@ export class Canvas2DContext implements RenderContext {
     
     if (props.fill) {
       this.ctx.fillStyle = props.fill;
-      this.ctx.fillText(text, x, y);
+      this.ctx.fillText(text, xl, yl);
     }
     if (props.stroke) {
       this.ctx.strokeStyle = props.stroke;
       this.ctx.lineWidth = props.strokeWidth ?? 1;
-      this.ctx.strokeText(text, x, y);
+      this.ctx.strokeText(text, xl, yl);
     }
   }
 
-  drawImage(image: HTMLImageElement, x: number, y: number, width: number, height: number, props: any): void {
-    this.ctx.drawImage(image, x, y, width, height);
+  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void {
+    this.ctx.drawImage(image, xl, yl, dxl, dyl);
   }
 
-  drawArc(x: number, y: number, radius: number, startAngle: number, endAngle: number, props: any): void {
+  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {
     this.ctx.beginPath();
-    this.ctx.arc(x, y, radius, startAngle, endAngle);
+    this.ctx.arc(xl, yl, rl, startAngle, endAngle);
     if (props.fill) {
       this.ctx.fillStyle = props.fill;
       this.ctx.fill();

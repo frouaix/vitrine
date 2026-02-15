@@ -18,8 +18,8 @@ export interface RendererConfig {
 export class ImmediateRenderer {
   private canvas: HTMLCanvasElement;
   private context: RenderContext;
-  private width: number;
-  private height: number;
+  private dxc: number;
+  private dyc: number;
   private pixelRatio: number;
   private eventManager: EventManager | null = null;
   private enableCulling: boolean;
@@ -28,16 +28,16 @@ export class ImmediateRenderer {
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
-    this.width = config.width || 800;
-    this.height = config.height || 600;
+    this.dxc = config.width || 800;
+    this.dyc = config.height || 600;
     this.pixelRatio = config.pixelRatio || window.devicePixelRatio || 1;
     this.enableCulling = config.enableCulling ?? true;
 
     this.viewport = {
       x: 0,
       y: 0,
-      width: this.width,
-      height: this.height
+      width: this.dxc,
+      height: this.dyc
     };
 
     this.setupCanvas();
@@ -55,21 +55,21 @@ export class ImmediateRenderer {
   }
 
   private setupCanvas(): void {
-    this.canvas.width = this.width * this.pixelRatio;
-    this.canvas.height = this.height * this.pixelRatio;
-    this.canvas.style.width = `${this.width}px`;
-    this.canvas.style.height = `${this.height}px`;
+    this.canvas.width = this.dxc * this.pixelRatio;
+    this.canvas.height = this.dyc * this.pixelRatio;
+    this.canvas.style.width = `${this.dxc}px`;
+    this.canvas.style.height = `${this.dyc}px`;
   }
 
   getCanvas(): HTMLCanvasElement {
     return this.canvas;
   }
 
-  resize(width: number, height: number): void {
-    this.width = width;
-    this.height = height;
-    this.viewport.width = width;
-    this.viewport.height = height;
+  resize(dxc: number, dyc: number): void {
+    this.dxc = dxc;
+    this.dyc = dyc;
+    this.viewport.width = dxc;
+    this.viewport.height = dyc;
     this.setupCanvas();
   }
 

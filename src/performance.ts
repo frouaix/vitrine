@@ -30,14 +30,14 @@ export class PerformanceOptimizer {
     if (block.props.visible === false) return false;
 
     // Get world bounds (getBounds will apply the block's transform)
-    const bounds = HitTester.getBounds(block, worldTransform);
-    if (!bounds) {
+    const boundsWorld = HitTester.getBounds(block, worldTransform);
+    if (!boundsWorld) {
       // If we can't calculate bounds, assume visible
       return true;
     }
 
     // Check if in viewport
-    return this.isInViewport(bounds, viewport);
+    return this.isInViewport(boundsWorld, viewport);
   }
 
   private static getBlockTransform(props: any): Matrix2D {
@@ -61,7 +61,7 @@ export class PerformanceOptimizer {
 
   // Object pooling for frequently allocated objects
   private static transformPool: Matrix2D[] = [];
-  private static pointPool: { x: number; y: number }[] = [];
+  private static pointPool: { xc: number; yc: number }[] = [];
 
   static getPooledTransform(): Matrix2D {
     return this.transformPool.pop() || Matrix2D.identity();
@@ -73,11 +73,11 @@ export class PerformanceOptimizer {
     }
   }
 
-  static getPooledPoint(): { x: number; y: number } {
-    return this.pointPool.pop() || { x: 0, y: 0 };
+  static getPooledPoint(): { xc: number; yc: number } {
+    return this.pointPool.pop() || { xc: 0, yc: 0 };
   }
 
-  static returnPooledPoint(point: { x: number; y: number }): void {
+  static returnPooledPoint(point: { xc: number; yc: number }): void {
     if (this.pointPool.length < 1000) {
       this.pointPool.push(point);
     }

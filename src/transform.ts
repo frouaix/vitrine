@@ -25,8 +25,8 @@ export class Matrix2D {
     return new Matrix2D();
   }
 
-  static translation(x: number, y: number): Matrix2D {
-    return new Matrix2D(1, 0, 0, 1, x, y);
+  static translation(dxl: number, dyl: number): Matrix2D {
+    return new Matrix2D(1, 0, 0, 1, dxl, dyl);
   }
 
   static rotation(angle: number): Matrix2D {
@@ -57,8 +57,8 @@ export class Matrix2D {
     return new Matrix2D(a, b, c, d, e, f);
   }
 
-  translate(x: number, y: number): Matrix2D {
-    return this.multiply(Matrix2D.translation(x, y));
+  translate(dxl: number, dyl: number): Matrix2D {
+    return this.multiply(Matrix2D.translation(dxl, dyl));
   }
 
   rotate(angle: number): Matrix2D {
@@ -73,10 +73,10 @@ export class Matrix2D {
     return this.multiply(Matrix2D.skew(skewX, skewY));
   }
 
-  transformPoint(x: number, y: number): { x: number; y: number } {
+  transformPoint(xl: number, yl: number): { x: number; y: number } {
     return {
-      x: this.a * x + this.c * y + this.e,
-      y: this.b * x + this.d * y + this.f
+      x: this.a * xl + this.c * yl + this.e,
+      y: this.b * xl + this.d * yl + this.f
     };
   }
 

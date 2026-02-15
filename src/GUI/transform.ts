@@ -23,13 +23,13 @@ import type {
 } from './types.js';
 import { GUIControlType } from './types.js';
 
-function repositionBlock<T extends Block>(block: T, x: number, y: number): T {
+function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {
     ...block,
     props: {
       ...block.props,
-      x,
-      y
+      x: xp,
+      y: yp
     }
   } as T;
 }
@@ -175,8 +175,8 @@ function transformTextBox(
   const props = control.props as TextBoxProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 300;
-  const height = props.height || 50;
+  const dxp = props.width || 300;
+  const dyp = props.height || 50;
   
   const bgColor = state.focused
     ? style.backgroundColor
@@ -193,8 +193,8 @@ function transformTextBox(
   // Background
   children.push(
     rectangle({
-      width,
-      height,
+      width: dxp,
+      height: dyp,
       fill: bgColor,
       stroke: borderColor,
       strokeWidth: style.borderWidth,
@@ -211,7 +211,7 @@ function transformTextBox(
       text({
         text: displayText,
         x: style.padding || 12,
-        y: height / 2,
+        y: dyp / 2,
         fill: props.value ? style.textColor : (style.disabledTextColor || style.textColor),
         fontSize: style.fontSize,
         font: style.fontFamily,
@@ -240,8 +240,8 @@ function transformCheckBox(
   const props = control.props as CheckBoxProps;
   const style = getControlStyle(control, context);
   
-  const boxSize = 28;
-  const labelSpacing = 12;
+  const dypBox = 28;
+  const dxpLabelSpacing = 12;
   
   const children: Block[] = [];
   
@@ -254,8 +254,8 @@ function transformCheckBox(
   
   children.push(
     rectangle({
-      width: boxSize,
-      height: boxSize,
+      width: dypBox,
+      height: dypBox,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -270,8 +270,8 @@ function transformCheckBox(
     children.push(
       text({
         text: '✓',
-        x: boxSize / 2,
-        y: boxSize / 2,
+        x: dypBox / 2,
+        y: dypBox / 2,
         fill: '#ffffff',
         fontSize: 18,
         align: 'center',
@@ -285,8 +285,8 @@ function transformCheckBox(
     children.push(
       text({
         text: props.label,
-        x: boxSize + labelSpacing,
-        y: boxSize / 2,
+        x: dypBox + dxpLabelSpacing,
+        y: dypBox / 2,
         fill: style.textColor,
         fontSize: style.fontSize,
         font: style.fontFamily,
@@ -315,8 +315,8 @@ function transformRadioButton(
   const props = control.props as RadioButtonProps;
   const style = getControlStyle(control, context);
   
-  const radius = 14;
-  const labelSpacing = 12;
+  const rl = 14;
+  const dxpLabelSpacing = 12;
   
   const children: Block[] = [];
   
@@ -327,7 +327,7 @@ function transformRadioButton(
   
   children.push(
     circle({
-      radius,
+      radius: rl,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -351,7 +351,7 @@ function transformRadioButton(
     children.push(
       text({
         text: props.label,
-        x: radius + labelSpacing,
+        x: rl + dxpLabelSpacing,
         y: 0,
         fill: style.textColor,
         fontSize: style.fontSize,
@@ -388,8 +388,8 @@ function transformButton(
   
   const style = getControlStyle({ ...control, props: { ...props, className } }, context);
   
-  const width = props.width || 160;
-  const height = props.height || 50;
+  const dxp = props.width || 160;
+  const dyp = props.height || 50;
   
   const bgColor = !props.enabled && props.enabled !== undefined
     ? style.disabledBackgroundColor
@@ -408,8 +408,8 @@ function transformButton(
   // Background
   children.push(
     rectangle({
-      width,
-      height,
+      width: dxp,
+      height: dyp,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -421,8 +421,8 @@ function transformButton(
   children.push(
     text({
       text: props.label,
-      x: width / 2,
-      y: height / 2,
+      x: dxp / 2,
+      y: dyp / 2,
       fill: textColor,
       fontSize: style.fontSize,
       font: style.fontFamily,
@@ -453,19 +453,19 @@ function transformSlider(
   const props = control.props as SliderProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 300;
-  const trackHeight = 6;
-  const thumbRadius = 12;
+  const dxp = props.width || 300;
+  const dypTrack = 6;
+  const rlThumb = 12;
   
   const min = props.min ?? 0;
   const max = props.max ?? 100;
   const value = props.value ?? min;
   const normalizedValue = (value - min) / (max - min);
-  const thumbX = normalizedValue * width;
+  const xlpThumb = normalizedValue * dxp;
   
   // Persistent drag state (stored on props to survive re-renders)
   if (!(props as any)._dragState) {
-    (props as any)._dragState = { dragging: false, startX: 0, startValue: 0 };
+    (props as any)._dragState = { dragging: false, xwStart: 0, startValue: 0 };
   }
   const dragState = (props as any)._dragState;
   
@@ -475,11 +475,11 @@ function transformSlider(
   children.push(
     rectangle({
       x: 0,
-      y: -trackHeight / 2,
-      width,
-      height: trackHeight,
+      y: -dypTrack / 2,
+      width: dxp,
+      height: dypTrack,
       fill: style.sliderTrackColor || '#4b5563',
-      cornerRadius: trackHeight / 2,
+      cornerRadius: dypTrack / 2,
       stroke: '#888888',
       strokeWidth: 1
     })
@@ -488,15 +488,15 @@ function transformSlider(
   // Thumb - draggable
   children.push(
     circle({
-      x: thumbX,
+      x: xlpThumb,
       y: 0,
-      radius: thumbRadius,
+      radius: rlThumb,
       fill: style.sliderThumbColor || '#3b82f6',
       stroke: '#ffffff',
       strokeWidth: 3,
       onPointerDown: props.onChange ? (e: PointerEvent) => {
         dragState.dragging = true;
-        dragState.startX = e.clientX;
+        dragState.xwStart = e.clientX;
         dragState.startValue = value;
       } : undefined,
       onDrag: props.onChange ? (e: PointerEvent) => {
@@ -507,8 +507,8 @@ function transformSlider(
         const scaleX = canvas.width / rect.width;
         
         // Calculate delta from drag start
-        const deltaX = (e.clientX - dragState.startX) * scaleX;
-        const deltaValue = (deltaX / width) * (max - min);
+        const dxc = (e.clientX - dragState.xwStart) * scaleX;
+        const deltaValue = (dxc / dxp) * (max - min);
         const newValue = Math.max(min, Math.min(max, dragState.startValue + deltaValue));
         
         props.onChange?.(newValue);
@@ -540,8 +540,8 @@ function transformDropdown(
   const props = control.props as DropdownProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 300;
-  const height = props.height || 50;
+  const dxp = props.width || 300;
+  const dyp = props.height || 50;
   
   const bgColor = state.hovered
     ? style.hoverBackgroundColor || style.backgroundColor
@@ -552,8 +552,8 @@ function transformDropdown(
   // Background
   children.push(
     rectangle({
-      width,
-      height,
+      width: dxp,
+      height: dyp,
       fill: bgColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -569,7 +569,7 @@ function transformDropdown(
     text({
       text: displayText,
       x: style.padding || 12,
-      y: height / 2,
+      y: dyp / 2,
       fill: selectedOption ? style.textColor : (style.disabledTextColor || style.textColor),
       fontSize: style.fontSize,
       font: style.fontFamily,
@@ -581,8 +581,8 @@ function transformDropdown(
   children.push(
     text({
       text: '▼',
-      x: width - (style.padding || 12) - 8,
-      y: height / 2,
+      x: dxp - (style.padding || 12) - 8,
+      y: dyp / 2,
       fill: style.textColor,
       fontSize: 14,
       baseline: 'middle'
@@ -636,8 +636,8 @@ function transformGUIImage(
 ): Block {
   const props = control.props as GUIImageProps;
   
-  const width = props.width || 100;
-  const height = props.height || 100;
+  const dxp = props.width || 100;
+  const dyp = props.height || 100;
   
   return group(
     {
@@ -649,8 +649,8 @@ function transformGUIImage(
     [
       image({
         src: props.src,
-        width,
-        height
+        width: dxp,
+        height: dyp
       })
     ]
   );
@@ -664,8 +664,8 @@ function transformPanel(
   const props = control.props as PanelProps;
   const style = getControlStyle(control, context);
   
-  const width = props.width || 300;
-  const height = props.height || 200;
+  const dxp = props.width || 300;
+  const dyp = props.height || 200;
   const padding = props.padding || style.padding || 16;
   
   const children: Block[] = [];
@@ -673,8 +673,8 @@ function transformPanel(
   // Background
   children.push(
     rectangle({
-      width,
-      height,
+      width: dxp,
+      height: dyp,
       fill: style.backgroundColor,
       stroke: style.borderColor,
       strokeWidth: style.borderWidth,
@@ -698,8 +698,8 @@ function transformPanel(
   
   // Transform children
   if (control.children) {
-    const contentY = props.title ? padding + (style.fontSize || 16) + 10 : padding;
-    const transformedChildren = transformGUIChildren(control.children, context, padding, contentY);
+    const ypContent = props.title ? padding + (style.fontSize || 16) + 10 : padding;
+    const transformedChildren = transformGUIChildren(control.children, context, padding, ypContent);
     children.push(...transformedChildren);
   }
   
@@ -729,7 +729,7 @@ function transformStack(
   }
   
   const children: Block[] = [];
-  let offset = padding;
+  let dypOffset = padding;
   let maxCrossAxis = 0; // Track maximum width (for vstack) or height (for hstack)
   
   for (const child of control.children) {
@@ -739,11 +739,11 @@ function transformStack(
     // Create a new block with updated coordinates instead of mutating
     const positionedBlock = repositionBlock(
       transformed,
-      direction === 'horizontal' ? offset : padding,
-      direction === 'horizontal' ? padding : offset
+      direction === 'horizontal' ? dypOffset : padding,
+      direction === 'horizontal' ? padding : dypOffset
     );
     
-    offset += (direction === 'horizontal' ? childDims.width : childDims.height) + spacing;
+    dypOffset += (direction === 'horizontal' ? childDims.width : childDims.height) + spacing;
     
     // Track the maximum size in the cross-axis direction
     if (direction === 'horizontal') {
@@ -756,7 +756,7 @@ function transformStack(
   }
   
   // Remove the trailing spacing from the last child
-  const totalMainAxis = offset - spacing + padding;
+  const totalMainAxis = dypOffset - spacing + padding;
   const totalCrossAxis = maxCrossAxis + 2 * padding;
   
   // Calculate the container's computed size (for documentation/debugging purposes)
@@ -826,16 +826,16 @@ function transformCarousel(
   const children: Block[] = transformed ? [transformed] : [];
   
   // Add navigation dots
-  const dotY = (props.height || 200) + 20;
-  const dotSpacing = 15;
-  const totalWidth = control.children.length * dotSpacing;
-  const startX = ((props.width || 300) - totalWidth) / 2;
+  const ypDot = (props.height || 200) + 20;
+  const dxpDotSpacing = 15;
+  const dxpTotal = control.children.length * dxpDotSpacing;
+  const xpStart = ((props.width || 300) - dxpTotal) / 2;
   
   for (let i = 0; i < control.children.length; i++) {
     children.push(
       circle({
-        x: startX + i * dotSpacing,
-        y: dotY,
+        x: xpStart + i * dxpDotSpacing,
+        y: ypDot,
         radius: 4,
         fill: i === currentIndex ? '#3b82f6' : '#d1d5db'
       })
@@ -887,21 +887,21 @@ function transformGrid(
     const row = Math.floor(index / columns);
     
     // Calculate x position based on previous column widths
-    let xPos = padding;
+    let xp = padding;
     for (let c = 0; c < col; c++) {
-      xPos += maxColWidth[c] + spacing;
+      xp += maxColWidth[c] + spacing;
     }
     
     // Calculate y position based on previous row heights
-    let yPos = padding;
+    let yp = padding;
     for (let r = 0; r < row; r++) {
-      yPos += maxRowHeight[r] + spacing;
+      yp += maxRowHeight[r] + spacing;
     }
     
     const transformed = transformGUIControl(child, context);
     
     // Create a new block with updated coordinates instead of mutating
-    const positionedBlock = repositionBlock(transformed, xPos, yPos);
+    const positionedBlock = repositionBlock(transformed, xp, yp);
     
     children.push(positionedBlock);
   });
@@ -927,15 +927,15 @@ function transformGrid(
 function transformGUIChildren(
   children: GUIControl[],
   context: TransformContext,
-  offsetX: number = 0,
-  offsetY: number = 0
+  dxpOffset: number = 0,
+  dypOffset: number = 0
 ): Block[] {
   return children.map(child => {
     const transformed = transformGUIControl(child, context);
     return repositionBlock(
       transformed,
-      (transformed.props.x || 0) + offsetX,
-      (transformed.props.y || 0) + offsetY
+      (transformed.props.x || 0) + dxpOffset,
+      (transformed.props.y || 0) + dypOffset
     );
   });
 }

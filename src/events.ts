@@ -20,7 +20,7 @@ export class EventManager {
   private currentScene: Block | null = null;
   private hoveredBlock: Block | null = null;
   private draggedBlock: Block | null = null;
-  private dragStart: { x: number; y: number } | null = null;
+  private dragStart: { xc: number; yc: number } | null = null;
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -72,22 +72,22 @@ export class EventManager {
     this.dragStart = null;
   }
 
-  private getCanvasCoordinates(event: PointerEvent): { x: number; y: number } {
+  private getCanvasCoordinates(event: PointerEvent): { xc: number; yc: number } {
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
     
     return {
-      x: (event.clientX - rect.left) * scaleX,
-      y: (event.clientY - rect.top) * scaleY
+      xc: (event.clientX - rect.left) * scaleX,
+      yc: (event.clientY - rect.top) * scaleY
     };
   }
 
   private createEventData(event: PointerEvent): PointerEventData {
     const coords = this.getCanvasCoordinates(event);
     return {
-      x: coords.x,
-      y: coords.y,
+      x: coords.xc,
+      y: coords.yc,
       button: event.button,
       buttons: event.buttons,
       ctrlKey: event.ctrlKey,
@@ -102,7 +102,7 @@ export class EventManager {
     if (!this.currentScene) return;
 
     const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.x, coords.y);
+    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
     if (hit && hit.block.props.onClick) {
       hit.block.props.onClick(event);
@@ -113,7 +113,7 @@ export class EventManager {
     if (!this.currentScene) return;
 
     const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.x, coords.y);
+    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
     if (hit) {
       if (hit.block.props.onPointerDown) {
@@ -132,7 +132,7 @@ export class EventManager {
     if (!this.currentScene) return;
 
     const coords = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(this.currentScene, coords.x, coords.y);
+    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
 
     if (hit && hit.block.props.onPointerUp) {
       hit.block.props.onPointerUp(event);
@@ -154,7 +154,7 @@ export class EventManager {
     }
 
     // Handle hover
-    const hit = HitTester.hitTest(this.currentScene, coords.x, coords.y);
+    const hit = HitTester.hitTest(this.currentScene, coords.xc, coords.yc);
     const newHoveredBlock = hit ? hit.block : null;
 
     if (newHoveredBlock !== this.hoveredBlock) {

@@ -12,15 +12,15 @@ export interface RendererOptions {
 
 export abstract class Renderer {
   protected canvas: HTMLCanvasElement;
-  protected width: number;
-  protected height: number;
+  protected dxc: number;
+  protected dyc: number;
 
   constructor(options: RendererOptions) {
     this.canvas = options.canvas || document.createElement('canvas');
-    this.width = options.width || 800;
-    this.height = options.height || 600;
-    this.canvas.width = this.width;
-    this.canvas.height = this.height;
+    this.dxc = options.width || 800;
+    this.dyc = options.height || 600;
+    this.canvas.width = this.dxc;
+    this.canvas.height = this.dyc;
   }
 
   abstract clear(): void;
@@ -30,11 +30,11 @@ export abstract class Renderer {
     return this.canvas;
   }
 
-  resize(width: number, height: number): void {
-    this.width = width;
-    this.height = height;
-    this.canvas.width = width;
-    this.canvas.height = height;
+  resize(dxc: number, dyc: number): void {
+    this.dxc = dxc;
+    this.dyc = dyc;
+    this.canvas.width = dxc;
+    this.canvas.height = dyc;
   }
 }
 
@@ -49,7 +49,7 @@ export class Canvas2DRenderer extends Renderer {
   }
 
   clear(): void {
-    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.clearRect(0, 0, this.dxc, this.dyc);
   }
 
   render(): void {
