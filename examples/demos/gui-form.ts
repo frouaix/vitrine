@@ -76,15 +76,15 @@ export const demo = {
         dx: 900,
         dy: 680,
         stTitle: 'User Registration Form',
-        padding: 25
+        duPadding: 25
       },
       [
         vstack(
-          { spacing: 25, padding: 0 },
+          { duSpacing: 25, duPadding: 0 },
           [
             // Name field
             vstack(
-              { spacing: 8 },
+              { duSpacing: 8 },
               [
                 label({ stText: 'Full Name:', fontSize: 16 }),
                 textbox({
@@ -99,7 +99,7 @@ export const demo = {
 
             // Email field
             vstack(
-              { spacing: 8 },
+              { duSpacing: 8 },
               [
                 label({ stText: 'Email Address:', fontSize: 16 }),
                 textbox({
@@ -121,26 +121,26 @@ export const demo = {
 
             // Notification preferences
             vstack(
-              { spacing: 12 },
+              { duSpacing: 12 },
               [
                 label({ stText: 'Notification Preferences:', fontSize: 16 }),
                 radiobutton({
                   stLabel: 'Email notifications',
-                  value: 'email',
+                  stValue: 'email',
                   group: 'notifications',
                   fChecked: state.formData.notifications === 'email',
                   onChange: (val) => { state.formData.notifications = val; }
                 }),
                 radiobutton({
                   stLabel: 'SMS notifications',
-                  value: 'sms',
+                  stValue: 'sms',
                   group: 'notifications',
                   fChecked: state.formData.notifications === 'sms',
                   onChange: (val) => { state.formData.notifications = val; }
                 }),
                 radiobutton({
                   stLabel: 'No notifications',
-                  value: 'none',
+                  stValue: 'none',
                   group: 'notifications',
                   fChecked: state.formData.notifications === 'none',
                   onChange: (val) => { state.formData.notifications = val; }
@@ -150,7 +150,7 @@ export const demo = {
 
             // Volume slider
             vstack(
-              { spacing: 12 },
+              { duSpacing: 12 },
               [
                 label({ stText: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 16 }),
                 slider({
@@ -165,13 +165,13 @@ export const demo = {
 
             // Country dropdown
             vstack(
-              { spacing: 8 },
+              { duSpacing: 8 },
               [
                 label({ stText: 'Country:', fontSize: 16 }),
                 dropdown({
                   dx: 850,
                   dy: 50,
-                  value: state.formData.country,
+                  stValue: state.formData.country,
                   stPlaceholder: 'Select your country',
                   options: [
                     { stLabel: 'United States', value: 'us' },
@@ -189,7 +189,7 @@ export const demo = {
 
             // Action buttons and theme switcher
             hstack(
-              { spacing: 15, alignment: 'center' },
+              { duSpacing: 15, alignment: 'center' },
               [
                 button({
                   stLabel: 'Submit',

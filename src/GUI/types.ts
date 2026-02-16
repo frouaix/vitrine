@@ -5,6 +5,7 @@
 import type { Block } from '../core/types.ts';
 
 export type GUIColor = string; // CSS color format
+export type Rs = { width: number; height: number };
 
 // GUI control types
 export enum GUIControlType {
@@ -35,12 +36,8 @@ export interface GUIBaseProps {
   className?: string;
   fVisible?: boolean;
   fEnabled?: boolean;
-  visible?: boolean;
-  enabled?: boolean;
   dx?: number;
   dy?: number;
-  width?: number;
-  height?: number;
   x?: number;
   y?: number;
 }
@@ -50,9 +47,6 @@ export interface TextBoxProps extends GUIBaseProps {
   stValue?: string;
   stPlaceholder?: string;
   fMultiline?: boolean;
-  value?: string;
-  placeholder?: string;
-  multiline?: boolean;
   maxLength?: number;
   onChange?: (stValue: string) => void;
   onFocus?: () => void;
@@ -64,8 +58,6 @@ export interface TextBoxProps extends GUIBaseProps {
 export interface CheckBoxProps extends GUIBaseProps {
   fChecked?: boolean;
   stLabel?: string;
-  checked?: boolean;
-  label?: string;
   onChange?: (fChecked: boolean) => void;
   onHover?: (event: PointerEvent) => void;
 }
@@ -73,9 +65,7 @@ export interface CheckBoxProps extends GUIBaseProps {
 export interface RadioButtonProps extends GUIBaseProps {
   fChecked?: boolean;
   stLabel?: string;
-  checked?: boolean;
-  label?: string;
-  value?: string;
+  stValue?: string;
   group?: string;
   onChange?: (stValue: string) => void;
   onHover?: (event: PointerEvent) => void;
@@ -83,7 +73,6 @@ export interface RadioButtonProps extends GUIBaseProps {
 
 export interface ButtonProps extends GUIBaseProps {
   stLabel?: string;
-  label?: string;
   onClick?: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
   onHover?: (event: PointerEvent) => void;
@@ -99,10 +88,9 @@ export interface SliderProps extends GUIBaseProps {
 }
 
 export interface DropdownProps extends GUIBaseProps {
-  value?: string;
-  options: Array<{ stLabel?: string; label?: string; value: string }>;
+  stValue?: string;
+  options: Array<{ stLabel?: string; value: string }>;
   stPlaceholder?: string;
-  placeholder?: string;
   onChange?: (stValue: string) => void;
   onClick?: (event: PointerEvent) => void;
   onHover?: (event: PointerEvent) => void;
@@ -114,27 +102,26 @@ export type Alignment = 'start' | 'center' | 'end' | 'stretch';
 
 export interface StackProps extends GUIBaseProps {
   direction?: StackDirection;
-  spacing?: number;
+  duSpacing?: number;
   alignment?: Alignment;
-  padding?: number;
+  duPadding?: number;
 }
 
 export interface HStackProps extends GUIBaseProps {
-  spacing?: number;
+  duSpacing?: number;
   alignment?: Alignment;
-  padding?: number;
+  duPadding?: number;
 }
 
 export interface VStackProps extends GUIBaseProps {
-  spacing?: number;
+  duSpacing?: number;
   alignment?: Alignment;
-  padding?: number;
+  duPadding?: number;
 }
 
 export interface CarouselProps extends GUIBaseProps {
   currentIndex?: number;
   fAutoPlay?: boolean;
-  autoPlay?: boolean;
   interval?: number;
   onIndexChange?: (index: number) => void;
 }
@@ -142,14 +129,13 @@ export interface CarouselProps extends GUIBaseProps {
 export interface GridProps extends GUIBaseProps {
   columns?: number;
   rows?: number;
-  spacing?: number;
-  padding?: number;
+  duSpacing?: number;
+  duPadding?: number;
 }
 
 // Content control properties
 export interface LabelProps extends GUIBaseProps {
   stText?: string;
-  text?: string;
   fontSize?: number;
   fontWeight?: 'normal' | 'bold';
   align?: 'left' | 'center' | 'right';
@@ -162,8 +148,7 @@ export interface GUIImageProps extends GUIBaseProps {
 
 export interface PanelProps extends GUIBaseProps {
   stTitle?: string;
-  title?: string;
-  padding?: number;
+  duPadding?: number;
 }
 
 export type GUIPropsByType = {
@@ -204,7 +189,7 @@ export interface ControlStyle {
   textColor?: GUIColor;
   fontSize?: number;
   fontFamily?: string;
-  padding?: number;
+  duPadding?: number;
   hoverBackgroundColor?: GUIColor;
   activeBackgroundColor?: GUIColor;
   disabledBackgroundColor?: GUIColor;

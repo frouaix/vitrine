@@ -28,7 +28,7 @@ pnpm deploy
 pnpm clean
 ```
 
-**Note**: This project has no test suite or linters configured. Focus on ensuring examples run correctly via `pnpm dev`.
+**Note**: This project has no test suite configured. Focus on ensuring examples run correctly via `pnpm dev`.
 
 Use `pnpm build` and `pnpm lint` to validate changes. (`lint` runs TypeScript checks via `tsc --noEmit`.)
 
@@ -95,6 +95,8 @@ Events flow through the transform hierarchy:
 - **Use explicit return types** for functions
 - **Prefer destructuring** over direct property access
 - **Hungarian notation** for geometric variables (see `hungarian-notation.md`)
+- **Functions returning `Rs` must use an `rs*` prefix** (for example `rsControl`, `rsStack`)
+- **Variables of type `Rs` must use an `rs*` prefix** (for example `rsChild`, `rsContent`)
 - **Guard Clause / Early Return** pattern for better readability
 - **No console.log** in production code
 - **No inline CSS** - use CSS Modules or styled components

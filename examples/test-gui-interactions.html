@@ -36,24 +36,24 @@
       const context = { theme: lightTheme };
       
       const gui = panel(
-        { x: 50, y: 50, width: 400, height: 400, title: 'Interaction Test', padding: 25 },
+        { x: 50, y: 50, dx: 400, dy: 400, stTitle: 'Interaction Test', duPadding: 25 },
         [
           vstack(
-            { spacing: 25 },
+            { duSpacing: 25 },
             [
               checkbox({
-                label: 'Test Checkbox (click me!)',
-                checked: state.checkboxChecked,
-                onChange: (checked) => {
-                  state.checkboxChecked = checked;
-                  addLog(`Checkbox changed to: ${checked}`);
+                stLabel: 'Test Checkbox (click me!)',
+                fChecked: state.checkboxChecked,
+                onChange: (fChecked) => {
+                  state.checkboxChecked = fChecked;
+                  addLog(`Checkbox changed to: ${fChecked}`);
                   render();
                 }
               }),
               radiobutton({
-                label: 'Option 1',
-                value: 'option1',
-                checked: state.radioValue === 'option1',
+                stLabel: 'Option 1',
+                stValue: 'option1',
+                fChecked: state.radioValue === 'option1',
                 onChange: (val) => {
                   state.radioValue = val;
                   addLog(`Radio changed to: ${val}`);
@@ -61,9 +61,9 @@
                 }
               }),
               radiobutton({
-                label: 'Option 2',
-                value: 'option2',
-                checked: state.radioValue === 'option2',
+                stLabel: 'Option 2',
+                stValue: 'option2',
+                fChecked: state.radioValue === 'option2',
                 onChange: (val) => {
                   state.radioValue = val;
                   addLog(`Radio changed to: ${val}`);
@@ -71,10 +71,10 @@
                 }
               }),
               button({
-                label: `Click Me! (${state.buttonClickCount})`,
+                stLabel: `Click Me! (${state.buttonClickCount})`,
                 variant: 'primary',
-                width: 350,
-                height: 50,
+                dx: 350,
+                dy: 50,
                 onClick: () => {
                   state.buttonClickCount++;
                   addLog(`Button clicked! Count: ${state.buttonClickCount}`);

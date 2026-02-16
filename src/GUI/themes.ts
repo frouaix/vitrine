@@ -14,7 +14,7 @@ const lightButtonStyle: ControlStyle = {
   textColor: '#1f2937',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
-  padding: 14,
+  duPadding: 14,
   hoverBackgroundColor: '#f3f4f6',
   activeBackgroundColor: '#e5e7eb',
   disabledBackgroundColor: '#f9fafb',
@@ -52,7 +52,7 @@ export const lightTheme: ThemeDefinition = {
       textColor: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      padding: 14,
+      duPadding: 14,
       focusBorderColor: '#3b82f6',
       disabledBackgroundColor: '#f9fafb',
       disabledTextColor: '#9ca3af'
@@ -94,7 +94,7 @@ export const lightTheme: ThemeDefinition = {
       textColor: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      padding: 14,
+      duPadding: 14,
       hoverBackgroundColor: '#f3f4f6',
       focusBorderColor: '#3b82f6'
     },
@@ -108,7 +108,7 @@ export const lightTheme: ThemeDefinition = {
       borderColor: '#e5e7eb',
       borderWidth: 1,
       borderRadius: 10,
-      padding: 20,
+      duPadding: 20,
       textColor: '#1f2937',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
@@ -131,7 +131,7 @@ const darkButtonStyle: ControlStyle = {
   textColor: '#f9fafb',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
-  padding: 14,
+  duPadding: 14,
   hoverBackgroundColor: '#4b5563',
   activeBackgroundColor: '#6b7280',
   disabledBackgroundColor: '#1f2937',
@@ -169,7 +169,7 @@ export const darkTheme: ThemeDefinition = {
       textColor: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      padding: 14,
+      duPadding: 14,
       focusBorderColor: '#60a5fa',
       disabledBackgroundColor: '#111827',
       disabledTextColor: '#6b7280'
@@ -211,7 +211,7 @@ export const darkTheme: ThemeDefinition = {
       textColor: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      padding: 14,
+      duPadding: 14,
       hoverBackgroundColor: '#374151',
       focusBorderColor: '#60a5fa'
     },
@@ -225,7 +225,7 @@ export const darkTheme: ThemeDefinition = {
       borderColor: '#374151',
       borderWidth: 1,
       borderRadius: 10,
-      padding: 20,
+      duPadding: 20,
       textColor: '#f9fafb',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
@@ -248,7 +248,7 @@ const colorfulButtonStyle: ControlStyle = {
   textColor: '#1f2937',
   fontSize: 17,
   fontFamily: 'system-ui, sans-serif',
-  padding: 15,
+  duPadding: 15,
   hoverBackgroundColor: '#fcd34d',
   activeBackgroundColor: '#f59e0b',
   disabledBackgroundColor: '#fef3c7',
@@ -286,7 +286,7 @@ export const colorfulTheme: ThemeDefinition = {
       textColor: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      padding: 15,
+      duPadding: 15,
       focusBorderColor: '#ec4899',
       disabledBackgroundColor: '#fffbeb',
       disabledTextColor: '#9ca3af'
@@ -328,7 +328,7 @@ export const colorfulTheme: ThemeDefinition = {
       textColor: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      padding: 15,
+      duPadding: 15,
       hoverBackgroundColor: '#fde68a',
       focusBorderColor: '#ec4899'
     },
@@ -342,7 +342,7 @@ export const colorfulTheme: ThemeDefinition = {
       borderColor: '#fbbf24',
       borderWidth: 2,
       borderRadius: 18,
-      padding: 24,
+      duPadding: 24,
       textColor: '#1f2937',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'

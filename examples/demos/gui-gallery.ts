@@ -64,14 +64,14 @@ export const demo = {
 
     // Build gallery GUI
     const gui = vstack(
-      { x: 50, y: 30, spacing: 25, padding: 0 },
+      { x: 50, y: 30, duSpacing: 25, duPadding: 0 },
       [
         // Header
         panel(
-          { dx: 900, dy: 100, padding: 25 },
+          { dx: 900, dy: 100, duPadding: 25 },
           [
             hstack(
-              { spacing: 25, alignment: 'center' },
+              { duSpacing: 25, alignment: 'center' },
               [
                 label({ 
                   stText: '🖼️ Image Gallery', 
@@ -96,7 +96,7 @@ export const demo = {
 
         // Main carousel area
         panel(
-          { dx: 900, dy: 450, padding: 25 },
+          { dx: 900, dy: 450, duPadding: 25 },
           [
             // Carousel with image placeholders
             carousel(
@@ -111,11 +111,11 @@ export const demo = {
               },
               state.images.map((img: GalleryImageItem, index: number) => 
                 vstack(
-                  { spacing: 20, alignment: 'center' },
+                  { duSpacing: 20, alignment: 'center' },
                   [
                     // Image placeholder (colored rectangle)
                     panel(
-                      { dx: 850, dy: 280, padding: 0 },
+                      { dx: 850, dy: 280, duPadding: 0 },
                       [
                         // We'll use a colored rectangle as image placeholder
                         label({ 
@@ -130,7 +130,7 @@ export const demo = {
                     
                     // Image info
                     vstack(
-                      { spacing: 8, alignment: 'center' },
+                      { duSpacing: 8, alignment: 'center' },
                       [
                         label({ 
                           stText: img.stTitle, 
@@ -154,10 +154,10 @@ export const demo = {
 
         // Navigation controls
         panel(
-          { dx: 900, dy: 100, padding: 25 },
+          { dx: 900, dy: 100, duPadding: 25 },
           [
             hstack(
-              { spacing: 18, alignment: 'center', x: 200 },
+              { duSpacing: 18, alignment: 'center', x: 200 },
               [
                 button({
                   stLabel: '⏮ First',

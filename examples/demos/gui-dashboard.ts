@@ -56,14 +56,14 @@ export const demo = {
 
     // Build dashboard GUI
     const gui = vstack(
-      { x: 20, y: 20, spacing: 25, padding: 0 },
+      { x: 20, y: 20, duSpacing: 25, duPadding: 0 },
       [
         // Header
         panel(
-          { dx: 960, dy: 100, padding: 25 },
+          { dx: 960, dy: 100, duPadding: 25 },
           [
             hstack(
-              { spacing: 25, alignment: 'center' },
+              { duSpacing: 25, alignment: 'center' },
               [
                 label({ 
                   stText: '📊 Analytics Dashboard', 
@@ -89,14 +89,14 @@ export const demo = {
 
         // Stats grid
         grid(
-          { columns: 4, spacing: 25, padding: 0 },
+          { columns: 4, duSpacing: 25, duPadding: 0 },
           [
             // Users stat
             panel(
-              { dx: 220, dy: 150, padding: 20 },
+              { dx: 220, dy: 150, duPadding: 20 },
               [
                 vstack(
-                  { spacing: 12 },
+                  { duSpacing: 12 },
                   [
                     label({ stText: 'Total Users', fontSize: 15 }),
                     label({ 
@@ -115,10 +115,10 @@ export const demo = {
 
             // Revenue stat
             panel(
-              { dx: 220, dy: 150, padding: 20 },
+              { dx: 220, dy: 150, duPadding: 20 },
               [
                 vstack(
-                  { spacing: 12 },
+                  { duSpacing: 12 },
                   [
                     label({ stText: 'Revenue', fontSize: 15 }),
                     label({ 
@@ -137,10 +137,10 @@ export const demo = {
 
             // Orders stat
             panel(
-              { dx: 220, dy: 150, padding: 20 },
+              { dx: 220, dy: 150, duPadding: 20 },
               [
                 vstack(
-                  { spacing: 12 },
+                  { duSpacing: 12 },
                   [
                     label({ stText: 'Orders', fontSize: 15 }),
                     label({ 
@@ -159,10 +159,10 @@ export const demo = {
 
             // Growth stat
             panel(
-              { dx: 220, dy: 150, padding: 20 },
+              { dx: 220, dy: 150, duPadding: 20 },
               [
                 vstack(
-                  { spacing: 12 },
+                  { duSpacing: 12 },
                   [
                     label({ stText: 'Growth', fontSize: 15 }),
                     label({ 
@@ -183,14 +183,14 @@ export const demo = {
 
         // Main content panels
         hstack(
-          { spacing: 25 },
+          { duSpacing: 25 },
           [
             // Recent activity
             panel(
-              { dx: 468, dy: 360, padding: 20, stTitle: 'Recent Activity' },
+              { dx: 468, dy: 360, duPadding: 20, stTitle: 'Recent Activity' },
               [
                 vstack(
-                  { spacing: 14, y: 50 },
+                  { duSpacing: 14, y: 50 },
                   [
                     label({ stText: '• User john@example.com registered', fontSize: 15 }),
                     label({ stText: '• Order #1234 completed ($250)', fontSize: 15 }),
@@ -206,10 +206,10 @@ export const demo = {
 
             // Quick actions
             panel(
-              { dx: 468, dy: 360, padding: 20, stTitle: 'Quick Actions' },
+              { dx: 468, dy: 360, duPadding: 20, stTitle: 'Quick Actions' },
               [
                 grid(
-                  { columns: 2, spacing: 15, y: 50 },
+                  { columns: 2, duSpacing: 15, y: 50 },
                   [
                     button({
                       stLabel: 'New User',

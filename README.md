@@ -21,9 +21,10 @@ Explore 12 interactive examples including data visualization, productivity apps,
 
 > **Note**: The WebGL renderer is currently non-functional. Use `ImmediateRenderer` (Canvas 2D) for all rendering.
 
-## Naming Conventions
+## Naming and Style Conventions
 
-This project uses Hungarian-style naming for geometry and style fields. See [.github/hungarian-notation.md](.github/hungarian-notation.md) for details.
+This project uses Hungarian-style naming for several types. See [.github/hungarian-notation.md](.github/hungarian-notation.md) for details.
+
 
 ## Import Conventions
 

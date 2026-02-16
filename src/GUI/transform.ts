@@ -5,7 +5,9 @@
 import type { Block } from '../core/types.ts';
 import { rectangle, circle, text, group, image } from '../core/blocks.ts';
 import type {
+  Rs,
   GUIControl,
+  GUIControlOfType,
   TransformContext,
   ControlStyle,
   TextBoxProps,
@@ -59,12 +61,12 @@ function getControlStyle(
 }
 
 // Helper to get the rendered dimensions of a control
-function getControlDimensions(control: GUIControl): { width: number; height: number } {
+function rsControl(control: GUIControl): Rs {
   const { props } = control;
-  const { dx, dy, width, height } = props;
+  const { dx, dy } = props;
   
   // If dimensions are explicitly set, use them
-  if ((dx ?? width) !== undefined && (dy ?? height) !== undefined) {
+  if (dx !== undefined && dy !== undefined) {
     return { width: resolveDx(props, GUI_DEFAULTS.controls.fallback.dx), height: resolveDy(props, GUI_DEFAULTS.controls.fallback.dy) };
   }
   
@@ -72,11 +74,11 @@ function getControlDimensions(control: GUIControl): { width: number; height: num
   if (control.type === GUIControlType.Stack || 
       control.type === GUIControlType.VStack || 
       control.type === GUIControlType.HStack) {
-    return computeStackDimensions(control);
+    return rsStack(control);
   }
   
   if (control.type === GUIControlType.Grid) {
-    return computeGridDimensions(control);
+    return rsGrid(control);
   }
   
   // Otherwise, use type-specific defaults
@@ -102,12 +104,12 @@ function getControlDimensions(control: GUIControl): { width: number; height: num
 }
 
 // Compute dimensions for stack-based layouts
-function computeStackDimensions(control: GUIControl): { width: number; height: number } {
-  const { props } = control as { props: StackProps };
-  const { direction: directionProp, spacing: duSpacing, padding: duPadding } = props;
+function rsStack(control: GUIControlOfType<GUIControlType.Stack | GUIControlType.HStack | GUIControlType.VStack>): Rs {
+  const { props } = control;
+  const { duSpacing, duPadding } = props;
   const direction = (control.type === GUIControlType.HStack) ? GUI_DEFAULTS.layout.directionHorizontal :
                     (control.type === GUIControlType.VStack) ? GUI_DEFAULTS.layout.directionVertical :
-                    (directionProp || GUI_DEFAULTS.controls.stack.direction);
+                    (control.props.direction || GUI_DEFAULTS.controls.stack.direction);
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
   const padding = duPadding || GUI_DEFAULTS.common.duPadding;
   
@@ -119,14 +121,14 @@ function computeStackDimensions(control: GUIControl): { width: number; height: n
   let maxCrossAxis = 0;
   
   control.children.forEach((child, index) => {
-    const childDims = getControlDimensions(child);
+    const rsChild = rsControl(child);
     
     if (direction === GUI_DEFAULTS.layout.directionHorizontal) {
-      totalMainAxis += childDims.width;
-      maxCrossAxis = Math.max(maxCrossAxis, childDims.height);
+      totalMainAxis += rsChild.width;
+      maxCrossAxis = Math.max(maxCrossAxis, rsChild.height);
     } else {
-      totalMainAxis += childDims.height;
-      maxCrossAxis = Math.max(maxCrossAxis, childDims.width);
+      totalMainAxis += rsChild.height;
+      maxCrossAxis = Math.max(maxCrossAxis, rsChild.width);
     }
     
     // Add spacing between children (but not after the last one)
@@ -144,9 +146,9 @@ function computeStackDimensions(control: GUIControl): { width: number; height: n
 }
 
 // Compute dimensions for grid layout
-function computeGridDimensions(control: GUIControl): { width: number; height: number } {
-  const { props } = control as { props: GridProps };
-  const { columns: duColumns, spacing: duSpacing, padding: duPadding } = props;
+function rsGrid(control: GUIControlOfType<GUIControlType.Grid>): Rs {
+  const { props } = control;
+  const { columns: duColumns, duSpacing, duPadding } = props;
   const columns = duColumns || GUI_DEFAULTS.controls.grid.duColumns;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
   const padding = duPadding || GUI_DEFAULTS.common.duPadding;
@@ -161,10 +163,10 @@ function computeGridDimensions(control: GUIControl): { width: number; height: nu
   control.children.forEach((child, index) => {
     const col = index % columns;
     const row = Math.floor(index / columns);
-    const childDims = getControlDimensions(child);
+    const rsChild = rsControl(child);
     
-    maxColWidth[col] = Math.max(maxColWidth[col] || GUI_DEFAULTS.common.duAxisStart, childDims.width);
-    maxRowHeight[row] = Math.max(maxRowHeight[row] || GUI_DEFAULTS.common.duAxisStart, childDims.height);
+    maxColWidth[col] = Math.max(maxColWidth[col] || GUI_DEFAULTS.common.duAxisStart, rsChild.width);
+    maxRowHeight[row] = Math.max(maxRowHeight[row] || GUI_DEFAULTS.common.duAxisStart, rsChild.height);
   });
   
   const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + 
@@ -181,7 +183,7 @@ function computeGridDimensions(control: GUIControl): { width: number; height: nu
 function transformTextBox(
   control: GUIControl,
   context: TransformContext,
-  state: { fHovered?: boolean; fFocused?: boolean; hovered?: boolean; focused?: boolean } = {}
+  state: { fHovered?: boolean; fFocused?: boolean } = {}
 ): Block {
   const { props } = control as { props: TextBoxProps };
   const style = getControlStyle(control, context);
@@ -190,11 +192,11 @@ function transformTextBox(
   const dxp = resolveDx(props, GUI_DEFAULTS.controls.textBox.dx);
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.textBox.dy);
   
-  const fFocused = state.fFocused ?? state.focused;
-  const fHovered = state.fHovered ?? state.hovered;
-  const stValue = resolveUserString(props as unknown as Record<string, unknown>, 'stValue', 'value');
-  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder', 'placeholder');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fFocused = state.fFocused;
+  const fHovered = state.fHovered;
+  const stValue = resolveUserString(props as unknown as Record<string, unknown>, 'stValue');
+  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder');
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fFocused
     ? style.backgroundColor
@@ -229,7 +231,7 @@ function transformTextBox(
     children.push(
       text({
         text: stDisplay,
-        x: style.padding || GUI_DEFAULTS.controls.textBox.duTextPadding,
+        x: style.duPadding || GUI_DEFAULTS.controls.textBox.duTextPadding,
         y: dyp / 2,
         fill: colText,
         fontSize: style.fontSize,
@@ -254,7 +256,7 @@ function transformTextBox(
 function transformCheckBox(
   control: GUIControl,
   context: TransformContext,
-  state: { fHovered?: boolean; hovered?: boolean } = {}
+  state: { fHovered?: boolean } = {}
 ): Block {
   const { props } = control as { props: CheckBoxProps };
   const style = getControlStyle(control, context);
@@ -266,10 +268,10 @@ function transformCheckBox(
   
   const children: Block[] = [];
   
-  const fHovered = state.fHovered ?? state.hovered;
-  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked', 'checked') === true;
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel', 'label');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fHovered = state.fHovered;
+  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked') === true;
+  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel');
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   // Checkbox box
   const colBg = fChecked
@@ -336,14 +338,14 @@ function transformCheckBox(
 function transformRadioButton(
   control: GUIControl,
   context: TransformContext,
-  state: { fHovered?: boolean; hovered?: boolean } = {}
+  state: { fHovered?: boolean } = {}
 ): Block {
   const { props } = control as { props: RadioButtonProps };
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, value: stValue, onChange, onHover } = props;
-  const fHovered = state.fHovered ?? state.hovered;
-  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked', 'checked') === true;
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel', 'label');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, stValue, onChange, onHover } = props;
+  const fHovered = state.fHovered;
+  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked') === true;
+  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel');
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
   const style = getControlStyle(control, context);
   
   const rl = GUI_DEFAULTS.controls.radioButton.duRadius;
@@ -412,7 +414,7 @@ function transformRadioButton(
 function transformButton(
   control: GUIControl,
   context: TransformContext,
-  state: { fHovered?: boolean; fPressed?: boolean; hovered?: boolean; pressed?: boolean } = {}
+  state: { fHovered?: boolean; fPressed?: boolean } = {}
 ): Block {
   const { props } = control as { props: ButtonProps };
   const {
@@ -423,11 +425,11 @@ function transformButton(
     onClick,
     onHover
   } = props;
-  const fEnabled = resolveFlag(props as unknown as Record<string, unknown>, 'fEnabled', 'enabled');
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel', 'label') || '';
-  const fHovered = state.fHovered ?? state.hovered;
-  const fPressed = state.fPressed ?? state.pressed;
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fEnabled = resolveFlag(props as unknown as Record<string, unknown>, 'fEnabled');
+  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel') || '';
+  const fHovered = state.fHovered;
+  const fPressed = state.fPressed;
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
   
   // Use className based on variant if no className specified
   let { className } = props;
@@ -498,7 +500,7 @@ function transformButton(
 function transformSlider(
   control: GUIControl,
   context: TransformContext,
-  state: { hovered?: boolean } = {}
+  state: { fHovered?: boolean } = {}
 ): Block {
   const { props } = control as { props: SliderProps };
   const {
@@ -583,7 +585,7 @@ function transformSlider(
     })
   );
 
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
   
   return group(
     {
@@ -601,14 +603,14 @@ function transformSlider(
 function transformDropdown(
   control: GUIControl,
   context: TransformContext,
-  state: { fHovered?: boolean; fOpen?: boolean; hovered?: boolean; open?: boolean } = {}
+  state: { fHovered?: boolean; fOpen?: boolean } = {}
 ): Block {
   const { props } = control as { props: DropdownProps };
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     id,
-    value: legacyValue,
+    stValue,
     options,
     onClick,
     onHover
@@ -618,10 +620,9 @@ function transformDropdown(
   const dxp = resolveDx(props, GUI_DEFAULTS.controls.dropdown.dx);
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.dropdown.dy);
   
-  const fHovered = state.fHovered ?? state.hovered;
-  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder', 'placeholder');
-  const stValue = resolveUserString(props as unknown as Record<string, unknown>, 'stValue', 'value') ?? legacyValue;
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fHovered = state.fHovered;
+  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder');
+  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fHovered
     ? style.hoverBackgroundColor || style.backgroundColor
@@ -645,12 +646,12 @@ function transformDropdown(
   // Display text
   const selectedOption = options.find(opt => opt.value === stValue);
   const colText = selectedOption ? style.textColor : (style.disabledTextColor || style.textColor);
-  const stDisplay = selectedOption?.stLabel || selectedOption?.label || stPlaceholder || GUI_DEFAULTS.controls.dropdown.stPlaceholder;
+  const stDisplay = selectedOption?.stLabel || stPlaceholder || GUI_DEFAULTS.controls.dropdown.stPlaceholder;
   
   children.push(
     text({
       text: stDisplay,
-      x: style.padding || GUI_DEFAULTS.controls.dropdown.duTextPadding,
+      x: style.duPadding || GUI_DEFAULTS.controls.dropdown.duTextPadding,
       y: dyp / 2,
       fill: colText,
       fontSize: style.fontSize,
@@ -663,7 +664,7 @@ function transformDropdown(
   children.push(
     text({
       text: GUI_DEFAULTS.controls.dropdown.stArrow,
-      x: dxp - (style.padding || GUI_DEFAULTS.controls.dropdown.duTextPadding) - GUI_DEFAULTS.controls.dropdown.duArrowOffsetX,
+      x: dxp - (style.duPadding || GUI_DEFAULTS.controls.dropdown.duTextPadding) - GUI_DEFAULTS.controls.dropdown.duArrowOffsetX,
       y: dyp / 2,
       fill: colText,
       fontSize: GUI_DEFAULTS.controls.dropdown.duArrowFont,
@@ -700,8 +701,8 @@ function transformLabel(
   } = props;
   const style = getControlStyle(control, context);
   const { textColor: colText } = style;
-  const stText = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stText', 'text') || '';
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const stText = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stText') || '';
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
   
   return group(
     {
@@ -729,7 +730,7 @@ function transformGUIImage(
 ): Block {
   const { props } = control as { props: GUIImageProps };
   const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, src, ...propsRest } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
   
   const dxp = resolveDx(props, GUI_DEFAULTS.controls.image.dx);
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.image.dy);
@@ -761,16 +762,16 @@ function transformPanel(
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     id,
-    padding: duPadding,
+    duPadding,
     ...propsRest
   } = props;
   const style = getControlStyle(control, context);
-  const stTitle = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stTitle', 'title');
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const stTitle = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stTitle');
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
   
   const dxp = resolveDx(props, GUI_DEFAULTS.controls.panel.dx);
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.panel.dy);
-  const padding = duPadding || style.padding || GUI_DEFAULTS.controls.panel.duPadding;
+  const padding = duPadding || style.duPadding || GUI_DEFAULTS.controls.panel.duPadding;
   const {
     backgroundColor: colBg,
     borderColor: colBorder,
@@ -834,11 +835,11 @@ function transformStack(
     y: yp = GUI_DEFAULTS.common.y,
     id,
     direction: directionProp,
-    spacing: duSpacing,
-    padding: duPadding,
+    duSpacing,
+    duPadding,
     ...propsRest
   } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
   const direction = directionProp || GUI_DEFAULTS.controls.stack.direction;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
@@ -854,7 +855,7 @@ function transformStack(
   
   for (const child of control.children) {
     const transformed = transformGUIControl(child, context);
-    const childDims = getControlDimensions(child);
+    const rsChild = rsControl(child);
     
     // Create a new block with updated coordinates instead of mutating
     const positionedBlock = repositionBlock(
@@ -863,13 +864,13 @@ function transformStack(
       direction === GUI_DEFAULTS.layout.directionHorizontal ? padding : dypOffset
     );
     
-    dypOffset += (direction === GUI_DEFAULTS.layout.directionHorizontal ? childDims.width : childDims.height) + spacing;
+    dypOffset += (direction === GUI_DEFAULTS.layout.directionHorizontal ? rsChild.width : rsChild.height) + spacing;
     
     // Track the maximum size in the cross-axis direction
     if (direction === GUI_DEFAULTS.layout.directionHorizontal) {
-      maxCrossAxis = Math.max(maxCrossAxis, childDims.height);
+      maxCrossAxis = Math.max(maxCrossAxis, rsChild.height);
     } else {
-      maxCrossAxis = Math.max(maxCrossAxis, childDims.width);
+      maxCrossAxis = Math.max(maxCrossAxis, rsChild.width);
     }
     
     children.push(positionedBlock);
@@ -934,7 +935,7 @@ function transformCarousel(
 ): Block {
   const { props } = control as { props: CarouselProps };
   const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, currentIndex: indexProp, ...propsRest } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
   const currentIndex = indexProp || GUI_DEFAULTS.controls.carousel.currentIndex;
   
   if (!control.children || control.children.length === 0) {
@@ -986,11 +987,11 @@ function transformGrid(
     y: yp = GUI_DEFAULTS.common.y,
     id,
     columns: duColumns,
-    spacing: duSpacing,
-    padding: duPadding,
+    duSpacing,
+    duPadding,
     ...propsRest
   } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible', 'visible');
+  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
   const columns = duColumns || GUI_DEFAULTS.controls.grid.duColumns;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
@@ -1008,10 +1009,10 @@ function transformGrid(
   control.children.forEach((child, index) => {
     const col = index % columns;
     const row = Math.floor(index / columns);
-    const childDims = getControlDimensions(child);
+    const rsChild = rsControl(child);
     
-    maxColWidth[col] = Math.max(maxColWidth[col] || GUI_DEFAULTS.common.duAxisStart, childDims.width);
-    maxRowHeight[row] = Math.max(maxRowHeight[row] || GUI_DEFAULTS.common.duAxisStart, childDims.height);
+    maxColWidth[col] = Math.max(maxColWidth[col] || GUI_DEFAULTS.common.duAxisStart, rsChild.width);
+    maxRowHeight[row] = Math.max(maxRowHeight[row] || GUI_DEFAULTS.common.duAxisStart, rsChild.height);
   });
   
   // Second pass: position children

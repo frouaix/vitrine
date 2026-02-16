@@ -54,8 +54,20 @@ Examples:
 ## GUI props convention
 
 - Public GUI size props should use `dx` and `dy`.
-- Legacy `width`/`height` may be accepted only as temporary compatibility aliases.
+- Public GUI layout/content spacing props should use `duSpacing` and `duPadding`.
 - Do not introduce new user-facing `width`/`height` fields in GUI APIs.
+
+## Function names
+
+- Functions returning `Rs` must start with `rs`.
+
+## `Rs` values
+
+- Variables whose value type is `Rs` must start with `rs`.
+
+Examples:
+- `rsControl`, `rsStack`, `rsGrid`.
+- `rsChild`, `rsPanel`, `rsContent`.
 
 ## Exceptions
 

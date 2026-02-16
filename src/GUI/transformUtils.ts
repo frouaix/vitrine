@@ -1,23 +1,21 @@
 // Copyright (c) 2026 François Rouaix
 
-export function resolveFlag(props: Record<string, unknown>, stFlag: string, legacyFlag: string): boolean | undefined {
+export function resolveFlag(props: Record<string, unknown>, stFlag: string): boolean | undefined {
   const fPrimary = props[stFlag] as boolean | undefined;
-  const fLegacy = props[legacyFlag] as boolean | undefined;
-  return fPrimary ?? fLegacy;
+  return fPrimary;
 }
 
-export function resolveUserString(props: Record<string, unknown>, stKey: string, legacyKey: string): string | undefined {
+export function resolveUserString(props: Record<string, unknown>, stKey: string): string | undefined {
   const stPrimary = props[stKey] as string | undefined;
-  const stLegacy = props[legacyKey] as string | undefined;
-  return stPrimary ?? stLegacy;
+  return stPrimary;
 }
 
-export function resolveDx(props: { dx?: number; width?: number }, dxDefault: number): number {
-  const { dx, width } = props;
-  return dx ?? width ?? dxDefault;
+export function resolveDx(props: { dx?: number }, dxDefault: number): number {
+  const { dx } = props;
+  return dx ?? dxDefault;
 }
 
-export function resolveDy(props: { dy?: number; height?: number }, dyDefault: number): number {
-  const { dy, height } = props;
-  return dy ?? height ?? dyDefault;
+export function resolveDy(props: { dy?: number }, dyDefault: number): number {
+  const { dy } = props;
+  return dy ?? dyDefault;
 }
