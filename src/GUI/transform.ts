@@ -6,11 +6,11 @@ import type { Block } from '../core/types.ts';
 import { rectangle, circle, text, group, image } from '../core/blocks.ts';
 import type {
   Rs,
+  LayoutDirection,
   GUIControl,
   GUIControlOfType,
   TransformContext,
   ControlStyle,
-  TextBoxProps,
   CheckBoxProps,
   RadioButtonProps,
   ButtonProps,
@@ -23,7 +23,7 @@ import type {
   PanelProps
 } from './types.ts';
 import { GUIControlType } from './types.ts';
-import { GUI_TO_BLOCK_DEFAULTS } from './constants.ts';
+import { GUI_DEFAULTS } from './constants.ts';
 import { resolveFlag, resolveUserString, resolveDx, resolveDy } from './transformUtils.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
@@ -36,8 +36,6 @@ function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
     }
   } as T;
 }
-
-const GUI_DEFAULTS = GUI_TO_BLOCK_DEFAULTS;
 
 // Helper to get style for a control
 function getControlStyle(
@@ -58,44 +56,46 @@ function getControlStyle(
 }
 
 // Helper to get the rendered dimensions of a control
-function rsControl(control: GUIControl): Rs {
-  const { type, props } = control;
-  const { dx, dy } = props;
-  
-  // If dimensions are explicitly set, use them
-  if (dx !== undefined && dy !== undefined) {
-    return { width: resolveDx(props, GUI_DEFAULTS.fallback.dx), height: resolveDy(props, GUI_DEFAULTS.fallback.dy) };
-  }
-  
-  // For layout controls, compute size from children
-  if (type === GUIControlType.VStack || 
-      type === GUIControlType.HStack) {
-    return rsStack(control);
-  }
-  
-  if (type === GUIControlType.Grid) {
-    return rsGrid(control);
-  }
-  
-  // Otherwise, use type-specific defaults
+function rsFallbackForControlType(type: GUIControlType): Rs {
   switch (type) {
     case GUIControlType.TextBox:
     case GUIControlType.Dropdown:
-      return { width: resolveDx(props, GUI_DEFAULTS.textBox.dx), height: resolveDy(props, GUI_DEFAULTS.textBox.dy) };
+      return { width: GUI_DEFAULTS.textBox.dx, height: GUI_DEFAULTS.textBox.dy };
     case GUIControlType.Button:
-      return { width: resolveDx(props, GUI_DEFAULTS.button.dx), height: resolveDy(props, GUI_DEFAULTS.button.dy) };
+      return { width: GUI_DEFAULTS.button.dx, height: GUI_DEFAULTS.button.dy };
     case GUIControlType.CheckBox:
-      return { width: resolveDx(props, GUI_DEFAULTS.checkBox.dx), height: resolveDy(props, GUI_DEFAULTS.checkBox.dy) };
+      return { width: GUI_DEFAULTS.checkBox.dx, height: GUI_DEFAULTS.checkBox.dy };
     case GUIControlType.RadioButton:
-      return { width: resolveDx(props, GUI_DEFAULTS.radioButton.dx), height: resolveDy(props, GUI_DEFAULTS.radioButton.dy) };
+      return { width: GUI_DEFAULTS.radioButton.dx, height: GUI_DEFAULTS.radioButton.dy };
     case GUIControlType.Slider:
-      return { width: resolveDx(props, GUI_DEFAULTS.slider.dx), height: resolveDy(props, GUI_DEFAULTS.slider.dy) };
+      return { width: GUI_DEFAULTS.slider.dx, height: GUI_DEFAULTS.slider.dy };
     case GUIControlType.Label:
-      return { width: resolveDx(props, GUI_DEFAULTS.label.dx), height: resolveDy(props, GUI_DEFAULTS.label.dy) };
+      return { width: GUI_DEFAULTS.label.dx, height: GUI_DEFAULTS.label.dy };
     case GUIControlType.Panel:
-      return { width: resolveDx(props, GUI_DEFAULTS.panel.dx), height: resolveDy(props, GUI_DEFAULTS.panel.dy) };
+      return { width: GUI_DEFAULTS.panel.dx, height: GUI_DEFAULTS.panel.dy };
     default:
-      return { width: resolveDx(props, GUI_DEFAULTS.fallback.dx), height: resolveDy(props, GUI_DEFAULTS.fallback.dy) };
+      return { width: GUI_DEFAULTS.fallback.dx, height: GUI_DEFAULTS.fallback.dy };
+  }
+}
+
+function rsControl(control: GUIControl): Rs {
+  const { type, props } = control;
+  const { dx, dy } = props;
+  const rsFallback = rsFallbackForControlType(type);
+  
+  // If dimensions are explicitly set, use them
+  if (dx !== undefined && dy !== undefined) {
+    return { width: dx, height: dy };
+  }
+
+  switch (type) {
+    case GUIControlType.HStack:
+    case GUIControlType.VStack:
+      return rsStack(control);
+    case GUIControlType.Grid:
+      return rsGrid(control);
+    default:
+      return { width: resolveDx(props, rsFallback.width), height: resolveDy(props, rsFallback.height) };
   }
 }
 
@@ -103,22 +103,21 @@ function rsControl(control: GUIControl): Rs {
 function rsStack(control: GUIControlOfType<GUIControlType.HStack | GUIControlType.VStack>): Rs {
   const { type, props, children } = control;
   const { duSpacing, duPadding } = props;
-  const { directionHorizontal, directionVertical } = GUI_DEFAULTS.layout;
-  const direction = type === GUIControlType.HStack ? directionHorizontal : directionVertical;
-  const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
-  const padding = duPadding || GUI_DEFAULTS.common.duPadding;
+  const direction: LayoutDirection = type === GUIControlType.HStack ? 'horizontal' : 'vertical';
+  const duSpacingActual = duSpacing || GUI_DEFAULTS.common.duSpacing;
+  const duPaddingActual = duPadding || GUI_DEFAULTS.common.duPadding;
   
   if (!children || children.length === 0) {
-    return { width: GUI_DEFAULTS.common.duMultiplier2 * padding, height: GUI_DEFAULTS.common.duMultiplier2 * padding };
+    return { width: 2 * duPaddingActual, height: 2 * duPaddingActual };
   }
   
-  let totalMainAxis = padding;
+  let totalMainAxis = duPaddingActual;
   let maxCrossAxis = 0;
   
   children.forEach((child, index) => {
     const rsChild = rsControl(child);
     
-    if (direction === directionHorizontal) {
+    if (direction === 'horizontal') {
       totalMainAxis += rsChild.width;
       maxCrossAxis = Math.max(maxCrossAxis, rsChild.height);
     } else {
@@ -127,15 +126,15 @@ function rsStack(control: GUIControlOfType<GUIControlType.HStack | GUIControlTyp
     }
     
     // Add spacing between children (but not after the last one)
-    if (index < children.length - GUI_DEFAULTS.common.duOne) {
-      totalMainAxis += spacing;
+    if (index < children.length - 1) {
+      totalMainAxis += duSpacingActual;
     }
   });
   
-  totalMainAxis += padding;
-  const totalCrossAxis = maxCrossAxis + GUI_DEFAULTS.common.duMultiplier2 * padding;
+  totalMainAxis += duPaddingActual;
+  const totalCrossAxis = maxCrossAxis + 2 * duPaddingActual;
   
-  return direction === directionHorizontal 
+  return direction === 'horizontal'
     ? { width: totalMainAxis, height: totalCrossAxis }
     : { width: totalCrossAxis, height: totalMainAxis };
 }
@@ -143,66 +142,78 @@ function rsStack(control: GUIControlOfType<GUIControlType.HStack | GUIControlTyp
 // Compute dimensions for grid layout
 function rsGrid(control: GUIControlOfType<GUIControlType.Grid>): Rs {
   const { props, children } = control;
-  const { columns: duColumns, duSpacing, duPadding } = props;
-  const columns = duColumns || GUI_DEFAULTS.grid.duColumns;
-  const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
-  const padding = duPadding || GUI_DEFAULTS.common.duPadding;
+  const { cColumns, duSpacing, duPadding } = props;
+  const cColumnsActual = cColumns || GUI_DEFAULTS.grid.cColumns;
+  const duSpacingActual = duSpacing || GUI_DEFAULTS.common.duSpacing;
+  const duPaddingActual = duPadding || GUI_DEFAULTS.common.duPadding;
   
   if (!children || children.length === 0) {
-    return { width: GUI_DEFAULTS.common.duMultiplier2 * padding, height: GUI_DEFAULTS.common.duMultiplier2 * padding };
+    return { width: 2 * duPaddingActual, height: 2 * duPaddingActual };
   }
   
   const maxColWidth: number[] = [];
   const maxRowHeight: number[] = [];
   
-  children.forEach((child, index) => {
-    const col = index % columns;
-    const row = Math.floor(index / columns);
+  children.forEach((child, iColumn) => {
+    const iColActual = iColumn % cColumnsActual;
+    const iRow = Math.floor(iColumn / cColumnsActual);
     const rsChild = rsControl(child);
     
-    maxColWidth[col] = Math.max(maxColWidth[col] || GUI_DEFAULTS.common.duAxisStart, rsChild.width);
-    maxRowHeight[row] = Math.max(maxRowHeight[row] || GUI_DEFAULTS.common.duAxisStart, rsChild.height);
+    maxColWidth[iColActual] = Math.max(maxColWidth[iColActual] || GUI_DEFAULTS.common.duAxisStart, rsChild.width);
+    maxRowHeight[iRow] = Math.max(maxRowHeight[iRow] || GUI_DEFAULTS.common.duAxisStart, rsChild.height);
   });
   
   const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + 
-                     Math.max(GUI_DEFAULTS.common.duAxisStart, maxColWidth.length - GUI_DEFAULTS.common.duOne) * spacing + 
-                     GUI_DEFAULTS.common.duMultiplier2 * padding;
+                     Math.max(GUI_DEFAULTS.common.duAxisStart, maxColWidth.length - 1) * duSpacingActual + 
+                     2 * duPaddingActual;
   const totalHeight = maxRowHeight.reduce((sum, h) => sum + h, 0) + 
-                      Math.max(GUI_DEFAULTS.common.duAxisStart, maxRowHeight.length - GUI_DEFAULTS.common.duOne) * spacing + 
-                      GUI_DEFAULTS.common.duMultiplier2 * padding;
+                      Math.max(GUI_DEFAULTS.common.duAxisStart, maxRowHeight.length - 1) * duSpacingActual + 
+                      2 * duPaddingActual;
   
   return { width: totalWidth, height: totalHeight };
 }
 
 // Transform textbox to core blocks
 function transformTextBox(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.TextBox>,
   context: TransformContext,
   state: { fHovered?: boolean; fFocused?: boolean } = {}
 ): Block {
-  const { props } = control as { props: TextBoxProps };
+  const { props } = control;
   const style = getControlStyle(control, context);
+  const {
+    colBackground,
+    colHoverBackground,
+    colFocusBorder,
+    colBorder: colBorderStyle,
+    colText,
+    colDisabledText,
+    borderWidth,
+    borderRadius,
+    duPadding,
+    fontSize,
+    fontFamily
+  } = style;
   const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, onClick, onHover } = props;
   
   const dxp = resolveDx(props, GUI_DEFAULTS.textBox.dx);
   const dyp = resolveDy(props, GUI_DEFAULTS.textBox.dy);
   
-  const fFocused = state.fFocused;
-  const fHovered = state.fHovered;
+  const { fFocused, fHovered } = state;
   const stValue = resolveUserString(props as unknown as Record<string, unknown>, 'stValue');
   const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder');
   const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fFocused
-    ? style.colBackground
+    ? colBackground
     : fHovered
-    ? style.colHoverBackground || style.colBackground
-    : style.colBackground;
+    ? colHoverBackground || colBackground
+    : colBackground;
   
   const colBorder = fFocused
-    ? style.colFocusBorder || style.colBorder
-    : style.colBorder;
-  const colText = stValue ? style.colText : (style.colDisabledText || style.colText);
+    ? colFocusBorder || colBorderStyle
+    : colBorderStyle;
+  const colTextActual = stValue ? colText : (colDisabledText || colText);
   
   const children: Block[] = [];
   
@@ -213,8 +224,8 @@ function transformTextBox(
       dy: dyp,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius,
+      strokeWidth: borderWidth,
+      cornerRadius: borderRadius,
       onClick,
       onHover
     })
@@ -226,11 +237,11 @@ function transformTextBox(
     children.push(
       text({
         text: stDisplay,
-        x: style.duPadding || GUI_DEFAULTS.textBox.duTextPadding,
+        x: duPadding || GUI_DEFAULTS.textBox.duTextPadding,
         y: dyp / 2,
-        fill: colText,
-        fontSize: style.fontSize,
-        font: style.fontFamily,
+        fill: colTextActual,
+        fontSize,
+        font: fontFamily,
         baseline: GUI_DEFAULTS.text.baselineMiddle
       })
     );
@@ -536,11 +547,11 @@ function transformSlider(
   children.push(
     rectangle({
       x: 0,
-      y: -dypTrack / GUI_DEFAULTS.common.duMultiplier2,
+      y: -dypTrack / 2,
       dx: dxp,
       dy: dypTrack,
       fill: colTrackFill,
-      cornerRadius: dypTrack / GUI_DEFAULTS.common.duMultiplier2,
+      cornerRadius: dypTrack / 2,
       stroke: colTrackStroke,
       strokeWidth: GUI_DEFAULTS.slider.duTrackStroke
     })
@@ -833,9 +844,7 @@ function transformStack(
     duPadding,
     ...propsRest
   } = props;
-  const direction = control.type === GUIControlType.HStack
-    ? GUI_DEFAULTS.layout.directionHorizontal
-    : GUI_DEFAULTS.layout.directionVertical;
+  const direction: LayoutDirection = control.type === GUIControlType.HStack ? 'horizontal' : 'vertical';
   const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
@@ -856,14 +865,14 @@ function transformStack(
     // Create a new block with updated coordinates instead of mutating
     const positionedBlock = repositionBlock(
       transformed,
-      direction === GUI_DEFAULTS.layout.directionHorizontal ? dypOffset : padding,
-      direction === GUI_DEFAULTS.layout.directionHorizontal ? padding : dypOffset
+      direction === 'horizontal' ? dypOffset : padding,
+      direction === 'horizontal' ? padding : dypOffset
     );
     
-    dypOffset += (direction === GUI_DEFAULTS.layout.directionHorizontal ? rsChild.width : rsChild.height) + spacing;
+    dypOffset += (direction === 'horizontal' ? rsChild.width : rsChild.height) + spacing;
     
     // Track the maximum size in the cross-axis direction
-    if (direction === GUI_DEFAULTS.layout.directionHorizontal) {
+    if (direction === 'horizontal') {
       maxCrossAxis = Math.max(maxCrossAxis, rsChild.height);
     } else {
       maxCrossAxis = Math.max(maxCrossAxis, rsChild.width);
@@ -874,12 +883,12 @@ function transformStack(
   
   // Remove the trailing spacing from the last child
   const totalMainAxis = dypOffset - spacing + padding;
-  const totalCrossAxis = maxCrossAxis + GUI_DEFAULTS.common.duMultiplier2 * padding;
+  const totalCrossAxis = maxCrossAxis + 2 * padding;
   
   // Calculate the container's computed size (for documentation/debugging purposes)
   // Note: Group blocks don't have explicit size; they're sized by their children
-  const computedWidth = direction === GUI_DEFAULTS.layout.directionHorizontal ? totalMainAxis : totalCrossAxis;
-  const computedHeight = direction === GUI_DEFAULTS.layout.directionHorizontal ? totalCrossAxis : totalMainAxis;
+  const computedWidth = direction === 'horizontal' ? totalMainAxis : totalCrossAxis;
+  const computedHeight = direction === 'horizontal' ? totalCrossAxis : totalMainAxis;
   
   return group(
     {
@@ -950,14 +959,14 @@ function transformGrid(
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     id,
-    columns: duColumns,
+    cColumns,
     duSpacing,
     duPadding,
     ...propsRest
   } = props;
   const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
-  const columns = duColumns || GUI_DEFAULTS.grid.duColumns;
+  const columns = cColumns || GUI_DEFAULTS.grid.cColumns;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
   const padding = duPadding || GUI_DEFAULTS.common.duPadding;
   
@@ -1006,9 +1015,9 @@ function transformGrid(
   
   // Calculate total grid size (for documentation/debugging purposes)
   // Note: Group blocks don't have explicit size; they're sized by their children
-  const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + (columns - GUI_DEFAULTS.common.duOne) * spacing + GUI_DEFAULTS.common.duMultiplier2 * padding;
+  const totalWidth = maxColWidth.reduce((sum, w) => sum + w, 0) + (columns - 1) * spacing + 2 * padding;
   const numRows = Math.ceil(control.children.length / columns);
-  const totalHeight = maxRowHeight.reduce((sum, h) => sum + h, 0) + (numRows - GUI_DEFAULTS.common.duOne) * spacing + GUI_DEFAULTS.common.duMultiplier2 * padding;
+  const totalHeight = maxRowHeight.reduce((sum, h) => sum + h, 0) + (numRows - 1) * spacing + 2 * padding;
   
   return group(
     {

@@ -6,6 +6,7 @@ import type { Block } from '../core/types.ts';
 
 export type GUIColor = string; // CSS color format
 export type Rs = { width: number; height: number };
+export type LayoutDirection = 'horizontal' | 'vertical';
 
 // GUI control types
 export enum GUIControlType {
@@ -112,7 +113,7 @@ export interface CarouselProps extends GUIBaseProps {
 }
 
 export interface GridProps extends GUIBaseProps {
-  columns?: number;
+  cColumns?: number;
   rows?: number;
   duSpacing?: number;
   duPadding?: number;

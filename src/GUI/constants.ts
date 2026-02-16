@@ -2,20 +2,14 @@
 
 // Default constants for GUI DSL to Core block transformation
 
-export const GUI_TO_BLOCK_DEFAULTS = {
+export const GUI_DEFAULTS = {
   common: {
     x: 0,
     y: 0,
     duSpacing: 10,
     duPadding: 0,
     duAxisStart: 0,
-    stEmpty: '',
-    duMultiplier2: 2,
-    duOne: 1
-  },
-  layout: {
-    directionHorizontal: 'horizontal',
-    directionVertical: 'vertical'
+    stEmpty: ''
   },
   text: {
     alignCenter: 'center',
@@ -97,7 +91,7 @@ export const GUI_TO_BLOCK_DEFAULTS = {
     colInactiveDotFill: '#d1d5db'
   },
   grid: {
-    duColumns: 3
+    cColumns: 3
   },
   fallback: {
     dx: 100,

@@ -89,7 +89,7 @@ export const demo = {
 
         // Stats grid
         grid(
-          { columns: 4, duSpacing: 25, duPadding: 0 },
+          { cColumns: 4, duSpacing: 25, duPadding: 0 },
           [
             // Users stat
             panel(
@@ -209,7 +209,7 @@ export const demo = {
               { dx: 468, dy: 360, duPadding: 20, stTitle: 'Quick Actions' },
               [
                 grid(
-                  { columns: 2, duSpacing: 15, y: 50 },
+                  { cColumns: 2, duSpacing: 15, y: 50 },
                   [
                     button({
                       stLabel: 'New User',
