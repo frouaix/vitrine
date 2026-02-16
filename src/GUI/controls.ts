@@ -94,3 +94,12 @@ export function guiImage(props: GUIPropsByType[GUIControlType.Image]): GUIContro
 export function panel(props: GUIPropsByType[GUIControlType.Panel], children?: GUIControl[]): GUIControlOfType<GUIControlType.Panel> {
   return control(GUIControlType.Panel, props, children);
 }
+
+// Calendar controls
+export function calendarDayView(props: GUIPropsByType[GUIControlType.CalendarDayView]): GUIControlOfType<GUIControlType.CalendarDayView> {
+  return control(GUIControlType.CalendarDayView, props);
+}
+
+export function calendarMonthView(props: GUIPropsByType[GUIControlType.CalendarMonthView]): GUIControlOfType<GUIControlType.CalendarMonthView> {
+  return control(GUIControlType.CalendarMonthView, props);
+}

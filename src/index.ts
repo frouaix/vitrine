@@ -27,6 +27,68 @@ export type { HitTestResult } from './hit-test.ts';
 // Block factory functions
 export * from './core/blocks.ts';
 
+// GUI components
+export {
+  // Types
+  GUIControlType,
+  CalendarViewType,
+  type GUIColor,
+  type LayoutDirection,
+  type GUIBaseProps,
+  type TextBoxProps,
+  type CheckBoxProps,
+  type RadioButtonProps,
+  type ButtonProps,
+  type SliderProps,
+  type DropdownProps,
+  type StackLayoutProps,
+  type CarouselProps,
+  type GridProps,
+  type LabelProps,
+  type GUIImageProps,
+  type PanelProps,
+  type CalendarEvent,
+  type DateRange,
+  type CalendarDayViewProps,
+  type CalendarMonthViewProps,
+  type CalendarNavProps,
+  type Alignment,
+  type ControlStyle,
+  type ThemeDefinition,
+  type TransformContext,
+  type GUIControl,
+  type GUIControlOfType,
+  // Controls
+  textbox,
+  checkbox,
+  radiobutton,
+  button,
+  slider,
+  dropdown,
+  hstack,
+  vstack,
+  carousel,
+  grid,
+  label,
+  guiImage,
+  panel,
+  calendarDayView,
+  calendarMonthView,
+  colorpicker,
+  // Calendar functions
+  rsCalendarDayView,
+  rsCalendarMonthView,
+  generateSampleEvents,
+  // Theme
+  lightTheme,
+  darkTheme,
+  colorfulTheme,
+  themes,
+  getTheme,
+  // Transform
+  transformGUIControl
+} from './GUI/index.ts';
+
 // Legacy exports (for backwards compatibility)
 export * from './core/renderer.ts';
 export * from './core/renderer-canvas.ts';

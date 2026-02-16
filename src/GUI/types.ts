@@ -4,6 +4,7 @@
 
 import type { Block } from '../core/types.ts';
 import type { ColorPickerProps } from './color-picker.ts';
+import type { CalendarDayViewProps, CalendarMonthViewProps } from './calendar-types.ts';
 
 export type GUIColor = string; // CSS color format
 export type Rs = { width: number; height: number };
@@ -29,7 +30,11 @@ export enum GUIControlType {
   // Content controls
   Label = 'label',
   Image = 'image',
-  Panel = 'panel'
+  Panel = 'panel',
+  
+  // Calendar controls
+  CalendarDayView = 'calendardayview',
+  CalendarMonthView = 'calendarmonthview'
 }
 
 // Base properties for all GUI controls
@@ -155,6 +160,8 @@ export type GUIPropsByType = {
   [GUIControlType.Label]: LabelProps;
   [GUIControlType.Image]: GUIImageProps;
   [GUIControlType.Panel]: PanelProps;
+  [GUIControlType.CalendarDayView]: CalendarDayViewProps;
+  [GUIControlType.CalendarMonthView]: CalendarMonthViewProps;
 };
 
 export type GUIControlForType<T extends GUIControlType = GUIControlType> = {

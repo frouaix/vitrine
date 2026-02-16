@@ -15,6 +15,7 @@ import type {
 import { GUIControlType } from './types.ts';
 import { GUI_DEFAULTS } from './constants.ts';
 import { DEFAULTS as colorPickerDefaults, transformColorPicker } from './color-picker.ts';
+import { rsCalendarDayView, rsCalendarMonthView } from './calendar.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {
@@ -1225,6 +1226,10 @@ export function transformGUIControl(
       return transformCarousel(control, context);
     case GUIControlType.Grid:
       return transformGrid(control, context);
+    case GUIControlType.CalendarDayView:
+      return rsCalendarDayView(control.props);
+    case GUIControlType.CalendarMonthView:
+      return rsCalendarMonthView(control.props);
     default:
       // Exhaustive check
       return group({}, []);
