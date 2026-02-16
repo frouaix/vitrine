@@ -193,6 +193,7 @@ function loadDemo(demo: GalleryDemo): void {
       width: size.width,
       height: size.height,
       enableCulling: demo.enableCulling !== false,
+      enableCameraControls: true,
       debugHoverOutline
     });
   }
