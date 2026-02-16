@@ -10,6 +10,49 @@ interface ColorPickerState {
   presets: string[];
 }
 
+function hexToHsv(colorHex: string): { hue: number; saturation: number; value: number } {
+  const normalizedHex = colorHex.replace('#', '');
+  const fullHex = normalizedHex.length === 3
+    ? normalizedHex.split('').map((char) => char + char).join('')
+    : normalizedHex;
+
+  if (!/^[0-9a-fA-F]{6}$/.test(fullHex)) {
+    return { hue: 0, saturation: 0, value: 0 };
+  }
+
+  const red = parseInt(fullHex.slice(0, 2), 16) / 255;
+  const green = parseInt(fullHex.slice(2, 4), 16) / 255;
+  const blue = parseInt(fullHex.slice(4, 6), 16) / 255;
+
+  const maxChannel = Math.max(red, green, blue);
+  const minChannel = Math.min(red, green, blue);
+  const delta = maxChannel - minChannel;
+
+  let hue = 0;
+  if (delta !== 0) {
+    if (maxChannel === red) {
+      hue = 60 * (((green - blue) / delta) % 6);
+    } else if (maxChannel === green) {
+      hue = 60 * (((blue - red) / delta) + 2);
+    } else {
+      hue = 60 * (((red - green) / delta) + 4);
+    }
+  }
+
+  if (hue < 0) {
+    hue += 360;
+  }
+
+  const saturation = maxChannel === 0 ? 0 : (delta / maxChannel) * 100;
+  const value = maxChannel * 100;
+
+  return {
+    hue: Math.min(359, Math.max(0, Math.round(hue))),
+    saturation: Math.min(100, Math.max(0, Math.round(saturation))),
+    value: Math.min(100, Math.max(0, Math.round(value)))
+  };
+}
+
 function getCanvasX(event: PointerEvent): number | null {
   const eventTarget = event.target;
   if (!(eventTarget instanceof HTMLCanvasElement)) {
@@ -168,7 +211,10 @@ export const demo = {
         stroke: '#fff',
         strokeWidth: 2,
         onClick: () => {
-          console.log(`Selected preset: ${color}`);
+          const { hue, saturation, value } = hexToHsv(color);
+          state.hue = hue;
+          state.saturation = saturation;
+          state.value = value;
         }
       })
     );
