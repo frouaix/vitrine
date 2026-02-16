@@ -11,7 +11,6 @@ import type {
 import { GUIControlType } from './types.ts';
 
 type RequiredChildrenControlType =
-  | GUIControlType.Stack
   | GUIControlType.HStack
   | GUIControlType.VStack
   | GUIControlType.Carousel

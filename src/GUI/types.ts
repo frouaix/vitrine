@@ -18,7 +18,6 @@ export enum GUIControlType {
   Dropdown = 'dropdown',
   
   // Layout controls
-  Stack = 'stack',
   HStack = 'hstack',
   VStack = 'vstack',
   Carousel = 'carousel',
@@ -97,17 +96,12 @@ export interface DropdownProps extends GUIBaseProps {
 }
 
 // Layout control properties
-export type StackDirection = 'horizontal' | 'vertical';
 export type Alignment = 'start' | 'center' | 'end' | 'stretch';
 
 export interface StackLayoutProps extends GUIBaseProps {
   duSpacing?: number;
   alignment?: Alignment;
   duPadding?: number;
-}
-
-export interface StackProps extends StackLayoutProps {
-  direction: StackDirection;
 }
 
 export interface CarouselProps extends GUIBaseProps {
@@ -149,7 +143,6 @@ export type GUIPropsByType = {
   [GUIControlType.Button]: ButtonProps;
   [GUIControlType.Slider]: SliderProps;
   [GUIControlType.Dropdown]: DropdownProps;
-  [GUIControlType.Stack]: StackProps;
   [GUIControlType.HStack]: StackLayoutProps & { direction?: never };
   [GUIControlType.VStack]: StackLayoutProps & { direction?: never };
   [GUIControlType.Carousel]: CarouselProps;

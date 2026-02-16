@@ -113,7 +113,6 @@ export const lightTheme: ThemeDefinition = {
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },
-    [GUIControlType.Stack]: {},
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},
     [GUIControlType.Grid]: {},
@@ -230,7 +229,6 @@ export const darkTheme: ThemeDefinition = {
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },
-    [GUIControlType.Stack]: {},
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},
     [GUIControlType.Grid]: {},
@@ -347,7 +345,6 @@ export const colorfulTheme: ThemeDefinition = {
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },
-    [GUIControlType.Stack]: {},
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},
     [GUIControlType.Grid]: {},
