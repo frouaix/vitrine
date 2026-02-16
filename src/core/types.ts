@@ -34,6 +34,7 @@ export interface EventHandlers {
 export interface BaseBlockProps extends Transform, EventHandlers {
   opacity?: number;
   visible?: boolean;
+  disableCulling?: boolean;
   shadow?: ShadowProps;
   id?: string;
 }

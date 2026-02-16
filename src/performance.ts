@@ -30,8 +30,12 @@ export class PerformanceOptimizer {
     worldTransform: Matrix2D = Matrix2D.identity()
   ): boolean {
     const { props } = block;
-    const { visible } = props;
+    const { visible, disableCulling } = props;
     if (visible === false) return false;
+
+    if (disableCulling) {
+      return true;
+    }
 
     // Get world bounds (getBounds will apply the block's transform)
     const boundsWorld = HitTester.getBounds(block, worldTransform);

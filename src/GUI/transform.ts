@@ -555,6 +555,7 @@ function transformSlider(
   const dxp = dx ?? GUI_DEFAULTS.slider.dx;
   const dypTrack = GUI_DEFAULTS.slider.duTrack;
   const rlThumb = GUI_DEFAULTS.slider.duThumbRadius;
+  const dypHitArea = rlThumb * 2;
   
   const minActual = min ?? GUI_DEFAULTS.slider.min;
   const maxActual = max ?? GUI_DEFAULTS.slider.max;
@@ -563,8 +564,67 @@ function transformSlider(
   const colTrackStroke = GUI_DEFAULTS.slider.colTrackStroke;
   const colThumbFill = colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
   const colThumbStroke = GUI_DEFAULTS.slider.colThumbStroke;
-  const normalizedValue = (value - minActual) / (maxActual - minActual);
-  const xlpThumb = normalizedValue * dxp;
+  const normalizedValue = Math.max(0, Math.min(1, (value - minActual) / (maxActual - minActual)));
+  const xlpThumbMin = Math.min(rlThumb, dxp / 2);
+  const xlpThumbMax = Math.max(xlpThumbMin, dxp - rlThumb);
+  const xlpThumb = xlpThumbMin + normalizedValue * (xlpThumbMax - xlpThumbMin);
+
+  type VitrinePointerEvent = PointerEvent & {
+    vtrLocalX?: number;
+  };
+
+  const getEventLocalX = (event: PointerEvent): number | null => {
+    const localX = (event as VitrinePointerEvent).vtrLocalX;
+    return typeof localX === 'number' ? localX : null;
+  };
+
+  const getValueFromLocalX = (xlpLocal: number): number => {
+    const range = maxActual - minActual;
+    const normalizedPosition = Math.max(0, Math.min(1, xlpLocal / dxp));
+    return minActual + normalizedPosition * range;
+  };
+
+  const applyFromTrackPosition = (xlpLocal: number): number => {
+    const nextValue = getValueFromLocalX(xlpLocal);
+    onChange?.(nextValue);
+    return nextValue;
+  };
+
+  const startTrackDrag = (event: PointerEvent): void => {
+    const xlpLocal = getEventLocalX(event);
+    const startValue = xlpLocal !== null
+      ? applyFromTrackPosition(xlpLocal)
+      : value;
+
+    dragState.fDragging = true;
+    dragState.xwStart = event.clientX;
+    dragState.startValue = startValue;
+  };
+
+  const clickTrack = (event: PointerEvent): void => {
+    const xlpLocal = getEventLocalX(event);
+    if (xlpLocal === null) {
+      return;
+    }
+
+    applyFromTrackPosition(xlpLocal);
+  };
+
+  const dragToValue = (event: PointerEvent): void => {
+    if (!dragState.fDragging) {
+      return;
+    }
+
+    const { target: canvas } = event as PointerEvent & { target: HTMLCanvasElement };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+
+    const dxc = (event.clientX - dragState.xwStart) * scaleX;
+    const deltaValue = (dxc / dxp) * (maxActual - minActual);
+    const newValue = Math.max(minActual, Math.min(maxActual, dragState.startValue + deltaValue));
+
+    onChange?.(newValue);
+  };
   
   // Persistent drag state (stored on props to survive re-renders)
   if (!(props as any)._dragState) {
@@ -587,6 +647,22 @@ function transformSlider(
       strokeWidth: GUI_DEFAULTS.slider.duTrackStroke
     })
   );
+
+  children.push(
+    rectangle({
+      x: 0,
+      y: -rlThumb,
+      dx: dxp,
+      dy: dypHitArea,
+      fill: 'transparent',
+      onClick: onChange ? (event: PointerEvent) => clickTrack(event) : undefined,
+      onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag(event) : undefined,
+      onDrag: onChange ? (event: PointerEvent) => dragToValue(event) : undefined,
+      onPointerUp: () => {
+        dragState.fDragging = false;
+      }
+    })
+  );
   
   // Thumb - draggable
   children.push(
@@ -594,6 +670,7 @@ function transformSlider(
       x: xlpThumb,
       y: 0,
       radius: rlThumb,
+      disableCulling: true,
       fill: colThumbFill,
       stroke: colThumbStroke,
       strokeWidth: GUI_DEFAULTS.slider.duThumbStroke,
@@ -602,20 +679,7 @@ function transformSlider(
         dragState.xwStart = e.clientX;
         dragState.startValue = value;
       } : undefined,
-      onDrag: onChange ? (e: PointerEvent) => {
-        if (!dragState.fDragging) return;
-        
-        const { target: canvas } = e as PointerEvent & { target: HTMLCanvasElement };
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        
-        // Calculate delta from drag start
-        const dxc = (e.clientX - dragState.xwStart) * scaleX;
-        const deltaValue = (dxc / dxp) * (maxActual - minActual);
-        const newValue = Math.max(minActual, Math.min(maxActual, dragState.startValue + deltaValue));
-        
-        onChange?.(newValue);
-      } : undefined,
+      onDrag: onChange ? (event: PointerEvent) => dragToValue(event) : undefined,
       onPointerUp: () => {
         dragState.fDragging = false;
       }
