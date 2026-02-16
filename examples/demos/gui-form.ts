@@ -31,13 +31,14 @@ interface FormDemoState {
   };
   currentTheme: ThemeKey;
   hoveredControl: string | null;
+  dropdownOpen: boolean;
 }
 
 export const demo = {
   id: 'gui-form',
   name: 'GUI Form',
   description: 'Interactive form with textboxes, checkboxes, buttons, and more',
-  size: { width: 1000, height: 760 },
+  size: { width: 1000, height: 1000 },
   
   init: (_renderer: unknown): FormDemoState => {
     return {
@@ -50,7 +51,8 @@ export const demo = {
         country: ''
       },
       currentTheme: 'dark',
-      hoveredControl: null
+      hoveredControl: null,
+      dropdownOpen: false
     };
   },
 
@@ -187,6 +189,7 @@ export const demo = {
                   dy: 50,
                   stValue: state.formData.country,
                   stPlaceholder: 'Select your country',
+                  fOpen: state.dropdownOpen,
                   options: [
                     { stLabel: 'United States', value: 'us' },
                     { stLabel: 'United Kingdom', value: 'uk' },
@@ -196,7 +199,8 @@ export const demo = {
                     { stLabel: 'France', value: 'fr' },
                     { stLabel: 'Japan', value: 'jp' }
                   ],
-                  onChange: (val) => { state.formData.country = val; }
+                  onChange: (val) => { state.formData.country = val; },
+                  onToggle: (fOpen) => { state.dropdownOpen = fOpen; }
                 })
               ]
             ),
