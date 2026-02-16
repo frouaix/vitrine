@@ -8,6 +8,7 @@ import { Canvas2DContext } from './context.ts';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester } from '../hit-test.ts';
+import { Matrix2D } from '../transform.ts';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
@@ -17,6 +18,7 @@ export interface RendererConfig {
   enableEvents?: boolean;
   enableCulling?: boolean;
   debugHoverOutline?: boolean;
+  enableCameraControls?: boolean;
 }
 
 export class ImmediateRenderer {
@@ -31,6 +33,10 @@ export class ImmediateRenderer {
   private debugHoveredBlock: Block | null = null;
   private viewport: Viewport;
   private perfMonitor: PerformanceMonitor;
+  private enableCameraControls: boolean;
+  private cameraX: number = 0;
+  private cameraY: number = 0;
+  private cameraZoom: number = 1;
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
@@ -39,6 +45,7 @@ export class ImmediateRenderer {
     this.pixelRatio = config.pixelRatio || window.devicePixelRatio || 1;
     this.enableCulling = config.enableCulling ?? true;
     this.debugHoverOutline = config.debugHoverOutline ?? false;
+    this.enableCameraControls = config.enableCameraControls ?? false;
 
     this.viewport = {
       x: 0,
@@ -56,6 +63,11 @@ export class ImmediateRenderer {
     // Enable event handling by default
     if (config.enableEvents !== false) {
       this.eventManager = new EventManager(this.canvas);
+      
+      // Setup camera controls if enabled
+      if (this.enableCameraControls) {
+        this.setupCameraControls();
+      }
     }
 
     this.perfMonitor = new PerformanceMonitor();
@@ -88,6 +100,55 @@ export class ImmediateRenderer {
     return this.debugHoverOutline;
   }
 
+  private setupCameraControls(): void {
+    const handleWheel = (e: WheelEvent): void => {
+      e.preventDefault();
+      
+      const zoomSpeed = 0.001;
+      const panSpeed = 1;
+      
+      if (e.ctrlKey) {
+        // Ctrl+MouseWheel: zoom in/out
+        const zoomDelta = -e.deltaY * zoomSpeed;
+        const newZoom = Math.max(0.1, Math.min(10, this.cameraZoom + zoomDelta));
+        
+        // Zoom towards mouse pointer
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // Adjust camera position to zoom towards pointer
+        const zoomRatio = newZoom / this.cameraZoom;
+        this.cameraX = mouseX - (mouseX - this.cameraX) * zoomRatio;
+        this.cameraY = mouseY - (mouseY - this.cameraY) * zoomRatio;
+        
+        this.cameraZoom = newZoom;
+      } else if (e.shiftKey) {
+        // Shift+MouseWheel: scroll horizontally
+        this.cameraX -= e.deltaY * panSpeed;
+      } else {
+        // MouseWheel: scroll vertically
+        this.cameraY -= e.deltaY * panSpeed;
+      }
+    };
+    
+    this.canvas.addEventListener('wheel', handleWheel, { passive: false });
+  }
+
+  getCameraTransform(): { x: number; y: number; zoom: number } {
+    return {
+      x: this.cameraX,
+      y: this.cameraY,
+      zoom: this.cameraZoom
+    };
+  }
+
+  setCameraTransform(x: number, y: number, zoom: number): void {
+    this.cameraX = x;
+    this.cameraY = y;
+    this.cameraZoom = zoom;
+  }
+
   render(block: Block): void {
     const startTime = performance.now();
 
@@ -95,7 +156,13 @@ export class ImmediateRenderer {
     if (this.debugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
       if (ptcLastPointer) {
-        const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc);
+        // Get camera transform for hit testing
+        const cameraTransform = this.enableCameraControls
+          ? Matrix2D.identity()
+              .translate(this.cameraX, this.cameraY)
+              .scaleXY(this.cameraZoom, this.cameraZoom)
+          : Matrix2D.identity();
+        const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc, cameraTransform);
         this.debugHoveredBlock = hit?.block || null;
       }
     }
@@ -110,12 +177,26 @@ export class ImmediateRenderer {
       this.context.applyTransform(matrix);
     }
     
+    // Apply camera transform (pan and zoom)
+    if (this.enableCameraControls) {
+      const cameraMatrix = this.context.transformStack.getCurrent()
+        .translate(this.cameraX, this.cameraY)
+        .scaleXY(this.cameraZoom, this.cameraZoom);
+      this.context.applyTransform(cameraMatrix);
+    }
+    
     this.renderBlock(block);
     this.context.restore();
 
-    // Update event system with current scene
+    // Update event system with current scene and camera transform
     if (this.eventManager) {
       this.eventManager.setScene(block);
+      if (this.enableCameraControls) {
+        const cameraTransform = Matrix2D.identity()
+          .translate(this.cameraX, this.cameraY)
+          .scaleXY(this.cameraZoom, this.cameraZoom);
+        this.eventManager.setCameraTransform(cameraTransform);
+      }
     }
 
     // Update performance stats

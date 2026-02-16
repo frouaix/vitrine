@@ -3,6 +3,7 @@
 // Event system for handling user interactions
 import { BlockType, type Block } from './core/types.ts';
 import { HitTester, type HitTestResult } from './hit-test.ts';
+import { Matrix2D } from './transform.ts';
 
 const EMPTY_SCENE: Block = {
   type: BlockType.Group,
@@ -36,6 +37,7 @@ export class EventManager {
   private draggedBlock: Block | null = null;
   private ptcDragStart: { xc: number; yc: number } | null = null;
   private ptcLastPointer: { xc: number; yc: number } | null = null;
+  private cameraTransform: Matrix2D = Matrix2D.identity();
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -63,6 +65,10 @@ export class EventManager {
 
   setScene(scene: Block): void {
     this.currentScene = scene;
+  }
+
+  setCameraTransform(transform: Matrix2D): void {
+    this.cameraTransform = transform;
   }
 
   getLastPointerCanvasPosition(): { xc: number; yc: number } | null {
@@ -128,7 +134,7 @@ export class EventManager {
     const { currentScene } = this;
 
     const { xc, yc } = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(currentScene, xc, yc);
+    const hit = HitTester.hitTest(currentScene, xc, yc, this.cameraTransform);
     if (!hit) return;
 
     this.decoratePointerEvent(event, hit);
@@ -183,7 +189,7 @@ export class EventManager {
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     this.ptcLastPointer = { xc, yc };
-    const hit = HitTester.hitTest(currentScene, xc, yc);
+    const hit = HitTester.hitTest(currentScene, xc, yc, this.cameraTransform);
 
     if (hit) {
       this.decoratePointerEvent(event, hit);
