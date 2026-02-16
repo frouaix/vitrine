@@ -168,9 +168,14 @@
         baseline: 'bottom'
       }));
 
-      // Note: This is the BUG - the scene is not wrapped in a camera group
-      // The camera x, y, zoom values are updated but not applied to the scene
-      const scene = group({ x: 400, y: 300 }, shapes);
+      // Apply camera transform to the scene
+      // Center the view at (400, 300) and apply camera pan and zoom
+      const scene = group({ 
+        x: 400 + camera.x, 
+        y: 300 + camera.y,
+        scaleX: camera.zoom,
+        scaleY: camera.zoom
+      }, shapes);
 
       renderer.render(scene);
       updateCameraDisplay();
