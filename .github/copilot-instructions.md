@@ -88,6 +88,8 @@ Events flow through the transform hierarchy:
 - TypeScript only, no JavaScript files
 - Uses strict TypeScript (`strict: true`)
 - **Always use semicolons** (`;`)
+- **Use explicit `.ts` extensions** for all relative TypeScript imports/exports (`./foo.ts`, `../bar.ts`)
+- **Keep package imports extensionless** (`vitrine`, `react`)
 - **Use explicit return types** for functions
 - **Prefer destructuring** over direct property access
 - **Hungarian notation** for geometric variables (see `hungarian-notation.md`)

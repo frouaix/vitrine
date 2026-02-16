@@ -25,6 +25,11 @@ Explore 12 interactive examples including data visualization, productivity apps,
 
 This project uses Hungarian-style naming for geometry and style fields. See [.github/hungarian-notation.md](.github/hungarian-notation.md) for details.
 
+## Import Conventions
+
+- Use explicit `.ts` extensions for all relative TypeScript imports and exports (for example `./foo.ts`, `../bar.ts`).
+- Keep package imports extensionless (for example `vitrine`, `react`).
+
 ## Installation
 
 ```bash
