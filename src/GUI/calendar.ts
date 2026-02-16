@@ -67,9 +67,9 @@ function stFormatDayHeader(date: Date): string {
 
 // Helper function to format hour as "9:00"
 function stFormatHour(hour: number): string {
-  const fPM = hour >= 12;
+  const fIsPM = hour >= 12;
   const hourDisplay = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${hourDisplay}:00 ${fPM ? 'PM' : 'AM'}`;
+  return `${hourDisplay}:00 ${fIsPM ? 'PM' : 'AM'}`;
 }
 
 // Helper function to get month name
@@ -107,7 +107,7 @@ function rgEventForDay(rgEvent: CalendarEvent[], date: Date): CalendarEvent[] {
 }
 
 // Render a single day column for multi-day view
-function rgBlockForDayColumn(
+function renderDayColumn(
   date: Date,
   rgEvent: CalendarEvent[],
   xColumn: number,
@@ -288,7 +288,7 @@ export function rsCalendarDayView(props: CalendarDayViewProps): Block {
     date.setDate(date.getDate() + iDay);
 
     const xColumn = dxHourLabel + iDay * dxColumn;
-    const rgBlockColumn = rgBlockForDayColumn(date, rgEvent, xColumn, hourStart, hourEnd, dxColumn);
+    const rgBlockColumn = renderDayColumn(date, rgEvent, xColumn, hourStart, hourEnd, dxColumn);
     rgBlock.push(...rgBlockColumn);
   }
 
@@ -296,7 +296,7 @@ export function rsCalendarDayView(props: CalendarDayViewProps): Block {
 }
 
 // Render a single month grid
-function rgBlockForMonthGrid(
+function renderMonthGrid(
   date: Date,
   rgEvent: CalendarEvent[],
   xMonth: number,
@@ -485,7 +485,7 @@ export function rsCalendarMonthView(props: CalendarMonthViewProps): Block {
     const xMonth = iCol * (dxMonth + CALENDAR_DEFAULTS.monthView.duMonthGridSpacing);
     const yMonth = iRow * (dyMonth + CALENDAR_DEFAULTS.monthView.duMonthGridSpacing);
 
-    const rgBlockMonth = rgBlockForMonthGrid(date, rgEvent, xMonth, yMonth, dayStartWeek);
+    const rgBlockMonth = renderMonthGrid(date, rgEvent, xMonth, yMonth, dayStartWeek);
     rgBlock.push(...rgBlockMonth);
   }
 
