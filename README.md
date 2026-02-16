@@ -144,6 +144,7 @@ console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
 pnpm install         # Install dependencies
 pnpm dev             # Start dev server with gallery
 pnpm build           # Compile TypeScript library
+pnpm lint            # Run lint/type checks
 pnpm build:examples  # Build examples for production
 pnpm deploy          # Deploy to GitHub Pages
 pnpm clean           # Remove build artifacts

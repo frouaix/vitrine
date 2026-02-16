@@ -30,6 +30,8 @@ pnpm clean
 
 **Note**: This project has no test suite or linters configured. Focus on ensuring examples run correctly via `pnpm dev`.
 
+Use `pnpm build` and `pnpm lint` to validate changes. (`lint` runs TypeScript checks via `tsc --noEmit`.)
+
 ## Architecture
 
 ### Core Rendering Model

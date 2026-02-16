@@ -17,6 +17,7 @@
   ],
   "scripts": {
     "build": "tsc",
+    "lint": "tsc --noEmit",
     "build:examples": "vite build",
     "dev": "vite",
     "preview": "vite preview",
