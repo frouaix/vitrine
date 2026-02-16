@@ -38,7 +38,7 @@ export const demo = {
   id: 'gui-form',
   name: 'GUI Form',
   description: 'Interactive form with textboxes, checkboxes, buttons, and more',
-  size: { width: 1000, height: 760 },
+  size: { width: 1000, height: 1000 },
   
   init: (_renderer: unknown): FormDemoState => {
     return {
