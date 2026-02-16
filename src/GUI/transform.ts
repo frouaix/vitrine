@@ -827,6 +827,7 @@ function transformDropdown(
     const duItemHeight = dyp;
     const duMenuHeight = Math.min(options.length * duItemHeight, dyp * 6); // Max 6 items visible
     const cVisibleItems = Math.floor(duMenuHeight / duItemHeight);
+    const colItemSelected = colBgHover || colBg;
     
     // Menu background
     children.push(
@@ -848,6 +849,16 @@ function transformDropdown(
       const ypItem = dyp + 2 + index * duItemHeight;
       const fSelected = option.value === stValue;
       
+      // Item click handler
+      const handleItemClick = () => {
+        if (onChange) {
+          onChange(option.value);
+        }
+        if (onToggle) {
+          onToggle(false);
+        }
+      };
+      
       // Item background (highlighted if selected)
       children.push(
         rectangle({
@@ -855,13 +866,8 @@ function transformDropdown(
           y: ypItem,
           dx: dxp,
           dy: duItemHeight,
-          fill: fSelected ? (colBgHover || colBg) : 'transparent',
-          onClick: onChange && (() => {
-            onChange(option.value);
-            if (onToggle) {
-              onToggle(false);
-            }
-          })
+          fill: fSelected ? colItemSelected : 'transparent',
+          onClick: handleItemClick
         })
       );
       
