@@ -100,9 +100,9 @@ export interface DropdownProps extends GUIBaseProps {
 export type Alignment = 'start' | 'center' | 'end' | 'stretch';
 
 export interface StackLayoutProps extends GUIBaseProps {
+  duPadding?: number;
   duSpacing?: number;
   alignment?: Alignment;
-  duPadding?: number;
 }
 
 export interface CarouselProps extends GUIBaseProps {
@@ -115,8 +115,8 @@ export interface CarouselProps extends GUIBaseProps {
 export interface GridProps extends GUIBaseProps {
   cColumns?: number;
   rows?: number;
-  duSpacing?: number;
   duPadding?: number;
+  duSpacing?: number;
 }
 
 // Content control properties
@@ -168,21 +168,21 @@ export type GUIControlOfType<T extends GUIControlType> = Extract<GUIControl, { t
 // Theme system
 export interface ControlStyle {
   colBackground?: GUIColor;
+  colBgActive?: GUIColor;
+  colBgChecked?: GUIColor;
+  colBgDisabled?: GUIColor;
+  colBgHover?: GUIColor;
   colBorder?: GUIColor;
+  colBorderFocus?: GUIColor;
+  colSliderThumb?: GUIColor;
+  colSliderTrack?: GUIColor;
+  colText?: GUIColor;
+  colTextDisabled?: GUIColor;
   borderWidth?: number;
   borderRadius?: number;
-  colText?: GUIColor;
   fontSize?: number;
   fontFamily?: string;
   duPadding?: number;
-  colHoverBackground?: GUIColor;
-  colActiveBackground?: GUIColor;
-  colDisabledBackground?: GUIColor;
-  colDisabledText?: GUIColor;
-  colFocusBorder?: GUIColor;
-  colCheckedBackground?: GUIColor;
-  colSliderTrack?: GUIColor;
-  colSliderThumb?: GUIColor;
 }
 
 export interface ThemeDefinition {

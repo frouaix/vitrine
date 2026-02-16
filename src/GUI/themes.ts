@@ -8,18 +8,18 @@ import { GUIControlType } from './types.ts';
 // Light theme
 const lightButtonStyle: ControlStyle = {
   colBackground: '#ffffff',
+  colBgActive: '#e5e7eb',
+  colBgDisabled: '#f9fafb',
+  colBgHover: '#f3f4f6',
   colBorder: '#d1d5db',
+  colBorderFocus: '#3b82f6',
+  colText: '#1f2937',
+  colTextDisabled: '#9ca3af',
   borderWidth: 1,
   borderRadius: 8,
-  colText: '#1f2937',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
-  duPadding: 14,
-  colHoverBackground: '#f3f4f6',
-  colActiveBackground: '#e5e7eb',
-  colDisabledBackground: '#f9fafb',
-  colDisabledText: '#9ca3af',
-  colFocusBorder: '#3b82f6'
+  duPadding: 14
 };
 
 export const lightTheme: ThemeDefinition = {
@@ -28,75 +28,75 @@ export const lightTheme: ThemeDefinition = {
     'primary-button': {
       ...lightButtonStyle,
       colBackground: '#3b82f6',
+      colBgActive: '#1d4ed8',
+      colBgHover: '#2563eb',
+      colBorder: '#3b82f6',
       colText: '#ffffff',
-      colHoverBackground: '#2563eb',
-      colActiveBackground: '#1d4ed8',
-      colBorder: '#3b82f6'
     },
     'danger-button': {
       ...lightButtonStyle,
       colBackground: '#ef4444',
+      colBgActive: '#b91c1c',
+      colBgHover: '#dc2626',
+      colBorder: '#ef4444',
       colText: '#ffffff',
-      colHoverBackground: '#dc2626',
-      colActiveBackground: '#b91c1c',
-      colBorder: '#ef4444'
     }
   },
   defaults: {
     [GUIControlType.Button]: lightButtonStyle,
     [GUIControlType.TextBox]: {
       colBackground: '#ffffff',
+      colBgDisabled: '#f9fafb',
       colBorder: '#d1d5db',
+      colBorderFocus: '#3b82f6',
+      colText: '#1f2937',
+      colTextDisabled: '#9ca3af',
       borderWidth: 1,
       borderRadius: 8,
-      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 14,
-      colFocusBorder: '#3b82f6',
-      colDisabledBackground: '#f9fafb',
-      colDisabledText: '#9ca3af'
+      duPadding: 14
     },
     [GUIControlType.CheckBox]: {
       colBackground: '#ffffff',
+      colBgChecked: '#3b82f6',
       colBorder: '#d1d5db',
+      colBorderFocus: '#3b82f6',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 5,
-      colText: '#1f2937',
       fontSize: 16,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#3b82f6',
-      colFocusBorder: '#3b82f6'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
       colBackground: '#ffffff',
+      colBgChecked: '#3b82f6',
       colBorder: '#d1d5db',
+      colBorderFocus: '#3b82f6',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 14,
-      colText: '#1f2937',
       fontSize: 16,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#3b82f6',
-      colFocusBorder: '#3b82f6'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Slider]: {
-      colSliderTrack: '#d1d5db',
       colSliderThumb: '#3b82f6',
+      colSliderTrack: '#d1d5db',
       colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
       colBackground: '#ffffff',
+      colBgHover: '#f3f4f6',
       colBorder: '#d1d5db',
+      colBorderFocus: '#3b82f6',
+      colText: '#1f2937',
       borderWidth: 1,
       borderRadius: 8,
-      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 14,
-      colHoverBackground: '#f3f4f6',
-      colFocusBorder: '#3b82f6'
+      duPadding: 14
     },
     [GUIControlType.Label]: {
       colText: '#1f2937',
@@ -106,12 +106,12 @@ export const lightTheme: ThemeDefinition = {
     [GUIControlType.Panel]: {
       colBackground: '#ffffff',
       colBorder: '#e5e7eb',
+      colText: '#1f2937',
       borderWidth: 1,
       borderRadius: 10,
-      duPadding: 20,
-      colText: '#1f2937',
       fontSize: 18,
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      duPadding: 20
     },
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},
@@ -124,18 +124,18 @@ export const lightTheme: ThemeDefinition = {
 // Dark theme
 const darkButtonStyle: ControlStyle = {
   colBackground: '#374151',
+  colBgActive: '#6b7280',
+  colBgDisabled: '#1f2937',
+  colBgHover: '#4b5563',
   colBorder: '#4b5563',
+  colBorderFocus: '#60a5fa',
+  colText: '#f9fafb',
+  colTextDisabled: '#6b7280',
   borderWidth: 1,
   borderRadius: 8,
-  colText: '#f9fafb',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
-  duPadding: 14,
-  colHoverBackground: '#4b5563',
-  colActiveBackground: '#6b7280',
-  colDisabledBackground: '#1f2937',
-  colDisabledText: '#6b7280',
-  colFocusBorder: '#60a5fa'
+  duPadding: 14
 };
 
 export const darkTheme: ThemeDefinition = {
@@ -144,75 +144,75 @@ export const darkTheme: ThemeDefinition = {
     'primary-button': {
       ...darkButtonStyle,
       colBackground: '#3b82f6',
+      colBgActive: '#1d4ed8',
+      colBgHover: '#2563eb',
+      colBorder: '#3b82f6',
       colText: '#ffffff',
-      colHoverBackground: '#2563eb',
-      colActiveBackground: '#1d4ed8',
-      colBorder: '#3b82f6'
     },
     'danger-button': {
       ...darkButtonStyle,
       colBackground: '#ef4444',
+      colBgActive: '#b91c1c',
+      colBgHover: '#dc2626',
+      colBorder: '#ef4444',
       colText: '#ffffff',
-      colHoverBackground: '#dc2626',
-      colActiveBackground: '#b91c1c',
-      colBorder: '#ef4444'
     }
   },
   defaults: {
     [GUIControlType.Button]: darkButtonStyle,
     [GUIControlType.TextBox]: {
       colBackground: '#1f2937',
+      colBgDisabled: '#111827',
       colBorder: '#4b5563',
+      colBorderFocus: '#60a5fa',
+      colText: '#f9fafb',
+      colTextDisabled: '#6b7280',
       borderWidth: 1,
       borderRadius: 8,
-      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 14,
-      colFocusBorder: '#60a5fa',
-      colDisabledBackground: '#111827',
-      colDisabledText: '#6b7280'
+      duPadding: 14
     },
     [GUIControlType.CheckBox]: {
       colBackground: '#1f2937',
+      colBgChecked: '#3b82f6',
       colBorder: '#4b5563',
+      colBorderFocus: '#60a5fa',
+      colText: '#f9fafb',
       borderWidth: 2,
       borderRadius: 5,
-      colText: '#f9fafb',
       fontSize: 16,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#3b82f6',
-      colFocusBorder: '#60a5fa'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
       colBackground: '#1f2937',
+      colBgChecked: '#3b82f6',
       colBorder: '#4b5563',
+      colBorderFocus: '#60a5fa',
+      colText: '#f9fafb',
       borderWidth: 2,
       borderRadius: 14,
-      colText: '#f9fafb',
       fontSize: 16,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#3b82f6',
-      colFocusBorder: '#60a5fa'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Slider]: {
-      colSliderTrack: '#4b5563',
       colSliderThumb: '#3b82f6',
+      colSliderTrack: '#4b5563',
       colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
       colBackground: '#1f2937',
+      colBgHover: '#374151',
       colBorder: '#4b5563',
+      colBorderFocus: '#60a5fa',
+      colText: '#f9fafb',
       borderWidth: 1,
       borderRadius: 8,
-      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 14,
-      colHoverBackground: '#374151',
-      colFocusBorder: '#60a5fa'
+      duPadding: 14
     },
     [GUIControlType.Label]: {
       colText: '#f9fafb',
@@ -222,12 +222,12 @@ export const darkTheme: ThemeDefinition = {
     [GUIControlType.Panel]: {
       colBackground: '#1f2937',
       colBorder: '#374151',
+      colText: '#f9fafb',
       borderWidth: 1,
       borderRadius: 10,
-      duPadding: 20,
-      colText: '#f9fafb',
       fontSize: 18,
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      duPadding: 20
     },
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},
@@ -240,18 +240,18 @@ export const darkTheme: ThemeDefinition = {
 // Colorful theme
 const colorfulButtonStyle: ControlStyle = {
   colBackground: '#fbbf24',
+  colBgActive: '#f59e0b',
+  colBgDisabled: '#fef3c7',
+  colBgHover: '#fcd34d',
   colBorder: '#f59e0b',
+  colBorderFocus: '#ec4899',
+  colText: '#1f2937',
+  colTextDisabled: '#9ca3af',
   borderWidth: 2,
   borderRadius: 14,
-  colText: '#1f2937',
   fontSize: 17,
   fontFamily: 'system-ui, sans-serif',
-  duPadding: 15,
-  colHoverBackground: '#fcd34d',
-  colActiveBackground: '#f59e0b',
-  colDisabledBackground: '#fef3c7',
-  colDisabledText: '#9ca3af',
-  colFocusBorder: '#ec4899'
+  duPadding: 15
 };
 
 export const colorfulTheme: ThemeDefinition = {
@@ -260,75 +260,75 @@ export const colorfulTheme: ThemeDefinition = {
     'primary-button': {
       ...colorfulButtonStyle,
       colBackground: '#ec4899',
+      colBgActive: '#be185d',
+      colBgHover: '#db2777',
+      colBorder: '#ec4899',
       colText: '#ffffff',
-      colHoverBackground: '#db2777',
-      colActiveBackground: '#be185d',
-      colBorder: '#ec4899'
     },
     'danger-button': {
       ...colorfulButtonStyle,
       colBackground: '#f97316',
+      colBgActive: '#c2410c',
+      colBgHover: '#ea580c',
+      colBorder: '#f97316',
       colText: '#ffffff',
-      colHoverBackground: '#ea580c',
-      colActiveBackground: '#c2410c',
-      colBorder: '#f97316'
     }
   },
   defaults: {
     [GUIControlType.Button]: colorfulButtonStyle,
     [GUIControlType.TextBox]: {
       colBackground: '#fef3c7',
+      colBgDisabled: '#fffbeb',
       colBorder: '#fbbf24',
+      colBorderFocus: '#ec4899',
+      colText: '#1f2937',
+      colTextDisabled: '#9ca3af',
       borderWidth: 2,
       borderRadius: 14,
-      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 15,
-      colFocusBorder: '#ec4899',
-      colDisabledBackground: '#fffbeb',
-      colDisabledText: '#9ca3af'
+      duPadding: 15
     },
     [GUIControlType.CheckBox]: {
       colBackground: '#fef3c7',
+      colBgChecked: '#10b981',
       colBorder: '#fbbf24',
+      colBorderFocus: '#ec4899',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 7,
-      colText: '#1f2937',
       fontSize: 17,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#10b981',
-      colFocusBorder: '#ec4899'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
       colBackground: '#fef3c7',
+      colBgChecked: '#10b981',
       colBorder: '#fbbf24',
+      colBorderFocus: '#ec4899',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 16,
-      colText: '#1f2937',
       fontSize: 17,
-      fontFamily: 'system-ui, sans-serif',
-      colCheckedBackground: '#10b981',
-      colFocusBorder: '#ec4899'
+      fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Slider]: {
-      colSliderTrack: '#fbbf24',
       colSliderThumb: '#ec4899',
+      colSliderTrack: '#fbbf24',
       colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
       colBackground: '#fef3c7',
+      colBgHover: '#fde68a',
       colBorder: '#fbbf24',
+      colBorderFocus: '#ec4899',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 14,
-      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      duPadding: 15,
-      colHoverBackground: '#fde68a',
-      colFocusBorder: '#ec4899'
+      duPadding: 15
     },
     [GUIControlType.Label]: {
       colText: '#1f2937',
@@ -338,12 +338,12 @@ export const colorfulTheme: ThemeDefinition = {
     [GUIControlType.Panel]: {
       colBackground: '#fef3c7',
       colBorder: '#fbbf24',
+      colText: '#1f2937',
       borderWidth: 2,
       borderRadius: 18,
-      duPadding: 24,
-      colText: '#1f2937',
       fontSize: 18,
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      duPadding: 24
     },
     [GUIControlType.HStack]: {},
     [GUIControlType.VStack]: {},

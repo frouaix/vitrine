@@ -6,9 +6,9 @@ export const GUI_DEFAULTS = {
   common: {
     x: 0,
     y: 0,
-    duSpacing: 10,
-    duPadding: 0,
     duAxisStart: 0,
+    duPadding: 0,
+    duSpacing: 10,
     stEmpty: ''
   },
   text: {
@@ -38,31 +38,31 @@ export const GUI_DEFAULTS = {
   radioButton: {
     dx: 200,
     dy: 28,
-    duRadius: 14,
     duInnerDotRadius: 8,
-    duLabelSpacing: 12
+    duLabelSpacing: 12,
+    duRadius: 14
   },
   slider: {
     dx: 300,
     dy: 24,
     min: 0,
     max: 100,
-    duTrack: 6,
     duThumbRadius: 12,
-    colTrackFill: '#4b5563',
-    colTrackStroke: '#888888',
+    duThumbStroke: 3,
+    duTrack: 6,
     duTrackStroke: 1,
     colThumbFill: '#3b82f6',
     colThumbStroke: '#ffffff',
-    duThumbStroke: 3
+    colTrackFill: '#4b5563',
+    colTrackStroke: '#888888',
   },
   dropdown: {
     dx: 300,
     dy: 50,
-    duTextPadding: 12,
-    stArrow: '▼',
     duArrowFont: 14,
     duArrowOffsetX: 8,
+    duTextPadding: 12,
+    stArrow: '▼',
     stPlaceholder: 'Select...'
   },
   label: {
@@ -85,8 +85,8 @@ export const GUI_DEFAULTS = {
     dy: 200,
     currentIndex: 0,
     duDotOffsetY: 20,
-    duDotSpacing: 15,
     duDotRadius: 4,
+    duDotSpacing: 15,
     colActiveDotFill: '#3b82f6',
     colInactiveDotFill: '#d1d5db'
   },

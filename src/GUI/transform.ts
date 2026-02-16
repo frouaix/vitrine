@@ -172,11 +172,11 @@ function transformTextBox(
   const style = getControlStyle(control, context);
   const {
     colBackground,
-    colHoverBackground,
-    colFocusBorder,
+    colBgHover,
+    colBorderFocus,
     colBorder: colBorderStyle,
     colText,
-    colDisabledText,
+    colTextDisabled,
     borderWidth,
     borderRadius,
     duPadding,
@@ -204,13 +204,13 @@ function transformTextBox(
   const colBg = fFocused
     ? colBackground
     : fHovered
-    ? colHoverBackground || colBackground
+    ? colBgHover || colBackground
     : colBackground;
   
   const colBorder = fFocused
-    ? colFocusBorder || colBorderStyle
+    ? colBorderFocus || colBorderStyle
     : colBorderStyle;
-  const colTextActual = stValue ? colText : (colDisabledText || colText);
+  const colTextActual = stValue ? colText : (colTextDisabled || colText);
   
   const children: Block[] = [];
   
@@ -264,8 +264,8 @@ function transformCheckBox(
   const { props } = control;
   const style = getControlStyle(control, context);
   const {
-    colCheckedBackground,
-    colHoverBackground,
+    colBgChecked,
+    colBgHover,
     colBackground,
     colBorder,
     colText,
@@ -286,9 +286,9 @@ function transformCheckBox(
 
   // Checkbox box
   const colBg = fCheckedActual
-    ? colCheckedBackground
+    ? colBgChecked
     : fHovered
-    ? colHoverBackground || colBackground
+    ? colBgHover || colBackground
     : colBackground;
   
   children.push(
@@ -356,10 +356,10 @@ function transformRadioButton(
   const { fHovered } = state;
   const style = getControlStyle(control, context);
   const {
-    colHoverBackground,
+    colBgHover,
     colBackground,
     colBorder,
-    colCheckedBackground: colChecked,
+    colBgChecked: colChecked,
     colText,
     borderWidth,
     fontSize,
@@ -373,7 +373,7 @@ function transformRadioButton(
   
   // Radio circle
   const colBg = fHovered
-    ? colHoverBackground || colBackground
+    ? colBgHover || colBackground
     : colBackground;
   
   children.push(
@@ -455,12 +455,12 @@ function transformButton(
   
   const style = getControlStyle({ ...control, props: { ...props, className } } as GUIControl, context);
   const {
-    colDisabledBackground,
-    colActiveBackground,
-    colHoverBackground,
+    colBgDisabled,
+    colBgActive,
+    colBgHover,
     colBackground,
-    colDisabledText,
     colText: colTextStyle,
+    colTextDisabled,
     colBorder,
     borderWidth,
     borderRadius,
@@ -472,15 +472,15 @@ function transformButton(
   const dyp = dy ?? GUI_DEFAULTS.button.dy;
   
   const colBg = !fEnabled && fEnabled !== undefined
-    ? colDisabledBackground
+    ? colBgDisabled
     : fPressed
-    ? colActiveBackground
+    ? colBgActive
     : fHovered
-    ? colHoverBackground
+    ? colBgHover
     : colBackground;
   
   const colText = !fEnabled && fEnabled !== undefined
-    ? colDisabledText
+    ? colTextDisabled
     : colTextStyle;
   
   const children: Block[] = [];
@@ -652,13 +652,13 @@ function transformDropdown(
   } = props;
   const style = getControlStyle(control, context);
   const {
-    colHoverBackground,
+    colBgHover,
     colBackground,
     colBorder,
     borderWidth,
     borderRadius,
     colText,
-    colDisabledText,
+    colTextDisabled,
     duPadding,
     fontSize,
     fontFamily
@@ -670,7 +670,7 @@ function transformDropdown(
   const { fHovered } = state;
 
   const colBg = fHovered
-    ? colHoverBackground || colBackground
+    ? colBgHover || colBackground
     : colBackground;
   
   const children: Block[] = [];
@@ -689,7 +689,7 @@ function transformDropdown(
   
   // Display text
   const selectedOption = options.find(opt => opt.value === stValue);
-  const colTextActual = selectedOption ? colText : (colDisabledText || colText);
+  const colTextActual = selectedOption ? colText : (colTextDisabled || colText);
   const stDisplay = selectedOption?.stLabel || stPlaceholder || GUI_DEFAULTS.dropdown.stPlaceholder;
   
   children.push(
