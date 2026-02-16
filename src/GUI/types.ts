@@ -167,7 +167,7 @@ export type GUIControlOfType<T extends GUIControlType> = Extract<GUIControl, { t
 
 // Theme system
 export interface ControlStyle {
-  colBackground?: GUIColor;
+  colBg?: GUIColor;
   colBgActive?: GUIColor;
   colBgChecked?: GUIColor;
   colBgDisabled?: GUIColor;

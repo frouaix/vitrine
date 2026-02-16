@@ -171,10 +171,10 @@ function transformTextBox(
   const { props } = control;
   const style = getControlStyle(control, context);
   const {
-    colBackground,
+    colBg,
     colBgHover,
     colBorderFocus,
-    colBorder: colBorderStyle,
+    colBorder,
     colText,
     colTextDisabled,
     borderWidth,
@@ -201,15 +201,15 @@ function transformTextBox(
   
   const { fFocused, fHovered } = state;
 
-  const colBg = fFocused
-    ? colBackground
+  const colBgActual = fFocused
+    ? colBg
     : fHovered
-    ? colBgHover || colBackground
-    : colBackground;
+    ? colBgHover || colBg
+    : colBg;
   
-  const colBorder = fFocused
-    ? colBorderFocus || colBorderStyle
-    : colBorderStyle;
+  const colBorderActual = fFocused
+    ? colBorderFocus || colBorder
+    : colBorder;
   const colTextActual = stValue ? colText : (colTextDisabled || colText);
   
   const children: Block[] = [];
@@ -219,8 +219,8 @@ function transformTextBox(
     rectangle({
       dx: dxp,
       dy: dyp,
-      fill: colBg,
-      stroke: colBorder,
+      fill: colBgActual,
+      stroke: colBorderActual,
       strokeWidth: borderWidth,
       cornerRadius: borderRadius,
       onClick,
@@ -266,7 +266,7 @@ function transformCheckBox(
   const {
     colBgChecked,
     colBgHover,
-    colBackground,
+    colBg,
     colBorder,
     colText,
     borderWidth,
@@ -285,17 +285,17 @@ function transformCheckBox(
   const fCheckedActual = fChecked === true;
 
   // Checkbox box
-  const colBg = fCheckedActual
+  const colBgActual = fCheckedActual
     ? colBgChecked
     : fHovered
-    ? colBgHover || colBackground
-    : colBackground;
+    ? colBgHover || colBg
+    : colBg;
   
   children.push(
     rectangle({
       dx: dypBox,
       dy: dypBox,
-      fill: colBg,
+      fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
       cornerRadius: borderRadius,
@@ -357,9 +357,9 @@ function transformRadioButton(
   const style = getControlStyle(control, context);
   const {
     colBgHover,
-    colBackground,
+    colBg,
     colBorder,
-    colBgChecked: colChecked,
+    colBgChecked,
     colText,
     borderWidth,
     fontSize,
@@ -372,14 +372,14 @@ function transformRadioButton(
   const children: Block[] = [];
   
   // Radio circle
-  const colBg = fHovered
-    ? colBgHover || colBackground
-    : colBackground;
+  const colBgActual = fHovered
+    ? colBgHover || colBg
+    : colBg;
   
   children.push(
     circle({
       radius: rl,
-      fill: colBg,
+      fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
       onClick: onChange && stValue ? (event: PointerEvent) => onChange(stValue) : undefined,
@@ -392,7 +392,7 @@ function transformRadioButton(
     children.push(
       circle({
         radius: GUI_DEFAULTS.radioButton.duInnerDotRadius,
-        fill: colChecked
+        fill: colBgChecked
       })
     );
   }
@@ -437,29 +437,29 @@ function transformButton(
     dy,
     id,
     variant,
-    className: classNameProp,
-    stLabel: stLabelProp,
+    className,
+    stLabel,
     fEnabled,
     fVisible,
     onClick,
     onHover
   } = props;
-  const stLabel = stLabelProp || '';
+  const stLabelActual = stLabel || '';
   const { fHovered, fPressed } = state;
   
   // Use className based on variant if no className specified
-  let className = classNameProp;
-  if (!className && variant) {
-    className = `${variant}-button`;
+  let classNameActual = className;
+  if (!classNameActual && variant) {
+    classNameActual = `${variant}-button`;
   }
   
-  const style = getControlStyle({ ...control, props: { ...props, className } } as GUIControl, context);
+  const style = getControlStyle({ ...control, props: { ...props, className: classNameActual } } as GUIControl, context);
   const {
     colBgDisabled,
     colBgActive,
     colBgHover,
-    colBackground,
-    colText: colTextStyle,
+    colBg,
+    colText,
     colTextDisabled,
     colBorder,
     borderWidth,
@@ -471,17 +471,17 @@ function transformButton(
   const dxp = dx ?? GUI_DEFAULTS.button.dx;
   const dyp = dy ?? GUI_DEFAULTS.button.dy;
   
-  const colBg = !fEnabled && fEnabled !== undefined
+  const colBgActual = !fEnabled && fEnabled !== undefined
     ? colBgDisabled
     : fPressed
     ? colBgActive
     : fHovered
     ? colBgHover
-    : colBackground;
+    : colBg;
   
-  const colText = !fEnabled && fEnabled !== undefined
+  const colTextActual = !fEnabled && fEnabled !== undefined
     ? colTextDisabled
-    : colTextStyle;
+    : colText;
   
   const children: Block[] = [];
   
@@ -490,7 +490,7 @@ function transformButton(
     rectangle({
       dx: dxp,
       dy: dyp,
-      fill: colBg,
+      fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
       cornerRadius: borderRadius
@@ -500,10 +500,10 @@ function transformButton(
   // Label
   children.push(
     text({
-      text: stLabel,
+      text: stLabelActual,
       x: dxp / 2,
       y: dyp / 2,
-      fill: colText,
+      fill: colTextActual,
       fontSize,
       font: fontFamily,
       align: GUI_DEFAULTS.text.alignCenter,
@@ -536,8 +536,8 @@ function transformSlider(
     y: yp = GUI_DEFAULTS.common.y,
     dx,
     id,
-    min: minProp,
-    max: maxProp,
+    min,
+    max,
     value: valueProp,
     fVisible,
     onChange,
@@ -553,14 +553,14 @@ function transformSlider(
   const dypTrack = GUI_DEFAULTS.slider.duTrack;
   const rlThumb = GUI_DEFAULTS.slider.duThumbRadius;
   
-  const min = minProp ?? GUI_DEFAULTS.slider.min;
-  const max = maxProp ?? GUI_DEFAULTS.slider.max;
-  const value = valueProp ?? min;
+  const minActual = min ?? GUI_DEFAULTS.slider.min;
+  const maxActual = max ?? GUI_DEFAULTS.slider.max;
+  const value = valueProp ?? minActual;
   const colTrackFill = colSliderTrack || GUI_DEFAULTS.slider.colTrackFill;
   const colTrackStroke = GUI_DEFAULTS.slider.colTrackStroke;
   const colThumbFill = colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
   const colThumbStroke = GUI_DEFAULTS.slider.colThumbStroke;
-  const normalizedValue = (value - min) / (max - min);
+  const normalizedValue = (value - minActual) / (maxActual - minActual);
   const xlpThumb = normalizedValue * dxp;
   
   // Persistent drag state (stored on props to survive re-renders)
@@ -608,8 +608,8 @@ function transformSlider(
         
         // Calculate delta from drag start
         const dxc = (e.clientX - dragState.xwStart) * scaleX;
-        const deltaValue = (dxc / dxp) * (max - min);
-        const newValue = Math.max(min, Math.min(max, dragState.startValue + deltaValue));
+        const deltaValue = (dxc / dxp) * (maxActual - minActual);
+        const newValue = Math.max(minActual, Math.min(maxActual, dragState.startValue + deltaValue));
         
         onChange?.(newValue);
       } : undefined,
@@ -653,7 +653,7 @@ function transformDropdown(
   const style = getControlStyle(control, context);
   const {
     colBgHover,
-    colBackground,
+    colBg,
     colBorder,
     borderWidth,
     borderRadius,
@@ -669,9 +669,9 @@ function transformDropdown(
   
   const { fHovered } = state;
 
-  const colBg = fHovered
-    ? colBgHover || colBackground
-    : colBackground;
+  const colBgActual = fHovered
+    ? colBgHover || colBg
+    : colBg;
   
   const children: Block[] = [];
   
@@ -680,7 +680,7 @@ function transformDropdown(
     rectangle({
       dx: dxp,
       dy: dyp,
-      fill: colBg,
+      fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
       cornerRadius: borderRadius
@@ -814,7 +814,7 @@ function transformPanel(
   const style = getControlStyle(control, context);
   const {
     duPadding: duPaddingStyle,
-    colBackground: colBg,
+    colBg: colBg,
     colBorder,
     colText,
     borderWidth,
@@ -825,7 +825,7 @@ function transformPanel(
   
   const dxp = dx ?? GUI_DEFAULTS.panel.dx;
   const dyp = dy ?? GUI_DEFAULTS.panel.dy;
-  const padding = duPadding || duPaddingStyle || GUI_DEFAULTS.panel.duPadding;
+  const duPaddingActual = duPadding || duPaddingStyle || GUI_DEFAULTS.panel.duPadding;
   
   const children: Block[] = [];
   
@@ -846,8 +846,8 @@ function transformPanel(
     children.push(
       text({
         text: stTitle,
-        x: padding,
-        y: padding,
+        x: duPaddingActual,
+        y: duPaddingActual,
         fill: colText,
         fontSize,
         font: fontFamily
@@ -857,8 +857,8 @@ function transformPanel(
   
   // Transform children
   if (control.children) {
-    const ypContent = stTitle ? padding + (fontSize || GUI_DEFAULTS.panel.duTitleFont) + GUI_DEFAULTS.panel.duTitleGap : padding;
-    const transformedChildren = transformGUIChildren(control.children, context, padding, ypContent);
+    const ypContent = stTitle ? duPaddingActual + (fontSize || GUI_DEFAULTS.panel.duTitleFont) + GUI_DEFAULTS.panel.duTitleGap : duPaddingActual;
+    const transformedChildren = transformGUIChildren(control.children, context, duPaddingActual, ypContent);
     children.push(...transformedChildren);
   }
   

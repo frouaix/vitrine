@@ -7,7 +7,7 @@ import { GUIControlType } from './types.ts';
 
 // Light theme
 const lightButtonStyle: ControlStyle = {
-  colBackground: '#ffffff',
+  colBg: '#ffffff',
   colBgActive: '#e5e7eb',
   colBgDisabled: '#f9fafb',
   colBgHover: '#f3f4f6',
@@ -27,7 +27,7 @@ export const lightTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...lightButtonStyle,
-      colBackground: '#3b82f6',
+      colBg: '#3b82f6',
       colBgActive: '#1d4ed8',
       colBgHover: '#2563eb',
       colBorder: '#3b82f6',
@@ -35,7 +35,7 @@ export const lightTheme: ThemeDefinition = {
     },
     'danger-button': {
       ...lightButtonStyle,
-      colBackground: '#ef4444',
+      colBg: '#ef4444',
       colBgActive: '#b91c1c',
       colBgHover: '#dc2626',
       colBorder: '#ef4444',
@@ -45,7 +45,7 @@ export const lightTheme: ThemeDefinition = {
   defaults: {
     [GUIControlType.Button]: lightButtonStyle,
     [GUIControlType.TextBox]: {
-      colBackground: '#ffffff',
+      colBg: '#ffffff',
       colBgDisabled: '#f9fafb',
       colBorder: '#d1d5db',
       colBorderFocus: '#3b82f6',
@@ -58,7 +58,7 @@ export const lightTheme: ThemeDefinition = {
       duPadding: 14
     },
     [GUIControlType.CheckBox]: {
-      colBackground: '#ffffff',
+      colBg: '#ffffff',
       colBgChecked: '#3b82f6',
       colBorder: '#d1d5db',
       colBorderFocus: '#3b82f6',
@@ -69,7 +69,7 @@ export const lightTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
-      colBackground: '#ffffff',
+      colBg: '#ffffff',
       colBgChecked: '#3b82f6',
       colBorder: '#d1d5db',
       colBorderFocus: '#3b82f6',
@@ -87,7 +87,7 @@ export const lightTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      colBackground: '#ffffff',
+      colBg: '#ffffff',
       colBgHover: '#f3f4f6',
       colBorder: '#d1d5db',
       colBorderFocus: '#3b82f6',
@@ -104,7 +104,7 @@ export const lightTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      colBackground: '#ffffff',
+      colBg: '#ffffff',
       colBorder: '#e5e7eb',
       colText: '#1f2937',
       borderWidth: 1,
@@ -123,7 +123,7 @@ export const lightTheme: ThemeDefinition = {
 
 // Dark theme
 const darkButtonStyle: ControlStyle = {
-  colBackground: '#374151',
+  colBg: '#374151',
   colBgActive: '#6b7280',
   colBgDisabled: '#1f2937',
   colBgHover: '#4b5563',
@@ -143,7 +143,7 @@ export const darkTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...darkButtonStyle,
-      colBackground: '#3b82f6',
+      colBg: '#3b82f6',
       colBgActive: '#1d4ed8',
       colBgHover: '#2563eb',
       colBorder: '#3b82f6',
@@ -151,7 +151,7 @@ export const darkTheme: ThemeDefinition = {
     },
     'danger-button': {
       ...darkButtonStyle,
-      colBackground: '#ef4444',
+      colBg: '#ef4444',
       colBgActive: '#b91c1c',
       colBgHover: '#dc2626',
       colBorder: '#ef4444',
@@ -161,7 +161,7 @@ export const darkTheme: ThemeDefinition = {
   defaults: {
     [GUIControlType.Button]: darkButtonStyle,
     [GUIControlType.TextBox]: {
-      colBackground: '#1f2937',
+      colBg: '#1f2937',
       colBgDisabled: '#111827',
       colBorder: '#4b5563',
       colBorderFocus: '#60a5fa',
@@ -174,7 +174,7 @@ export const darkTheme: ThemeDefinition = {
       duPadding: 14
     },
     [GUIControlType.CheckBox]: {
-      colBackground: '#1f2937',
+      colBg: '#1f2937',
       colBgChecked: '#3b82f6',
       colBorder: '#4b5563',
       colBorderFocus: '#60a5fa',
@@ -185,7 +185,7 @@ export const darkTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
-      colBackground: '#1f2937',
+      colBg: '#1f2937',
       colBgChecked: '#3b82f6',
       colBorder: '#4b5563',
       colBorderFocus: '#60a5fa',
@@ -203,7 +203,7 @@ export const darkTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      colBackground: '#1f2937',
+      colBg: '#1f2937',
       colBgHover: '#374151',
       colBorder: '#4b5563',
       colBorderFocus: '#60a5fa',
@@ -220,7 +220,7 @@ export const darkTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      colBackground: '#1f2937',
+      colBg: '#1f2937',
       colBorder: '#374151',
       colText: '#f9fafb',
       borderWidth: 1,
@@ -239,7 +239,7 @@ export const darkTheme: ThemeDefinition = {
 
 // Colorful theme
 const colorfulButtonStyle: ControlStyle = {
-  colBackground: '#fbbf24',
+  colBg: '#fbbf24',
   colBgActive: '#f59e0b',
   colBgDisabled: '#fef3c7',
   colBgHover: '#fcd34d',
@@ -259,7 +259,7 @@ export const colorfulTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...colorfulButtonStyle,
-      colBackground: '#ec4899',
+      colBg: '#ec4899',
       colBgActive: '#be185d',
       colBgHover: '#db2777',
       colBorder: '#ec4899',
@@ -267,7 +267,7 @@ export const colorfulTheme: ThemeDefinition = {
     },
     'danger-button': {
       ...colorfulButtonStyle,
-      colBackground: '#f97316',
+      colBg: '#f97316',
       colBgActive: '#c2410c',
       colBgHover: '#ea580c',
       colBorder: '#f97316',
@@ -277,7 +277,7 @@ export const colorfulTheme: ThemeDefinition = {
   defaults: {
     [GUIControlType.Button]: colorfulButtonStyle,
     [GUIControlType.TextBox]: {
-      colBackground: '#fef3c7',
+      colBg: '#fef3c7',
       colBgDisabled: '#fffbeb',
       colBorder: '#fbbf24',
       colBorderFocus: '#ec4899',
@@ -290,7 +290,7 @@ export const colorfulTheme: ThemeDefinition = {
       duPadding: 15
     },
     [GUIControlType.CheckBox]: {
-      colBackground: '#fef3c7',
+      colBg: '#fef3c7',
       colBgChecked: '#10b981',
       colBorder: '#fbbf24',
       colBorderFocus: '#ec4899',
@@ -301,7 +301,7 @@ export const colorfulTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.RadioButton]: {
-      colBackground: '#fef3c7',
+      colBg: '#fef3c7',
       colBgChecked: '#10b981',
       colBorder: '#fbbf24',
       colBorderFocus: '#ec4899',
@@ -319,7 +319,7 @@ export const colorfulTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      colBackground: '#fef3c7',
+      colBg: '#fef3c7',
       colBgHover: '#fde68a',
       colBorder: '#fbbf24',
       colBorderFocus: '#ec4899',
@@ -336,7 +336,7 @@ export const colorfulTheme: ThemeDefinition = {
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      colBackground: '#fef3c7',
+      colBg: '#fef3c7',
       colBorder: '#fbbf24',
       colText: '#1f2937',
       borderWidth: 2,
