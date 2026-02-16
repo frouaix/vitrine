@@ -778,9 +778,19 @@ function transformDropdown(
     ? colBgHover || colBg
     : colBg;
   
+  // Main dropdown click handler
+  const handleMainClick = (event: PointerEvent) => {
+    if (onToggle) {
+      onToggle(!fOpen);
+    }
+    if (onClick) {
+      onClick(event);
+    }
+  };
+  
   const children: Block[] = [];
   
-  // Background for main dropdown
+  // Background for main dropdown - attach click handler here since groups don't receive events
   children.push(
     rectangle({
       dx: dxp,
@@ -788,7 +798,9 @@ function transformDropdown(
       fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
-      cornerRadius: borderRadius
+      cornerRadius: borderRadius,
+      onClick: handleMainClick,
+      onHover
     })
   );
   
@@ -886,24 +898,12 @@ function transformDropdown(
     });
   }
   
-  // Main dropdown click handler
-  const handleMainClick = (event: PointerEvent) => {
-    if (onToggle) {
-      onToggle(!fOpen);
-    }
-    if (onClick) {
-      onClick(event);
-    }
-  };
-  
   return group(
     {
       x: xp,
       y: yp,
       visible: fVisible !== false,
-      id,
-      onClick: handleMainClick,
-      onHover
+      id
     },
     children
   );
