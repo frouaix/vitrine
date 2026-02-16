@@ -170,19 +170,15 @@ export class ImmediateRenderer {
     PerformanceOptimizer.resetStats();
     this.context.clear();
     this.context.save();
-    
-    // Apply pixel ratio scaling
-    if (this.pixelRatio !== 1) {
-      const matrix = this.context.transformStack.getCurrent().scaleXY(this.pixelRatio, this.pixelRatio);
-      this.context.applyTransform(matrix);
-    }
-    
-    // Apply camera transform (pan and zoom)
+
+    // Apply camera transform (pan and zoom) to root transform stack
     if (this.enableCameraControls) {
-      const cameraMatrix = this.context.transformStack.getCurrent()
-        .translate(this.cameraX, this.cameraY)
-        .scaleXY(this.cameraZoom, this.cameraZoom);
-      this.context.applyTransform(cameraMatrix);
+      this.context.transformStack.apply({
+        x: this.cameraX,
+        y: this.cameraY,
+        scaleX: this.cameraZoom,
+        scaleY: this.cameraZoom
+      });
     }
     
     this.renderBlock(block);
@@ -239,7 +235,15 @@ export class ImmediateRenderer {
     // Apply transform
     this.context.transformStack.save();
     this.context.transformStack.apply(props);
-    this.context.applyTransform(this.context.transformStack.getCurrent());
+    const worldTransform = this.context.transformStack.getCurrent();
+    if (this.pixelRatio !== 1) {
+      const renderTransform = Matrix2D.identity()
+        .scaleXY(this.pixelRatio, this.pixelRatio)
+        .multiply(worldTransform);
+      this.context.applyTransform(renderTransform);
+    } else {
+      this.context.applyTransform(worldTransform);
+    }
 
     // Apply opacity
     const parentOpacity = this.context.opacity;
