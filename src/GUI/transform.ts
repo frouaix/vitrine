@@ -748,7 +748,10 @@ function transformDropdown(
     stValue,
     stPlaceholder,
     fVisible,
+    fOpen,
     options,
+    onChange,
+    onToggle,
     onClick,
     onHover
   } = props;
@@ -777,7 +780,7 @@ function transformDropdown(
   
   const children: Block[] = [];
   
-  // Background
+  // Background for main dropdown
   children.push(
     rectangle({
       dx: dxp,
@@ -807,9 +810,10 @@ function transformDropdown(
   );
   
   // Arrow indicator
+  const stArrow = fOpen ? '▲' : GUI_DEFAULTS.dropdown.stArrow;
   children.push(
     text({
-      text: GUI_DEFAULTS.dropdown.stArrow,
+      text: stArrow,
       x: dxp - (duPadding || GUI_DEFAULTS.dropdown.duTextPadding) - GUI_DEFAULTS.dropdown.duArrowOffsetX,
       y: dyp / 2,
       fill: colTextActual,
@@ -818,13 +822,81 @@ function transformDropdown(
     })
   );
   
+  // Expanded menu
+  if (fOpen && options.length > 0) {
+    const duItemHeight = dyp;
+    const duMenuHeight = Math.min(options.length * duItemHeight, dyp * 6); // Max 6 items visible
+    const cVisibleItems = Math.floor(duMenuHeight / duItemHeight);
+    
+    // Menu background
+    children.push(
+      rectangle({
+        x: 0,
+        y: dyp + 2,
+        dx: dxp,
+        dy: duMenuHeight,
+        fill: colBg,
+        stroke: colBorder,
+        strokeWidth: borderWidth,
+        cornerRadius: borderRadius
+      })
+    );
+    
+    // Menu items
+    const itemsToShow = options.slice(0, cVisibleItems);
+    itemsToShow.forEach((option, index) => {
+      const ypItem = dyp + 2 + index * duItemHeight;
+      const fSelected = option.value === stValue;
+      
+      // Item background (highlighted if selected)
+      children.push(
+        rectangle({
+          x: 0,
+          y: ypItem,
+          dx: dxp,
+          dy: duItemHeight,
+          fill: fSelected ? (colBgHover || colBg) : 'transparent',
+          onClick: onChange && (() => {
+            onChange(option.value);
+            if (onToggle) {
+              onToggle(false);
+            }
+          })
+        })
+      );
+      
+      // Item text
+      children.push(
+        text({
+          text: option.stLabel || option.value,
+          x: duPadding || GUI_DEFAULTS.dropdown.duTextPadding,
+          y: ypItem + duItemHeight / 2,
+          fill: colText,
+          fontSize,
+          font: fontFamily,
+          baseline: GUI_DEFAULTS.text.baselineMiddle
+        })
+      );
+    });
+  }
+  
+  // Main dropdown click handler
+  const handleMainClick = (event: PointerEvent) => {
+    if (onToggle) {
+      onToggle(!fOpen);
+    }
+    if (onClick) {
+      onClick(event);
+    }
+  };
+  
   return group(
     {
       x: xp,
       y: yp,
       visible: fVisible !== false,
       id,
-      onClick,
+      onClick: handleMainClick,
       onHover
     },
     children
