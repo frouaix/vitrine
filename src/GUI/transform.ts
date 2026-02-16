@@ -25,6 +25,7 @@ import type {
 } from './types.ts';
 import { GUIControlType } from './types.ts';
 import { GUI_TO_BLOCK_DEFAULTS } from './constants.ts';
+import { resolveFlag, resolveUserString, resolveDx, resolveDy } from './transformUtils.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {
@@ -38,28 +39,6 @@ function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
 }
 
 const GUI_DEFAULTS = GUI_TO_BLOCK_DEFAULTS;
-
-function resolveFlag(props: Record<string, unknown>, stFlag: string, legacyFlag: string): boolean | undefined {
-  const fPrimary = props[stFlag] as boolean | undefined;
-  const fLegacy = props[legacyFlag] as boolean | undefined;
-  return fPrimary ?? fLegacy;
-}
-
-function resolveUserString(props: Record<string, unknown>, stKey: string, legacyKey: string): string | undefined {
-  const stPrimary = props[stKey] as string | undefined;
-  const stLegacy = props[legacyKey] as string | undefined;
-  return stPrimary ?? stLegacy;
-}
-
-function resolveDx(props: { dx?: number; width?: number }, dxDefault: number): number {
-  const { dx, width } = props;
-  return dx ?? width ?? dxDefault;
-}
-
-function resolveDy(props: { dy?: number; height?: number }, dyDefault: number): number {
-  const { dy, height } = props;
-  return dy ?? height ?? dyDefault;
-}
 
 // Helper to get style for a control
 function getControlStyle(
