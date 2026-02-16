@@ -3,6 +3,7 @@
 // GUI DSL type definitions for high-level UI controls
 
 import type { Block } from '../core/types.ts';
+import type { ColorPickerProps } from './color-picker.ts';
 
 export type GUIColor = string; // CSS color format
 export type Rs = { width: number; height: number };
@@ -17,6 +18,7 @@ export enum GUIControlType {
   Button = 'button',
   Slider = 'slider',
   Dropdown = 'dropdown',
+  ColorPicker = 'colorpicker',
   
   // Layout controls
   HStack = 'hstack',
@@ -144,6 +146,7 @@ export type GUIPropsByType = {
   [GUIControlType.Button]: ButtonProps;
   [GUIControlType.Slider]: SliderProps;
   [GUIControlType.Dropdown]: DropdownProps;
+  [GUIControlType.ColorPicker]: ColorPickerProps;
   [GUIControlType.HStack]: StackLayoutProps & { direction?: never };
   [GUIControlType.VStack]: StackLayoutProps & { direction?: never };
   [GUIControlType.Carousel]: CarouselProps;

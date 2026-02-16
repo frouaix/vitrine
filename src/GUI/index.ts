@@ -4,5 +4,6 @@
 
 export * from './types.ts';
 export * from './controls.ts';
+export * from './color-picker.ts';
 export * from './themes.ts';
 export * from './transform.ts';

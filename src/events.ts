@@ -22,6 +22,13 @@ export interface PointerEventData {
   originalEvent: PointerEvent;
 }
 
+type VitrinePointerEvent = PointerEvent & {
+  vtrLocalX?: number;
+  vtrLocalY?: number;
+  vtrWorldX?: number;
+  vtrWorldY?: number;
+};
+
 export class EventManager {
   private canvas: HTMLCanvasElement;
   private currentScene: Block = EMPTY_SCENE;
@@ -119,7 +126,17 @@ export class EventManager {
     const hit = HitTester.hitTest(currentScene, xc, yc);
     if (!hit) return;
 
+    this.decoratePointerEvent(event, hit);
+
     handler(hit);
+  }
+
+  private decoratePointerEvent(event: PointerEvent, hit: HitTestResult): void {
+    const vitrineEvent = event as VitrinePointerEvent;
+    vitrineEvent.vtrLocalX = hit.localX;
+    vitrineEvent.vtrLocalY = hit.localY;
+    vitrineEvent.vtrWorldX = hit.worldX;
+    vitrineEvent.vtrWorldY = hit.worldY;
   }
 
   private handleClick(event: PointerEvent): void {
@@ -157,6 +174,10 @@ export class EventManager {
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     const hit = HitTester.hitTest(currentScene, xc, yc);
+
+    if (hit) {
+      this.decoratePointerEvent(event, hit);
+    }
 
     // Handle dragging
     if (draggedBlock && ptcDragStart) {

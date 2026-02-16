@@ -86,6 +86,17 @@ export const lightTheme: ThemeDefinition = {
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
+    [GUIControlType.ColorPicker]: {
+      colBg: '#ffffff',
+      colBorder: '#d1d5db',
+      colText: '#1f2937',
+      colSliderThumb: '#ffffff',
+      colSliderTrack: '#e5e7eb',
+      borderWidth: 1,
+      borderRadius: 10,
+      fontSize: 14,
+      fontFamily: 'system-ui, sans-serif'
+    },
     [GUIControlType.Dropdown]: {
       colBg: '#ffffff',
       colBgHover: '#f3f4f6',
@@ -202,6 +213,17 @@ export const darkTheme: ThemeDefinition = {
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
+    [GUIControlType.ColorPicker]: {
+      colBg: '#111827',
+      colBorder: '#374151',
+      colText: '#f9fafb',
+      colSliderThumb: '#ffffff',
+      colSliderTrack: '#4b5563',
+      borderWidth: 1,
+      borderRadius: 10,
+      fontSize: 14,
+      fontFamily: 'system-ui, sans-serif'
+    },
     [GUIControlType.Dropdown]: {
       colBg: '#1f2937',
       colBgHover: '#374151',
@@ -316,6 +338,17 @@ export const colorfulTheme: ThemeDefinition = {
       colSliderTrack: '#fbbf24',
       colText: '#1f2937',
       fontSize: 17,
+      fontFamily: 'system-ui, sans-serif'
+    },
+    [GUIControlType.ColorPicker]: {
+      colBg: '#fff7d1',
+      colBorder: '#fbbf24',
+      colText: '#1f2937',
+      colSliderThumb: '#ffffff',
+      colSliderTrack: '#fde68a',
+      borderWidth: 2,
+      borderRadius: 14,
+      fontSize: 15,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {

@@ -14,6 +14,7 @@ import type {
 } from './types.ts';
 import { GUIControlType } from './types.ts';
 import { GUI_DEFAULTS } from './constants.ts';
+import { transformColorPicker } from './color-picker.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {
@@ -58,6 +59,8 @@ function rsFallbackForControlType(type: GUIControlType): Rs {
       return { width: GUI_DEFAULTS.radioButton.dx, height: GUI_DEFAULTS.radioButton.dy };
     case GUIControlType.Slider:
       return { width: GUI_DEFAULTS.slider.dx, height: GUI_DEFAULTS.slider.dy };
+    case GUIControlType.ColorPicker:
+      return { width: GUI_DEFAULTS.colorPicker.dx, height: GUI_DEFAULTS.colorPicker.dy };
     case GUIControlType.Label:
       return { width: GUI_DEFAULTS.label.dx, height: GUI_DEFAULTS.label.dy };
     case GUIControlType.Panel:
@@ -1108,6 +1111,8 @@ export function transformGUIControl(
       return transformSlider(control, context, state);
     case GUIControlType.Dropdown:
       return transformDropdown(control, context, state);
+    case GUIControlType.ColorPicker:
+      return transformColorPicker(control, context, state);
     case GUIControlType.Label:
       return transformLabel(control, context);
     case GUIControlType.Image:
