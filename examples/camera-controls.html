@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Camera Controls Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      cursor: grab;
+    }
+    canvas:active {
+      cursor: grabbing;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .camera-info {
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Vitrine Camera Controls</h1>
+  <div class="info">
+    <strong>Controls:</strong>
+    <ul>
+      <li>Scroll wheel: Zoom in/out</li>
+      <li>Mouse drag: Pan the camera</li>
+      <li>Reset button: Return to original view</li>
+    </ul>
+    <button id="resetBtn">Reset Camera</button>
+    <div class="camera-info">
+      <div>Camera X: <span id="cameraX">0</span></div>
+      <div>Camera Y: <span id="cameraY">0</span></div>
+      <div>Camera Zoom: <span id="cameraZoom">1.00</span></div>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+  
+  <script type="module">
+    import { 
+      ImmediateRenderer, 
+      rectangle, 
+      circle, 
+      text, 
+      group 
+    } from '../dist/index.js';
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new ImmediateRenderer({ 
+      canvas, 
+      width: 800, 
+      height: 600 
+    });
+
+    // Camera state
+    let camera = {
+      x: 0,
+      y: 0,
+      zoom: 1.0
+    };
+
+    // Panning state
+    let isPanning = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let cameraStartX = 0;
+    let cameraStartY = 0;
+
+    function updateCameraDisplay() {
+      document.getElementById('cameraX').textContent = camera.x.toFixed(2);
+      document.getElementById('cameraY').textContent = camera.y.toFixed(2);
+      document.getElementById('cameraZoom').textContent = camera.zoom.toFixed(2);
+    }
+
+    function render() {
+      // Create a grid of shapes to demonstrate panning/zooming
+      const shapes = [];
+      
+      // Background
+      shapes.push(rectangle({ 
+        dx: 2000, 
+        dy: 2000, 
+        fill: '#f5f5f5',
+        x: -1000,
+        y: -1000
+      }));
+
+      // Grid of shapes
+      for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+          const x = i * 150 - 675;
+          const y = j * 150 - 675;
+          
+          shapes.push(rectangle({ 
+            x: x, 
+            y: y, 
+            dx: 80, 
+            dy: 80, 
+            fill: `hsl(${(i * 36 + j * 24) % 360}, 70%, 60%)`,
+            stroke: '#333',
+            strokeWidth: 2,
+            cornerRadius: 8
+          }));
+
+          shapes.push(text({ 
+            x: x + 40, 
+            y: y + 40, 
+            text: `${i},${j}`, 
+            fontSize: 12,
+            fill: '#333',
+            align: 'center',
+            baseline: 'middle'
+          }));
+        }
+      }
+
+      // Center marker
+      shapes.push(circle({ 
+        x: 0, 
+        y: 0, 
+        radius: 20, 
+        fill: '#ff0000',
+        stroke: '#990000',
+        strokeWidth: 3
+      }));
+
+      shapes.push(text({ 
+        x: 0, 
+        y: -40, 
+        text: 'Origin (0, 0)', 
+        fontSize: 16,
+        fill: '#333',
+        align: 'center',
+        baseline: 'middle'
+      }));
+
+      // Instructions
+      shapes.push(text({ 
+        x: 0, 
+        y: 600, 
+        text: 'Scroll to zoom, drag to pan', 
+        fontSize: 18,
+        fill: '#666',
+        align: 'center',
+        baseline: 'bottom'
+      }));
+
+      // Note: This is the BUG - the scene is not wrapped in a camera group
+      // The camera x, y, zoom values are updated but not applied to the scene
+      const scene = group({ x: 400, y: 300 }, shapes);
+
+      renderer.render(scene);
+      updateCameraDisplay();
+    }
+
+    // Scroll wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      
+      const zoomFactor = 1.1;
+      const delta = e.deltaY > 0 ? 1 / zoomFactor : zoomFactor;
+      
+      camera.zoom *= delta;
+      camera.zoom = Math.max(0.1, Math.min(5.0, camera.zoom)); // Clamp zoom
+      
+      render();
+    });
+
+    // Mouse panning
+    canvas.addEventListener('pointerdown', (e) => {
+      isPanning = true;
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      cameraStartX = camera.x;
+      cameraStartY = camera.y;
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (isPanning) {
+        const dx = e.clientX - panStartX;
+        const dy = e.clientY - panStartY;
+        
+        camera.x = cameraStartX + dx;
+        camera.y = cameraStartY + dy;
+        
+        render();
+      }
+    });
+
+    canvas.addEventListener('pointerup', () => {
+      isPanning = false;
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      isPanning = false;
+    });
+
+    // Reset button
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      camera.x = 0;
+      camera.y = 0;
+      camera.zoom = 1.0;
+      render();
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
