@@ -10,21 +10,10 @@ import type {
   GUIControl,
   GUIControlOfType,
   TransformContext,
-  ControlStyle,
-  CheckBoxProps,
-  RadioButtonProps,
-  ButtonProps,
-  SliderProps,
-  DropdownProps,
-  CarouselProps,
-  GridProps,
-  LabelProps,
-  GUIImageProps,
-  PanelProps
+  ControlStyle
 } from './types.ts';
 import { GUIControlType } from './types.ts';
 import { GUI_DEFAULTS } from './constants.ts';
-import { resolveFlag, resolveUserString, resolveDx, resolveDy } from './transformUtils.ts';
 
 function repositionBlock<T extends Block>(block: T, xp: number, yp: number): T {
   return {
@@ -95,7 +84,7 @@ function rsControl(control: GUIControl): Rs {
     case GUIControlType.Grid:
       return rsGrid(control);
     default:
-      return { width: resolveDx(props, rsFallback.width), height: resolveDy(props, rsFallback.height) };
+      return { width: dx ?? rsFallback.width, height: dy ?? rsFallback.height };
   }
 }
 
@@ -194,15 +183,23 @@ function transformTextBox(
     fontSize,
     fontFamily
   } = style;
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, onClick, onHover } = props;
+  const {
+    x: xp = GUI_DEFAULTS.common.x,
+    y: yp = GUI_DEFAULTS.common.y,
+    dx,
+    dy,
+    id,
+    stValue,
+    stPlaceholder,
+    fVisible,
+    onClick,
+    onHover
+  } = props;
   
-  const dxp = resolveDx(props, GUI_DEFAULTS.textBox.dx);
-  const dyp = resolveDy(props, GUI_DEFAULTS.textBox.dy);
+  const dxp = dx ?? GUI_DEFAULTS.textBox.dx;
+  const dyp = dy ?? GUI_DEFAULTS.textBox.dy;
   
   const { fFocused, fHovered } = state;
-  const stValue = resolveUserString(props as unknown as Record<string, unknown>, 'stValue');
-  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fFocused
     ? colBackground
@@ -260,31 +257,39 @@ function transformTextBox(
 
 // Transform checkbox to core blocks
 function transformCheckBox(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.CheckBox>,
   context: TransformContext,
   state: { fHovered?: boolean } = {}
 ): Block {
-  const { props } = control as { props: CheckBoxProps };
+  const { props } = control;
   const style = getControlStyle(control, context);
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, onHover, onChange } = props;
+  const {
+    colCheckedBackground,
+    colHoverBackground,
+    colBackground,
+    colBorder,
+    colText,
+    borderWidth,
+    borderRadius,
+    fontSize,
+    fontFamily
+  } = style;
+  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, fChecked, stLabel, fVisible, onHover, onChange } = props;
   
   const dypBox = GUI_DEFAULTS.checkBox.duBox;
   const dxpLabelSpacing = GUI_DEFAULTS.checkBox.duLabelSpacing;
-  const { colBorder, colText } = style;
   
   const children: Block[] = [];
   
-  const fHovered = state.fHovered;
-  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked') === true;
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
+  const { fHovered } = state;
+  const fCheckedActual = fChecked === true;
 
   // Checkbox box
-  const colBg = fChecked
-    ? style.colCheckedBackground
+  const colBg = fCheckedActual
+    ? colCheckedBackground
     : fHovered
-    ? style.colHoverBackground || style.colBackground
-    : style.colBackground;
+    ? colHoverBackground || colBackground
+    : colBackground;
   
   children.push(
     rectangle({
@@ -292,15 +297,15 @@ function transformCheckBox(
       dy: dypBox,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius,
-      onClick: onChange ? (event: PointerEvent) => onChange(!fChecked) : undefined,
+      strokeWidth: borderWidth,
+      cornerRadius: borderRadius,
+      onClick: onChange ? (event: PointerEvent) => onChange(!fCheckedActual) : undefined,
       onHover
     })
   );
   
   // Check mark
-  if (fChecked) {
+  if (fCheckedActual) {
     children.push(
       text({
         text: GUI_DEFAULTS.checkBox.checkmark.stText,
@@ -322,8 +327,8 @@ function transformCheckBox(
         x: dypBox + dxpLabelSpacing,
         y: dypBox / 2,
         fill: colText,
-        fontSize: style.fontSize,
-        font: style.fontFamily,
+        fontSize,
+        font: fontFamily,
         baseline: GUI_DEFAULTS.text.baselineMiddle
       })
     );
@@ -342,39 +347,41 @@ function transformCheckBox(
 
 // Transform radio button to core blocks
 function transformRadioButton(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.RadioButton>,
   context: TransformContext,
   state: { fHovered?: boolean } = {}
 ): Block {
-  const { props } = control as { props: RadioButtonProps };
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, stValue, onChange, onHover } = props;
-  const fHovered = state.fHovered;
-  const fChecked = resolveFlag(props as unknown as Record<string, unknown>, 'fChecked') === true;
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
+  const { props } = control;
+  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, stValue, stLabel, fChecked, fVisible, onChange, onHover } = props;
+  const { fHovered } = state;
   const style = getControlStyle(control, context);
+  const {
+    colHoverBackground,
+    colBackground,
+    colBorder,
+    colCheckedBackground: colChecked,
+    colText,
+    borderWidth,
+    fontSize,
+    fontFamily
+  } = style;
   
   const rl = GUI_DEFAULTS.radioButton.duRadius;
   const dxpLabelSpacing = GUI_DEFAULTS.radioButton.duLabelSpacing;
-  const {
-    colBorder,
-    colCheckedBackground: colChecked,
-    colText
-  } = style;
   
   const children: Block[] = [];
   
   // Radio circle
   const colBg = fHovered
-    ? style.colHoverBackground || style.colBackground
-    : style.colBackground;
+    ? colHoverBackground || colBackground
+    : colBackground;
   
   children.push(
     circle({
       radius: rl,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
+      strokeWidth: borderWidth,
       onClick: onChange && stValue ? (event: PointerEvent) => onChange(stValue) : undefined,
       onHover
     })
@@ -398,8 +405,8 @@ function transformRadioButton(
         x: rl + dxpLabelSpacing,
         y: 0,
         fill: colText,
-        fontSize: style.fontSize,
-        font: style.fontFamily,
+        fontSize,
+        font: fontFamily,
         baseline: GUI_DEFAULTS.text.baselineMiddle
       })
     );
@@ -418,48 +425,63 @@ function transformRadioButton(
 
 // Transform button to core blocks
 function transformButton(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Button>,
   context: TransformContext,
   state: { fHovered?: boolean; fPressed?: boolean } = {}
 ): Block {
-  const { props } = control as { props: ButtonProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
+    dx,
+    dy,
     id,
     variant,
+    className: classNameProp,
+    stLabel: stLabelProp,
+    fEnabled,
+    fVisible,
     onClick,
     onHover
   } = props;
-  const fEnabled = resolveFlag(props as unknown as Record<string, unknown>, 'fEnabled');
-  const stLabel = resolveUserString(props as unknown as Record<string, unknown>, 'stLabel') || '';
-  const fHovered = state.fHovered;
-  const fPressed = state.fPressed;
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
+  const stLabel = stLabelProp || '';
+  const { fHovered, fPressed } = state;
   
   // Use className based on variant if no className specified
-  let { className } = props;
+  let className = classNameProp;
   if (!className && variant) {
     className = `${variant}-button`;
   }
   
   const style = getControlStyle({ ...control, props: { ...props, className } } as GUIControl, context);
+  const {
+    colDisabledBackground,
+    colActiveBackground,
+    colHoverBackground,
+    colBackground,
+    colDisabledText,
+    colText: colTextStyle,
+    colBorder,
+    borderWidth,
+    borderRadius,
+    fontSize,
+    fontFamily
+  } = style;
   
-  const dxp = resolveDx(props, GUI_DEFAULTS.button.dx);
-  const dyp = resolveDy(props, GUI_DEFAULTS.button.dy);
+  const dxp = dx ?? GUI_DEFAULTS.button.dx;
+  const dyp = dy ?? GUI_DEFAULTS.button.dy;
   
   const colBg = !fEnabled && fEnabled !== undefined
-    ? style.colDisabledBackground
+    ? colDisabledBackground
     : fPressed
-    ? style.colActiveBackground
+    ? colActiveBackground
     : fHovered
-    ? style.colHoverBackground
-    : style.colBackground;
+    ? colHoverBackground
+    : colBackground;
   
   const colText = !fEnabled && fEnabled !== undefined
-    ? style.colDisabledText
-    : style.colText;
-  const { colBorder } = style;
+    ? colDisabledText
+    : colTextStyle;
   
   const children: Block[] = [];
   
@@ -470,8 +492,8 @@ function transformButton(
       dy: dyp,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius
+      strokeWidth: borderWidth,
+      cornerRadius: borderRadius
     })
   );
   
@@ -482,8 +504,8 @@ function transformButton(
       x: dxp / 2,
       y: dyp / 2,
       fill: colText,
-      fontSize: style.fontSize,
-      font: style.fontFamily,
+      fontSize,
+      font: fontFamily,
       align: GUI_DEFAULTS.text.alignCenter,
       baseline: GUI_DEFAULTS.text.baselineMiddle
     })
@@ -504,33 +526,39 @@ function transformButton(
 
 // Transform slider to core blocks
 function transformSlider(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Slider>,
   context: TransformContext,
   state: { fHovered?: boolean } = {}
 ): Block {
-  const { props } = control as { props: SliderProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
+    dx,
     id,
     min: minProp,
     max: maxProp,
     value: valueProp,
+    fVisible,
     onChange,
     onHover
   } = props;
   const style = getControlStyle(control, context);
+  const {
+    colSliderTrack,
+    colSliderThumb
+  } = style;
   
-  const dxp = resolveDx(props, GUI_DEFAULTS.slider.dx);
+  const dxp = dx ?? GUI_DEFAULTS.slider.dx;
   const dypTrack = GUI_DEFAULTS.slider.duTrack;
   const rlThumb = GUI_DEFAULTS.slider.duThumbRadius;
   
   const min = minProp ?? GUI_DEFAULTS.slider.min;
   const max = maxProp ?? GUI_DEFAULTS.slider.max;
   const value = valueProp ?? min;
-  const colTrackFill = style.colSliderTrack || GUI_DEFAULTS.slider.colTrackFill;
+  const colTrackFill = colSliderTrack || GUI_DEFAULTS.slider.colTrackFill;
   const colTrackStroke = GUI_DEFAULTS.slider.colTrackStroke;
-  const colThumbFill = style.colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
+  const colThumbFill = colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
   const colThumbStroke = GUI_DEFAULTS.slider.colThumbStroke;
   const normalizedValue = (value - min) / (max - min);
   const xlpThumb = normalizedValue * dxp;
@@ -590,9 +618,6 @@ function transformSlider(
       }
     })
   );
-
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
-  
   return group(
     {
       x: xp,
@@ -607,33 +632,46 @@ function transformSlider(
 
 // Transform dropdown to core blocks
 function transformDropdown(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Dropdown>,
   context: TransformContext,
   state: { fHovered?: boolean; fOpen?: boolean } = {}
 ): Block {
-  const { props } = control as { props: DropdownProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
+    dx,
+    dy,
     id,
     stValue,
+    stPlaceholder,
+    fVisible,
     options,
     onClick,
     onHover
   } = props;
   const style = getControlStyle(control, context);
+  const {
+    colHoverBackground,
+    colBackground,
+    colBorder,
+    borderWidth,
+    borderRadius,
+    colText,
+    colDisabledText,
+    duPadding,
+    fontSize,
+    fontFamily
+  } = style;
   
-  const dxp = resolveDx(props, GUI_DEFAULTS.dropdown.dx);
-  const dyp = resolveDy(props, GUI_DEFAULTS.dropdown.dy);
+  const dxp = dx ?? GUI_DEFAULTS.dropdown.dx;
+  const dyp = dy ?? GUI_DEFAULTS.dropdown.dy;
   
-  const fHovered = state.fHovered;
-  const stPlaceholder = resolveUserString(props as unknown as Record<string, unknown>, 'stPlaceholder');
-  const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
+  const { fHovered } = state;
 
   const colBg = fHovered
-    ? style.colHoverBackground || style.colBackground
-    : style.colBackground;
-  const { colBorder } = style;
+    ? colHoverBackground || colBackground
+    : colBackground;
   
   const children: Block[] = [];
   
@@ -644,24 +682,24 @@ function transformDropdown(
       dy: dyp,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius
+      strokeWidth: borderWidth,
+      cornerRadius: borderRadius
     })
   );
   
   // Display text
   const selectedOption = options.find(opt => opt.value === stValue);
-  const colText = selectedOption ? style.colText : (style.colDisabledText || style.colText);
+  const colTextActual = selectedOption ? colText : (colDisabledText || colText);
   const stDisplay = selectedOption?.stLabel || stPlaceholder || GUI_DEFAULTS.dropdown.stPlaceholder;
   
   children.push(
     text({
       text: stDisplay,
-      x: style.duPadding || GUI_DEFAULTS.dropdown.duTextPadding,
+      x: duPadding || GUI_DEFAULTS.dropdown.duTextPadding,
       y: dyp / 2,
-      fill: colText,
-      fontSize: style.fontSize,
-      font: style.fontFamily,
+      fill: colTextActual,
+      fontSize,
+      font: fontFamily,
         baseline: GUI_DEFAULTS.text.baselineMiddle
     })
   );
@@ -670,9 +708,9 @@ function transformDropdown(
   children.push(
     text({
       text: GUI_DEFAULTS.dropdown.stArrow,
-      x: dxp - (style.duPadding || GUI_DEFAULTS.dropdown.duTextPadding) - GUI_DEFAULTS.dropdown.duArrowOffsetX,
+      x: dxp - (duPadding || GUI_DEFAULTS.dropdown.duTextPadding) - GUI_DEFAULTS.dropdown.duArrowOffsetX,
       y: dyp / 2,
-      fill: colText,
+      fill: colTextActual,
       fontSize: GUI_DEFAULTS.dropdown.duArrowFont,
       baseline: GUI_DEFAULTS.text.baselineMiddle
     })
@@ -693,22 +731,22 @@ function transformDropdown(
 
 // Transform label to core blocks
 function transformLabel(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Label>,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: LabelProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     id,
     fontSize: duFont,
+    stText,
+    fVisible,
     align,
-    ...propsRest
   } = props;
   const style = getControlStyle(control, context);
-  const { colText } = style;
-  const stText = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stText') || '';
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
+  const { colText, fontSize, fontFamily } = style;
+  const stTextActual = stText || '';
   
   return group(
     {
@@ -719,10 +757,10 @@ function transformLabel(
     },
     [
       text({
-        text: stText,
+        text: stTextActual,
         fill: colText,
-        fontSize: duFont || style.fontSize,
-        font: style.fontFamily,
+        fontSize: duFont || fontSize,
+        font: fontFamily,
         align
       })
     ]
@@ -731,15 +769,14 @@ function transformLabel(
 
 // Transform GUI image to core blocks
 function transformGUIImage(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Image>,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: GUIImageProps };
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, src, ...propsRest } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
+  const { props } = control;
+  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, dx, dy, id, src, fVisible } = props;
   
-  const dxp = resolveDx(props, GUI_DEFAULTS.image.dx);
-  const dyp = resolveDy(props, GUI_DEFAULTS.image.dy);
+  const dxp = dx ?? GUI_DEFAULTS.image.dx;
+  const dyp = dy ?? GUI_DEFAULTS.image.dy;
   
   return group(
     {
@@ -760,29 +797,35 @@ function transformGUIImage(
 
 // Transform panel to core blocks
 function transformPanel(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Panel>,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: PanelProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
+    dx,
+    dy,
     id,
     duPadding,
-    ...propsRest
+    stTitle,
+    fVisible
   } = props;
   const style = getControlStyle(control, context);
-  const stTitle = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stTitle');
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
-  
-  const dxp = resolveDx(props, GUI_DEFAULTS.panel.dx);
-  const dyp = resolveDy(props, GUI_DEFAULTS.panel.dy);
-  const padding = duPadding || style.duPadding || GUI_DEFAULTS.panel.duPadding;
   const {
+    duPadding: duPaddingStyle,
     colBackground: colBg,
     colBorder,
-    colText
+    colText,
+    borderWidth,
+    borderRadius,
+    fontSize,
+    fontFamily
   } = style;
+  
+  const dxp = dx ?? GUI_DEFAULTS.panel.dx;
+  const dyp = dy ?? GUI_DEFAULTS.panel.dy;
+  const padding = duPadding || duPaddingStyle || GUI_DEFAULTS.panel.duPadding;
   
   const children: Block[] = [];
   
@@ -793,8 +836,8 @@ function transformPanel(
       dy: dyp,
       fill: colBg,
       stroke: colBorder,
-      strokeWidth: style.borderWidth,
-      cornerRadius: style.borderRadius
+      strokeWidth: borderWidth,
+      cornerRadius: borderRadius
     })
   );
   
@@ -806,15 +849,15 @@ function transformPanel(
         x: padding,
         y: padding,
         fill: colText,
-        fontSize: style.fontSize,
-        font: style.fontFamily
+        fontSize,
+        font: fontFamily
       })
     );
   }
   
   // Transform children
   if (control.children) {
-    const ypContent = stTitle ? padding + (style.fontSize || GUI_DEFAULTS.panel.duTitleFont) + GUI_DEFAULTS.panel.duTitleGap : padding;
+    const ypContent = stTitle ? padding + (fontSize || GUI_DEFAULTS.panel.duTitleFont) + GUI_DEFAULTS.panel.duTitleGap : padding;
     const transformedChildren = transformGUIChildren(control.children, context, padding, ypContent);
     children.push(...transformedChildren);
   }
@@ -842,10 +885,9 @@ function transformStack(
     id,
     duSpacing,
     duPadding,
-    ...propsRest
+    fVisible
   } = props;
   const direction: LayoutDirection = control.type === GUIControlType.HStack ? 'horizontal' : 'vertical';
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
   const padding = duPadding || GUI_DEFAULTS.common.duPadding;
@@ -903,12 +945,11 @@ function transformStack(
 
 // Transform carousel
 function transformCarousel(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Carousel>,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: CarouselProps };
-  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, id, currentIndex: indexProp, ...propsRest } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
+  const { props } = control;
+  const { x: xp = GUI_DEFAULTS.common.x, y: yp = GUI_DEFAULTS.common.y, dx, dy, id, currentIndex: indexProp, fVisible } = props;
   const currentIndex = indexProp || GUI_DEFAULTS.carousel.currentIndex;
   
   if (!control.children || control.children.length === 0) {
@@ -922,10 +963,10 @@ function transformCarousel(
   const children: Block[] = transformed ? [transformed] : [];
   
   // Add navigation dots
-  const ypDot = resolveDy(props, GUI_DEFAULTS.carousel.dy) + GUI_DEFAULTS.carousel.duDotOffsetY;
+  const ypDot = (dy ?? GUI_DEFAULTS.carousel.dy) + GUI_DEFAULTS.carousel.duDotOffsetY;
   const dxpDotSpacing = GUI_DEFAULTS.carousel.duDotSpacing;
   const dxpTotal = control.children.length * dxpDotSpacing;
-  const xpStart = (resolveDx(props, GUI_DEFAULTS.carousel.dx) - dxpTotal) / 2;
+  const xpStart = ((dx ?? GUI_DEFAULTS.carousel.dx) - dxpTotal) / 2;
   
   for (let i = 0; i < control.children.length; i++) {
     children.push(
@@ -951,10 +992,10 @@ function transformCarousel(
 
 // Transform grid
 function transformGrid(
-  control: GUIControl,
+  control: GUIControlOfType<GUIControlType.Grid>,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: GridProps };
+  const { props } = control;
   const {
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
@@ -962,9 +1003,8 @@ function transformGrid(
     cColumns,
     duSpacing,
     duPadding,
-    ...propsRest
+    fVisible
   } = props;
-  const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
   const columns = cColumns || GUI_DEFAULTS.grid.cColumns;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
