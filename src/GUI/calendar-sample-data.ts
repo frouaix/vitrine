@@ -6,7 +6,6 @@ import type { CalendarEvent } from './calendar-types.ts';
 
 export function generateSampleEvents(): CalendarEvent[] {
   const rgEvent: CalendarEvent[] = [];
-  const dateBase = new Date(2026, 1, 16); // February 16, 2026
 
   // All-day events
   rgEvent.push({
