@@ -70,6 +70,7 @@ let renderer: RendererInstance | null = null;
 let animationId: number | null = null;
 let canvas: HTMLCanvasElement;
 let rendererMode = 'canvas2d';
+let debugHoverOutline = false;
 
 // UI Elements
 let demoListEl: HTMLElement;
@@ -93,6 +94,7 @@ function init() {
   getRequiredElement<HTMLElement>('toggleCode').addEventListener('click', toggleCodePanel);
   getRequiredElement<HTMLElement>('toggleStats').addEventListener('click', toggleStats);
   getRequiredElement<HTMLElement>('resetDemo').addEventListener('click', resetDemo);
+  getRequiredElement<HTMLElement>('toggleDebugHover').addEventListener('click', toggleDebugHover);
   getRequiredElement<HTMLSelectElement>('rendererMode').addEventListener('change', (event: Event) => {
     const select = event.currentTarget as HTMLSelectElement;
     rendererMode = select.value;
@@ -190,9 +192,12 @@ function loadDemo(demo: GalleryDemo): void {
       canvas,
       width: size.width,
       height: size.height,
-      enableCulling: demo.enableCulling !== false
+      enableCulling: demo.enableCulling !== false,
+      debugHoverOutline
     });
   }
+
+  syncDebugHoverButton();
 
   // Initialize demo
   currentDemo = demo;
@@ -248,6 +253,25 @@ function resetDemo(): void {
   if (currentDemo) {
     loadDemo(currentDemo);
   }
+}
+
+function toggleDebugHover(): void {
+  debugHoverOutline = !debugHoverOutline;
+
+  if (renderer instanceof ImmediateRenderer) {
+    renderer.setDebugHoverOutline(debugHoverOutline);
+  }
+
+  syncDebugHoverButton();
+}
+
+function syncDebugHoverButton(): void {
+  const button = getRequiredElement<HTMLElement>('toggleDebugHover');
+  const fEnabled = renderer instanceof ImmediateRenderer;
+
+  button.textContent = `Debug Hover: ${debugHoverOutline ? 'ON' : 'OFF'}`;
+  button.style.opacity = fEnabled ? '1' : '0.6';
+  button.style.pointerEvents = fEnabled ? 'auto' : 'none';
 }
 
 // Start gallery

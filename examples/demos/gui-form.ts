@@ -1,7 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
 // GUI Form Demo - Interactive form with various controls
-import { ImmediateRenderer } from 'vitrine';
 import {
   vstack,
   hstack,
@@ -38,8 +37,9 @@ export const demo = {
   id: 'gui-form',
   name: 'GUI Form',
   description: 'Interactive form with textboxes, checkboxes, buttons, and more',
+  size: { width: 1000, height: 760 },
   
-  init: (): FormDemoState => {
+  init: (_renderer: unknown): FormDemoState => {
     return {
       formData: {
         name: '',
@@ -153,13 +153,27 @@ export const demo = {
               { duSpacing: 12 },
               [
                 label({ stText: `Volume: ${Math.round(state.formData.volume)}%`, fontSize: 16 }),
-                slider({
-                  dx: 850,
-                  value: state.formData.volume,
-                  min: 0,
-                  max: 100,
-                  onChange: (val) => { state.formData.volume = val; }
-                })
+                hstack(
+                  { duSpacing: 24, alignment: 'center' },
+                  [
+                    slider({
+                      dx: 760,
+                      value: state.formData.volume,
+                      min: 0,
+                      max: 100,
+                      onChange: (val) => { state.formData.volume = val; }
+                    }),
+                    slider({
+                      orientation: 'vertical',
+                      dx: 36,
+                      dy: 160,
+                      value: state.formData.volume,
+                      min: 0,
+                      max: 100,
+                      onChange: (val) => { state.formData.volume = val; }
+                    })
+                  ]
+                )
               ]
             ),
 

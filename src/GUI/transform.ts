@@ -86,6 +86,14 @@ function rsControl(control: GUIControl): Rs {
       return rsStack(control);
     case GUIControlType.Grid:
       return rsGrid(control);
+    case GUIControlType.Slider: {
+      const { orientation } = props as GUIControlOfType<GUIControlType.Slider>['props'];
+      const fVertical = orientation === 'vertical';
+      return {
+        width: dx ?? (fVertical ? GUI_DEFAULTS.slider.dy : GUI_DEFAULTS.slider.dx),
+        height: dy ?? (fVertical ? GUI_DEFAULTS.slider.dx : GUI_DEFAULTS.slider.dy)
+      };
+    }
     default:
       return { width: dx ?? rsFallback.width, height: dy ?? rsFallback.height };
   }
@@ -538,7 +546,9 @@ function transformSlider(
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     dx,
+    dy,
     id,
+    orientation,
     min,
     max,
     value: valueProp,
@@ -551,63 +561,79 @@ function transformSlider(
     colSliderTrack,
     colSliderThumb
   } = style;
-  
-  const dxp = dx ?? GUI_DEFAULTS.slider.dx;
+
+  const fVertical = orientation === 'vertical';
+  const duLength = fVertical
+    ? (dy ?? dx ?? GUI_DEFAULTS.slider.dx)
+    : (dx ?? GUI_DEFAULTS.slider.dx);
+  const duCross = fVertical
+    ? (dx ?? GUI_DEFAULTS.slider.dy)
+    : (dy ?? GUI_DEFAULTS.slider.dy);
   const dypTrack = GUI_DEFAULTS.slider.duTrack;
   const rlThumb = GUI_DEFAULTS.slider.duThumbRadius;
   const dypHitArea = rlThumb * 2;
+  const duCrossCenter = duCross / 2;
   
   const minActual = min ?? GUI_DEFAULTS.slider.min;
   const maxActual = max ?? GUI_DEFAULTS.slider.max;
   const value = valueProp ?? minActual;
+  const range = maxActual - minActual;
   const colTrackFill = colSliderTrack || GUI_DEFAULTS.slider.colTrackFill;
   const colTrackStroke = GUI_DEFAULTS.slider.colTrackStroke;
   const colThumbFill = colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
   const colThumbStroke = GUI_DEFAULTS.slider.colThumbStroke;
-  const normalizedValue = Math.max(0, Math.min(1, (value - minActual) / (maxActual - minActual)));
-  const xlpThumbMin = Math.min(rlThumb, dxp / 2);
-  const xlpThumbMax = Math.max(xlpThumbMin, dxp - rlThumb);
-  const xlpThumb = xlpThumbMin + normalizedValue * (xlpThumbMax - xlpThumbMin);
+  const normalizedValue = range === 0
+    ? 0
+    : Math.max(0, Math.min(1, (value - minActual) / range));
+  const duThumbMin = Math.min(rlThumb, duLength / 2);
+  const duThumbMax = Math.max(duThumbMin, duLength - rlThumb);
+  const duThumbAxis = duThumbMin + (fVertical ? (1 - normalizedValue) : normalizedValue) * (duThumbMax - duThumbMin);
 
   type VitrinePointerEvent = PointerEvent & {
     vtrLocalX?: number;
+    vtrLocalY?: number;
   };
 
-  const getEventLocalX = (event: PointerEvent): number | null => {
-    const localX = (event as VitrinePointerEvent).vtrLocalX;
-    return typeof localX === 'number' ? localX : null;
+  const getEventLocalPosition = (event: PointerEvent): number | null => {
+    const eventWithLocal = event as VitrinePointerEvent;
+    const local = fVertical ? eventWithLocal.vtrLocalY : eventWithLocal.vtrLocalX;
+    return typeof local === 'number' ? local : null;
   };
 
-  const getValueFromLocalX = (xlpLocal: number): number => {
-    const range = maxActual - minActual;
-    const normalizedPosition = Math.max(0, Math.min(1, xlpLocal / dxp));
-    return minActual + normalizedPosition * range;
+  const getValueFromLocalPosition = (duLocal: number): number => {
+    if (range === 0) {
+      return minActual;
+    }
+
+    const normalizedPosition = Math.max(0, Math.min(1, duLocal / duLength));
+    const normalizedForValue = fVertical ? (1 - normalizedPosition) : normalizedPosition;
+    return minActual + normalizedForValue * range;
   };
 
-  const applyFromTrackPosition = (xlpLocal: number): number => {
-    const nextValue = getValueFromLocalX(xlpLocal);
+  const applyFromTrackPosition = (duLocal: number): number => {
+    const nextValue = getValueFromLocalPosition(duLocal);
     onChange?.(nextValue);
     return nextValue;
   };
 
   const startTrackDrag = (event: PointerEvent): void => {
-    const xlpLocal = getEventLocalX(event);
-    const startValue = xlpLocal !== null
-      ? applyFromTrackPosition(xlpLocal)
+    const duLocal = getEventLocalPosition(event);
+    const startValue = duLocal !== null
+      ? applyFromTrackPosition(duLocal)
       : value;
 
     dragState.fDragging = true;
-    dragState.xwStart = event.clientX;
+    dragState.xwStart = fVertical ? event.clientY : event.clientX;
     dragState.startValue = startValue;
   };
 
   const clickTrack = (event: PointerEvent): void => {
-    const xlpLocal = getEventLocalX(event);
-    if (xlpLocal === null) {
+    const duLocal = getEventLocalPosition(event);
+    if (duLocal === null) {
       return;
     }
 
-    applyFromTrackPosition(xlpLocal);
+    applyFromTrackPosition(duLocal);
   };
 
   const dragToValue = (event: PointerEvent): void => {
@@ -617,10 +643,19 @@ function transformSlider(
 
     const { target: canvas } = event as PointerEvent & { target: HTMLCanvasElement };
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
+    const scale = fVertical
+      ? (canvas.height / rect.height)
+      : (canvas.width / rect.width);
 
-    const dxc = (event.clientX - dragState.xwStart) * scaleX;
-    const deltaValue = (dxc / dxp) * (maxActual - minActual);
+    if (range === 0) {
+      onChange?.(minActual);
+      return;
+    }
+
+    const duDeltaWorld = (fVertical ? event.clientY : event.clientX) - dragState.xwStart;
+    const duDeltaCanvas = duDeltaWorld * scale;
+    const normalizedDelta = duDeltaCanvas / duLength;
+    const deltaValue = (fVertical ? -normalizedDelta : normalizedDelta) * range;
     const newValue = Math.max(minActual, Math.min(maxActual, dragState.startValue + deltaValue));
 
     onChange?.(newValue);
@@ -637,10 +672,10 @@ function transformSlider(
   // Visual track
   children.push(
     rectangle({
-      x: 0,
-      y: -dypTrack / 2,
-      dx: dxp,
-      dy: dypTrack,
+      x: fVertical ? (duCrossCenter - dypTrack / 2) : 0,
+      y: fVertical ? 0 : (duCrossCenter - dypTrack / 2),
+      dx: fVertical ? dypTrack : duLength,
+      dy: fVertical ? duLength : dypTrack,
       fill: colTrackFill,
       cornerRadius: dypTrack / 2,
       stroke: colTrackStroke,
@@ -650,10 +685,10 @@ function transformSlider(
 
   children.push(
     rectangle({
-      x: 0,
-      y: -rlThumb,
-      dx: dxp,
-      dy: dypHitArea,
+      x: fVertical ? (duCrossCenter - rlThumb) : 0,
+      y: fVertical ? 0 : (duCrossCenter - rlThumb),
+      dx: fVertical ? dypHitArea : duLength,
+      dy: fVertical ? duLength : dypHitArea,
       fill: 'transparent',
       onClick: onChange ? (event: PointerEvent) => clickTrack(event) : undefined,
       onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag(event) : undefined,
@@ -667,8 +702,8 @@ function transformSlider(
   // Thumb - draggable
   children.push(
     circle({
-      x: xlpThumb,
-      y: 0,
+      x: fVertical ? duCrossCenter : duThumbAxis,
+      y: fVertical ? duThumbAxis : duCrossCenter,
       radius: rlThumb,
       disableCulling: true,
       fill: colThumbFill,

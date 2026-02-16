@@ -35,6 +35,7 @@ export class EventManager {
   private hoveredBlock: Block | null = null;
   private draggedBlock: Block | null = null;
   private ptcDragStart: { xc: number; yc: number } | null = null;
+  private ptcLastPointer: { xc: number; yc: number } | null = null;
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -62,6 +63,10 @@ export class EventManager {
 
   setScene(scene: Block): void {
     this.currentScene = scene;
+  }
+
+  getLastPointerCanvasPosition(): { xc: number; yc: number } | null {
+    return this.ptcLastPointer;
   }
 
   private setupEventListeners(): void {
@@ -146,6 +151,8 @@ export class EventManager {
   }
 
   private handlePointerDown(event: PointerEvent): void {
+    this.ptcLastPointer = this.getCanvasCoordinates(event);
+
     this.withPointerHit(event, (hit) => {
       const { block } = hit;
       const { onPointerDown, onDrag } = block.props;
@@ -160,6 +167,8 @@ export class EventManager {
   }
 
   private handlePointerUp(event: PointerEvent): void {
+    this.ptcLastPointer = this.getCanvasCoordinates(event);
+
     this.withPointerHit(event, (hit) => {
       hit.block.props.onPointerUp?.(event);
     });
@@ -173,6 +182,7 @@ export class EventManager {
     const { currentScene, draggedBlock, ptcDragStart, canvas } = this;
 
     const { xc, yc } = this.getCanvasCoordinates(event);
+    this.ptcLastPointer = { xc, yc };
     const hit = HitTester.hitTest(currentScene, xc, yc);
 
     if (hit) {
@@ -218,6 +228,7 @@ export class EventManager {
     this.hoveredBlock = null;
     this.draggedBlock = null;
     this.ptcDragStart = null;
+    this.ptcLastPointer = null;
     this.canvas.style.cursor = 'default';
   }
 

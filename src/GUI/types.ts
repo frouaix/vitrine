@@ -81,6 +81,7 @@ export interface ButtonProps extends GUIBaseProps {
 }
 
 export interface SliderProps extends GUIBaseProps {
+  orientation?: 'horizontal' | 'vertical';
   value?: number;
   min?: number;
   max?: number;

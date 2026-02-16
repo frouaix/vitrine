@@ -7,6 +7,7 @@ import type { RenderContext } from './context.ts';
 import { Canvas2DContext } from './context.ts';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
+import { HitTester } from '../hit-test.ts';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
@@ -15,6 +16,7 @@ export interface RendererConfig {
   pixelRatio?: number;
   enableEvents?: boolean;
   enableCulling?: boolean;
+  debugHoverOutline?: boolean;
 }
 
 export class ImmediateRenderer {
@@ -25,6 +27,8 @@ export class ImmediateRenderer {
   private pixelRatio: number;
   private eventManager: EventManager | null = null;
   private enableCulling: boolean;
+  private debugHoverOutline: boolean;
+  private debugHoveredBlock: Block | null = null;
   private viewport: Viewport;
   private perfMonitor: PerformanceMonitor;
 
@@ -34,6 +38,7 @@ export class ImmediateRenderer {
     this.dyc = config.height || 600;
     this.pixelRatio = config.pixelRatio || window.devicePixelRatio || 1;
     this.enableCulling = config.enableCulling ?? true;
+    this.debugHoverOutline = config.debugHoverOutline ?? false;
 
     this.viewport = {
       x: 0,
@@ -75,8 +80,25 @@ export class ImmediateRenderer {
     this.setupCanvas();
   }
 
+  setDebugHoverOutline(enabled: boolean): void {
+    this.debugHoverOutline = enabled;
+  }
+
+  getDebugHoverOutline(): boolean {
+    return this.debugHoverOutline;
+  }
+
   render(block: Block): void {
     const startTime = performance.now();
+
+    this.debugHoveredBlock = null;
+    if (this.debugHoverOutline && this.eventManager) {
+      const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
+      if (ptcLastPointer) {
+        const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc);
+        this.debugHoveredBlock = hit?.block || null;
+      }
+    }
     
     PerformanceOptimizer.resetStats();
     this.context.clear();
@@ -193,8 +215,69 @@ export class ImmediateRenderer {
       }
     }
 
+    if (this.debugHoverOutline && block === this.debugHoveredBlock) {
+      this.renderDebugHoverOutline(block);
+    }
+
     this.context.transformStack.restore();
     this.context.restore();
+  }
+
+  private renderDebugHoverOutline(block: Block): void {
+    const propsOutline = {
+      fill: 'transparent',
+      stroke: '#ff00ff',
+      strokeWidth: 2
+    };
+
+    switch (block.type) {
+      case BlockType.Rectangle: {
+        const { dx, dy } = block.props;
+        this.context.drawRectangle(0, 0, dx, dy, propsOutline);
+        return;
+      }
+      case BlockType.Circle: {
+        const { radius } = block.props;
+        this.context.drawCircle(0, 0, radius, propsOutline);
+        return;
+      }
+      case BlockType.Ellipse: {
+        const { radiusX, radiusY } = block.props;
+        this.context.drawEllipse(0, 0, radiusX, radiusY, propsOutline);
+        return;
+      }
+      case BlockType.Line: {
+        const { x1, y1, x2, y2 } = block.props;
+        this.context.drawLine(x1, y1, x2, y2, { stroke: '#ff00ff', strokeWidth: 3 });
+        return;
+      }
+      case BlockType.Text: {
+        const { fontSize: duFont, text } = block.props;
+        const fontSize = duFont ?? 16;
+        const textWidth = text.length * fontSize * 0.6;
+        this.context.drawRectangle(0, 0, textWidth, fontSize, propsOutline);
+        return;
+      }
+      case BlockType.Image: {
+        const { dx, dy } = block.props;
+        this.context.drawRectangle(0, 0, dx, dy, propsOutline);
+        return;
+      }
+      case BlockType.Arc: {
+        const { radius, startAngle, endAngle } = block.props;
+        this.context.drawArc(0, 0, radius, startAngle, endAngle, { stroke: '#ff00ff', strokeWidth: 3 });
+        return;
+      }
+      case BlockType.Path: {
+        const { pathData } = block.props;
+        this.context.drawPath(pathData, propsOutline);
+        return;
+      }
+      case BlockType.Group:
+      case BlockType.Layer:
+      default:
+        return;
+    }
   }
 
   private renderRectangle(block: BlockOfType<BlockType.Rectangle>): void {
