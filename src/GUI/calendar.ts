@@ -7,8 +7,7 @@ import { rectangle, circle, text, group } from '../core/blocks.ts';
 import type {
   CalendarEvent,
   CalendarDayViewProps,
-  CalendarMonthViewProps,
-  DateRange
+  CalendarMonthViewProps
 } from './calendar-types.ts';
 
 // Constants for calendar rendering
@@ -17,18 +16,23 @@ const CALENDAR_DEFAULTS = {
     dxColumnHeader: 80,
     dyColumnHeader: 40,
     dxColumn: 120,
-    hourHeight: 60,
+    dyHour: 60,
+    dxHourLabel: 60,
     duEventPadding: 2,
     duAllDayCircleRadius: 6,
     duAllDayCircleSpacing: 4,
+    cMaxAllDayCircles: 8,
+    duEventCornerRadius: 4,
+    duEventTitlePadding: 4,
+    duHourLabelOffset: 10,
     colGridLine: '#e0e0e0',
     colHeaderBg: '#f5f5f5',
     colHeaderText: '#333333',
     colHourText: '#666666',
     colEventBorder: '#ffffff',
-    fontSizeHeader: 14,
-    fontSizeHour: 12,
-    fontSizeEvent: 11
+    duFontSizeHeader: 14,
+    duFontSizeHour: 12,
+    duFontSizeEvent: 11
   },
   monthView: {
     dxCell: 100,
@@ -36,15 +40,22 @@ const CALENDAR_DEFAULTS = {
     dyCellHeader: 30,
     duEventIndicatorRadius: 3,
     duEventIndicatorSpacing: 6,
-    maxEventIndicators: 5,
+    cMaxEventIndicators: 5,
+    cWeeksInGrid: 6,
+    duMonthTitleOffset: 20,
+    duMonthGridSpacing: 20,
+    duDayHeaderOffset: 40,
+    duDayCellPadding: 8,
+    duDayIndicatorOffset: 12,
     colGridLine: '#e0e0e0',
     colHeaderBg: '#f5f5f5',
     colHeaderText: '#333333',
     colDayText: '#333333',
     colDayTextOtherMonth: '#999999',
     colWeekendBg: '#f9f9f9',
-    fontSizeHeader: 13,
-    fontSizeDay: 14
+    duFontSizeHeader: 13,
+    duFontSizeDay: 14,
+    duFontSizeMore: 10
   }
 };
 
@@ -56,9 +67,9 @@ function stFormatDayHeader(date: Date): string {
 
 // Helper function to format hour as "9:00"
 function stFormatHour(hour: number): string {
-  const isPM = hour >= 12;
+  const fPM = hour >= 12;
   const hourDisplay = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return `${hourDisplay}:00 ${isPM ? 'PM' : 'AM'}`;
+  return `${hourDisplay}:00 ${fPM ? 'PM' : 'AM'}`;
 }
 
 // Helper function to get month name
@@ -96,7 +107,7 @@ function rgEventForDay(rgEvent: CalendarEvent[], date: Date): CalendarEvent[] {
 }
 
 // Render a single day column for multi-day view
-function rsRenderDayColumn(
+function rgBlockForDayColumn(
   date: Date,
   rgEvent: CalendarEvent[],
   xColumn: number,
@@ -106,9 +117,9 @@ function rsRenderDayColumn(
 ): Block[] {
   const rgBlock: Block[] = [];
   const dyColumnHeader = CALENDAR_DEFAULTS.dayView.dyColumnHeader;
-  const hourHeight = CALENDAR_DEFAULTS.dayView.hourHeight;
+  const dyHour = CALENDAR_DEFAULTS.dayView.dyHour;
   const cHour = hourEnd - hourStart;
-  const dyColumn = cHour * hourHeight;
+  const dyColumn = cHour * dyHour;
 
   // Day header
   rgBlock.push(
@@ -129,7 +140,7 @@ function rsRenderDayColumn(
       x: xColumn + dxColumn / 2,
       y: dyColumnHeader / 2,
       fill: CALENDAR_DEFAULTS.dayView.colHeaderText,
-      fontSize: CALENDAR_DEFAULTS.dayView.fontSizeHeader,
+      fontSize: CALENDAR_DEFAULTS.dayView.duFontSizeHeader,
       align: 'center',
       baseline: 'middle'
     })
@@ -137,7 +148,7 @@ function rsRenderDayColumn(
 
   // Column background with grid lines
   for (let iHour = 0; iHour <= cHour; iHour++) {
-    const yLine = dyColumnHeader + iHour * hourHeight;
+    const yLine = dyColumnHeader + iHour * dyHour;
     rgBlock.push(
       rectangle({
         x: xColumn,
@@ -169,7 +180,7 @@ function rsRenderDayColumn(
   const yCircle = dyColumnHeader / 2;
 
   rgEventAllDay.forEach((event, iEvent) => {
-    if (iEvent < 8) { // Limit to 8 circles
+    if (iEvent < CALENDAR_DEFAULTS.dayView.cMaxAllDayCircles) {
       rgBlock.push(
         circle({
           x: xCircle,
@@ -200,8 +211,8 @@ function rsRenderDayColumn(
     const hourEndClamped = Math.min(hourEnd, hourEventEnd);
 
     if (hourStartClamped < hourEndClamped) {
-      const yEvent = dyColumnHeader + (hourStartClamped - hourStart) * hourHeight;
-      const dyEvent = (hourEndClamped - hourStartClamped) * hourHeight;
+      const yEvent = dyColumnHeader + (hourStartClamped - hourStart) * dyHour;
+      const dyEvent = (hourEndClamped - hourStartClamped) * dyHour;
 
       rgBlock.push(
         rectangle({
@@ -212,7 +223,7 @@ function rsRenderDayColumn(
           fill: event.colEvent,
           stroke: CALENDAR_DEFAULTS.dayView.colEventBorder,
           strokeWidth: 1,
-          cornerRadius: 4
+          cornerRadius: CALENDAR_DEFAULTS.dayView.duEventCornerRadius
         })
       );
 
@@ -220,10 +231,10 @@ function rsRenderDayColumn(
       rgBlock.push(
         text({
           text: event.stTitle,
-          x: xColumn + CALENDAR_DEFAULTS.dayView.duEventPadding + 4,
-          y: yEvent + CALENDAR_DEFAULTS.dayView.duEventPadding + 4,
+          x: xColumn + CALENDAR_DEFAULTS.dayView.duEventPadding + CALENDAR_DEFAULTS.dayView.duEventTitlePadding,
+          y: yEvent + CALENDAR_DEFAULTS.dayView.duEventPadding + CALENDAR_DEFAULTS.dayView.duEventTitlePadding,
           fill: '#ffffff',
-          fontSize: CALENDAR_DEFAULTS.dayView.fontSizeEvent,
+          fontSize: CALENDAR_DEFAULTS.dayView.duFontSizeEvent,
           baseline: 'top'
         })
       );
@@ -246,25 +257,25 @@ export function rsCalendarDayView(props: CalendarDayViewProps): Block {
   } = props;
 
   const dxColumn = CALENDAR_DEFAULTS.dayView.dxColumn;
-  const hourHeight = CALENDAR_DEFAULTS.dayView.hourHeight;
+  const dyHour = CALENDAR_DEFAULTS.dayView.dyHour;
   const dyColumnHeader = CALENDAR_DEFAULTS.dayView.dyColumnHeader;
   const cHour = hourEnd - hourStart;
-  const dyColumn = cHour * hourHeight;
+  const dyColumn = cHour * dyHour;
 
   const rgBlock: Block[] = [];
 
   // Hour labels (left side)
-  const dxHourLabel = 60;
+  const dxHourLabel = CALENDAR_DEFAULTS.dayView.dxHourLabel;
   for (let iHour = 0; iHour <= cHour; iHour++) {
     const hour = hourStart + iHour;
-    const yLabel = dyColumnHeader + iHour * hourHeight;
+    const yLabel = dyColumnHeader + iHour * dyHour;
     rgBlock.push(
       text({
         text: stFormatHour(hour),
-        x: dxHourLabel - 10,
+        x: dxHourLabel - CALENDAR_DEFAULTS.dayView.duHourLabelOffset,
         y: yLabel,
         fill: CALENDAR_DEFAULTS.dayView.colHourText,
-        fontSize: CALENDAR_DEFAULTS.dayView.fontSizeHour,
+        fontSize: CALENDAR_DEFAULTS.dayView.duFontSizeHour,
         align: 'right',
         baseline: 'middle'
       })
@@ -277,7 +288,7 @@ export function rsCalendarDayView(props: CalendarDayViewProps): Block {
     date.setDate(date.getDate() + iDay);
 
     const xColumn = dxHourLabel + iDay * dxColumn;
-    const rgBlockColumn = rsRenderDayColumn(date, rgEvent, xColumn, hourStart, hourEnd, dxColumn);
+    const rgBlockColumn = rgBlockForDayColumn(date, rgEvent, xColumn, hourStart, hourEnd, dxColumn);
     rgBlock.push(...rgBlockColumn);
   }
 
@@ -285,7 +296,7 @@ export function rsCalendarDayView(props: CalendarDayViewProps): Block {
 }
 
 // Render a single month grid
-function rsRenderMonthGrid(
+function rgBlockForMonthGrid(
   date: Date,
   rgEvent: CalendarEvent[],
   xMonth: number,
@@ -303,9 +314,9 @@ function rsRenderMonthGrid(
     text({
       text: stMonthYear,
       x: xMonth + (7 * dxCell) / 2,
-      y: yMonth + 20,
+      y: yMonth + CALENDAR_DEFAULTS.monthView.duMonthTitleOffset,
       fill: CALENDAR_DEFAULTS.monthView.colHeaderText,
-      fontSize: CALENDAR_DEFAULTS.monthView.fontSizeHeader + 4,
+      fontSize: CALENDAR_DEFAULTS.monthView.duFontSizeHeader + 4,
       align: 'center',
       baseline: 'middle'
     })
@@ -313,7 +324,7 @@ function rsRenderMonthGrid(
 
   // Day of week headers
   const rgstDayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const yDayHeader = yMonth + 40;
+  const yDayHeader = yMonth + CALENDAR_DEFAULTS.monthView.duDayHeaderOffset;
 
   for (let iDay = 0; iDay < 7; iDay++) {
     const dayIndex = (dayStartWeek + iDay) % 7;
@@ -337,7 +348,7 @@ function rsRenderMonthGrid(
         x: xCell + dxCell / 2,
         y: yDayHeader + dyCellHeader / 2,
         fill: CALENDAR_DEFAULTS.monthView.colHeaderText,
-        fontSize: CALENDAR_DEFAULTS.monthView.fontSizeHeader,
+        fontSize: CALENDAR_DEFAULTS.monthView.duFontSizeHeader,
         align: 'center',
         baseline: 'middle'
       })
@@ -357,7 +368,7 @@ function rsRenderMonthGrid(
   let dateCell = new Date(dateFirstOfMonth);
   dateCell.setDate(dateCell.getDate() - dayOffset);
 
-  for (let iWeek = 0; iWeek < 6; iWeek++) {
+  for (let iWeek = 0; iWeek < CALENDAR_DEFAULTS.monthView.cWeeksInGrid; iWeek++) {
     for (let iDayOfWeek = 0; iDayOfWeek < 7; iDayOfWeek++) {
       const xCell = xMonth + iDayOfWeek * dxCell;
       const yCell = yGridStart + iWeek * dyCell;
@@ -385,12 +396,12 @@ function rsRenderMonthGrid(
       rgBlock.push(
         text({
           text: dateCell.getDate().toString(),
-          x: xCell + 8,
-          y: yCell + 8,
+          x: xCell + CALENDAR_DEFAULTS.monthView.duDayCellPadding,
+          y: yCell + CALENDAR_DEFAULTS.monthView.duDayCellPadding,
           fill: fOtherMonth 
             ? CALENDAR_DEFAULTS.monthView.colDayTextOtherMonth 
             : CALENDAR_DEFAULTS.monthView.colDayText,
-          fontSize: CALENDAR_DEFAULTS.monthView.fontSizeDay,
+          fontSize: CALENDAR_DEFAULTS.monthView.duFontSizeDay,
           baseline: 'top'
         })
       );
@@ -399,15 +410,15 @@ function rsRenderMonthGrid(
       const rgEventDay = rgEventForDay(rgEvent, dateCell);
       const cIndicator = Math.min(
         rgEventDay.length, 
-        CALENDAR_DEFAULTS.monthView.maxEventIndicators
+        CALENDAR_DEFAULTS.monthView.cMaxEventIndicators
       );
 
       for (let iIndicator = 0; iIndicator < cIndicator; iIndicator++) {
         const event = rgEventDay[iIndicator];
-        const xIndicator = xCell + 8 + iIndicator * 
+        const xIndicator = xCell + CALENDAR_DEFAULTS.monthView.duDayCellPadding + iIndicator * 
           (CALENDAR_DEFAULTS.monthView.duEventIndicatorRadius * 2 + 
            CALENDAR_DEFAULTS.monthView.duEventIndicatorSpacing);
-        const yIndicator = yCell + dyCell - 12;
+        const yIndicator = yCell + dyCell - CALENDAR_DEFAULTS.monthView.duDayIndicatorOffset;
 
         rgBlock.push(
           circle({
@@ -420,11 +431,11 @@ function rsRenderMonthGrid(
       }
 
       // More indicator if needed
-      if (rgEventDay.length > CALENDAR_DEFAULTS.monthView.maxEventIndicators) {
-        const xMore = xCell + 8 + cIndicator * 
+      if (rgEventDay.length > CALENDAR_DEFAULTS.monthView.cMaxEventIndicators) {
+        const xMore = xCell + CALENDAR_DEFAULTS.monthView.duDayCellPadding + cIndicator * 
           (CALENDAR_DEFAULTS.monthView.duEventIndicatorRadius * 2 + 
            CALENDAR_DEFAULTS.monthView.duEventIndicatorSpacing);
-        const yMore = yCell + dyCell - 12;
+        const yMore = yCell + dyCell - CALENDAR_DEFAULTS.monthView.duDayIndicatorOffset;
 
         rgBlock.push(
           text({
@@ -432,7 +443,7 @@ function rsRenderMonthGrid(
             x: xMore,
             y: yMore,
             fill: CALENDAR_DEFAULTS.monthView.colDayText,
-            fontSize: 10,
+            fontSize: CALENDAR_DEFAULTS.monthView.duFontSizeMore,
             baseline: 'middle'
           })
         );
@@ -460,8 +471,9 @@ export function rsCalendarMonthView(props: CalendarMonthViewProps): Block {
 
   const rgBlock: Block[] = [];
   const dxMonth = 7 * CALENDAR_DEFAULTS.monthView.dxCell;
-  const dyMonth = 40 + CALENDAR_DEFAULTS.monthView.dyCellHeader + 
-                  6 * CALENDAR_DEFAULTS.monthView.dyCell;
+  const dyMonth = CALENDAR_DEFAULTS.monthView.duDayHeaderOffset + 
+                  CALENDAR_DEFAULTS.monthView.dyCellHeader + 
+                  CALENDAR_DEFAULTS.monthView.cWeeksInGrid * CALENDAR_DEFAULTS.monthView.dyCell;
 
   // Render each month
   for (let iMonth = 0; iMonth < cMonth; iMonth++) {
@@ -470,10 +482,10 @@ export function rsCalendarMonthView(props: CalendarMonthViewProps): Block {
     // Position months in a grid (2 columns max)
     const iCol = iMonth % 2;
     const iRow = Math.floor(iMonth / 2);
-    const xMonth = iCol * (dxMonth + 20);
-    const yMonth = iRow * (dyMonth + 20);
+    const xMonth = iCol * (dxMonth + CALENDAR_DEFAULTS.monthView.duMonthGridSpacing);
+    const yMonth = iRow * (dyMonth + CALENDAR_DEFAULTS.monthView.duMonthGridSpacing);
 
-    const rgBlockMonth = rsRenderMonthGrid(date, rgEvent, xMonth, yMonth, dayStartWeek);
+    const rgBlockMonth = rgBlockForMonthGrid(date, rgEvent, xMonth, yMonth, dayStartWeek);
     rgBlock.push(...rgBlockMonth);
   }
 
