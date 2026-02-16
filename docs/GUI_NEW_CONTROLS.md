@@ -25,9 +25,13 @@ Shared files should only receive small registration changes:
   - Add switch dispatch to the module transform function
   - Add fallback size mapping if needed
 - `src/GUI/constants.ts`
-  - Add default dimensions/constants required by the new control
+  - Usually no changes needed for co-located complex-control defaults
 - `src/GUI/themes.ts`
   - Add default style entries for each built-in theme
+
+### Default values ownership
+
+For new complex controls, defaults must be co-located in the control module (for example `DEFAULTS` in `src/GUI/color-picker.ts`) and imported directly by code that needs them, with contextual aliasing at import sites (for example `DEFAULTS as colorPickerDefaults`).
 
 ### Scope
 

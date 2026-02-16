@@ -11,7 +11,6 @@ import type {
   TransformContext
 } from './types.ts';
 import { GUIControlType } from './types.ts';
-import { GUI_DEFAULTS } from './constants.ts';
 
 export interface ColorPickerChange {
   hue: number;
@@ -43,6 +42,38 @@ interface ColorPickerDragState {
 type VitrinePointerEvent = PointerEvent & {
   vtrLocalX?: number;
 };
+
+export const DEFAULTS = {
+  x: 0,
+  y: 0,
+  dx: 520,
+  dy: 330,
+  hue: 200,
+  saturation: 80,
+  value: 90,
+  duPadding: 14,
+  dxLabel: 36,
+  dxLabelGap: 10,
+  dyPreview: 56,
+  duPreviewRadius: 8,
+  dySectionGap: 14,
+  dyBar: 30,
+  dyBarGap: 14,
+  duTrackHeight: 10,
+  duThumbRadius: 9,
+  cHueSegments: 120,
+  cSvSegments: 80,
+  colTrackStroke: '#888888',
+  colThumbFill: '#3b82f6',
+  dyPresetGap: 20,
+  dyPresetLabelGap: 24,
+  duPresetRadius: 14,
+  duPresetSpacing: 12,
+  presets: [
+    '#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b',
+    '#ff8787', '#a9e34b', '#cc5de8', '#ff922b'
+  ]
+} as const;
 
 function clamp(unValue: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, unValue));
@@ -228,8 +259,8 @@ export function transformColorPicker(
 ): Block {
   const { props } = control;
   const {
-    x: xp = GUI_DEFAULTS.common.x,
-    y: yp = GUI_DEFAULTS.common.y,
+    x: xp = DEFAULTS.x,
+    y: yp = DEFAULTS.y,
     dx,
     dy,
     id,
@@ -257,31 +288,31 @@ export function transformColorPicker(
     fontFamily
   } = style;
 
-  const dxp = dx ?? GUI_DEFAULTS.colorPicker.dx;
-  const dyp = dy ?? GUI_DEFAULTS.colorPicker.dy;
-  const duPadding = GUI_DEFAULTS.colorPicker.duPadding;
-  const dxLabel = GUI_DEFAULTS.colorPicker.dxLabel;
-  const dxLabelGap = GUI_DEFAULTS.colorPicker.dxLabelGap;
-  const dyBar = GUI_DEFAULTS.colorPicker.dyBar;
-  const dyBarGap = GUI_DEFAULTS.colorPicker.dyBarGap;
-  const dyPreview = GUI_DEFAULTS.colorPicker.dyPreview;
-  const dyPresetGap = GUI_DEFAULTS.colorPicker.dyPresetGap;
-  const duPresetRadius = GUI_DEFAULTS.colorPicker.duPresetRadius;
-  const duPresetSpacing = GUI_DEFAULTS.colorPicker.duPresetSpacing;
+  const dxp = dx ?? DEFAULTS.dx;
+  const dyp = dy ?? DEFAULTS.dy;
+  const duPadding = DEFAULTS.duPadding;
+  const dxLabel = DEFAULTS.dxLabel;
+  const dxLabelGap = DEFAULTS.dxLabelGap;
+  const dyBar = DEFAULTS.dyBar;
+  const dyBarGap = DEFAULTS.dyBarGap;
+  const dyPreview = DEFAULTS.dyPreview;
+  const dyPresetGap = DEFAULTS.dyPresetGap;
+  const duPresetRadius = DEFAULTS.duPresetRadius;
+  const duPresetSpacing = DEFAULTS.duPresetSpacing;
 
-  const hue = clamp(hueProp ?? GUI_DEFAULTS.colorPicker.hue, 0, 359);
-  const saturation = clamp(saturationProp ?? GUI_DEFAULTS.colorPicker.saturation, 0, 100);
-  const value = clamp(valueProp ?? GUI_DEFAULTS.colorPicker.value, 0, 100);
+  const hue = clamp(hueProp ?? DEFAULTS.hue, 0, 359);
+  const saturation = clamp(saturationProp ?? DEFAULTS.saturation, 0, 100);
+  const value = clamp(valueProp ?? DEFAULTS.value, 0, 100);
   const showPreview = fShowPreview !== false;
   const showPresets = fShowPresets !== false;
-  const presetsActual = presets ?? [...GUI_DEFAULTS.colorPicker.presets];
+  const presetsActual = presets ?? [...DEFAULTS.presets];
 
   const xlpBars = duPadding + dxLabel + dxLabelGap;
   const dxpBars = Math.max(1, dxp - xlpBars - duPadding);
-  const duTrackHeight = GUI_DEFAULTS.colorPicker.duTrackHeight;
-  const duThumbRadius = GUI_DEFAULTS.colorPicker.duThumbRadius;
-  const colTrackStroke = colSliderTrack || GUI_DEFAULTS.slider.colTrackStroke;
-  const colThumbFill = colSliderThumb || GUI_DEFAULTS.slider.colThumbFill;
+  const duTrackHeight = DEFAULTS.duTrackHeight;
+  const duThumbRadius = DEFAULTS.duThumbRadius;
+  const colTrackStroke = colSliderTrack || DEFAULTS.colTrackStroke;
+  const colThumbFill = colSliderThumb || DEFAULTS.colThumbFill;
 
   const currentRgb = hsvToRgbTuple(hue, saturation, value);
   const currentColor = hsvToRgbString(hue, saturation, value);
@@ -316,7 +347,7 @@ export function transformColorPicker(
         fill: currentColor,
         stroke: colBorder,
         strokeWidth: borderWidth,
-        cornerRadius: GUI_DEFAULTS.colorPicker.duPreviewRadius
+        cornerRadius: DEFAULTS.duPreviewRadius
       })
     );
 
@@ -333,11 +364,11 @@ export function transformColorPicker(
       })
     );
 
-    ylpCursor += dyPreview + GUI_DEFAULTS.colorPicker.dySectionGap;
+    ylpCursor += dyPreview + DEFAULTS.dySectionGap;
   }
 
-  const cHueSegments = GUI_DEFAULTS.colorPicker.cHueSegments;
-  const cSvSegments = GUI_DEFAULTS.colorPicker.cSvSegments;
+  const cHueSegments = DEFAULTS.cHueSegments;
+  const cSvSegments = DEFAULTS.cSvSegments;
   const dyTrackOffset = (dyBar - duTrackHeight) / 2;
 
   const startDrag = (stChannel: 'hue' | 'saturation' | 'value', event: PointerEvent): void => {
@@ -621,7 +652,7 @@ export function transformColorPicker(
         font: fontFamily
       })
     );
-    ylpCursor += GUI_DEFAULTS.colorPicker.dyPresetLabelGap;
+    ylpCursor += DEFAULTS.dyPresetLabelGap;
 
     const dxpPresetStep = 2 * duPresetRadius + duPresetSpacing;
     const maxPresets = Math.max(1, Math.floor((dxp - 2 * duPadding + duPresetSpacing) / dxpPresetStep));
