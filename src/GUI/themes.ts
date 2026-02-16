@@ -7,19 +7,19 @@ import { GUIControlType } from './types.ts';
 
 // Light theme
 const lightButtonStyle: ControlStyle = {
-  backgroundColor: '#ffffff',
-  borderColor: '#d1d5db',
+  colBackground: '#ffffff',
+  colBorder: '#d1d5db',
   borderWidth: 1,
   borderRadius: 8,
-  textColor: '#1f2937',
+  colText: '#1f2937',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
   duPadding: 14,
-  hoverBackgroundColor: '#f3f4f6',
-  activeBackgroundColor: '#e5e7eb',
-  disabledBackgroundColor: '#f9fafb',
-  disabledTextColor: '#9ca3af',
-  focusBorderColor: '#3b82f6'
+  colHoverBackground: '#f3f4f6',
+  colActiveBackground: '#e5e7eb',
+  colDisabledBackground: '#f9fafb',
+  colDisabledText: '#9ca3af',
+  colFocusBorder: '#3b82f6'
 };
 
 export const lightTheme: ThemeDefinition = {
@@ -27,89 +27,89 @@ export const lightTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...lightButtonStyle,
-      backgroundColor: '#3b82f6',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#2563eb',
-      activeBackgroundColor: '#1d4ed8',
-      borderColor: '#3b82f6'
+      colBackground: '#3b82f6',
+      colText: '#ffffff',
+      colHoverBackground: '#2563eb',
+      colActiveBackground: '#1d4ed8',
+      colBorder: '#3b82f6'
     },
     'danger-button': {
       ...lightButtonStyle,
-      backgroundColor: '#ef4444',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#dc2626',
-      activeBackgroundColor: '#b91c1c',
-      borderColor: '#ef4444'
+      colBackground: '#ef4444',
+      colText: '#ffffff',
+      colHoverBackground: '#dc2626',
+      colActiveBackground: '#b91c1c',
+      colBorder: '#ef4444'
     }
   },
   defaults: {
     [GUIControlType.Button]: lightButtonStyle,
     [GUIControlType.TextBox]: {
-      backgroundColor: '#ffffff',
-      borderColor: '#d1d5db',
+      colBackground: '#ffffff',
+      colBorder: '#d1d5db',
       borderWidth: 1,
       borderRadius: 8,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 14,
-      focusBorderColor: '#3b82f6',
-      disabledBackgroundColor: '#f9fafb',
-      disabledTextColor: '#9ca3af'
+      colFocusBorder: '#3b82f6',
+      colDisabledBackground: '#f9fafb',
+      colDisabledText: '#9ca3af'
     },
     [GUIControlType.CheckBox]: {
-      backgroundColor: '#ffffff',
-      borderColor: '#d1d5db',
+      colBackground: '#ffffff',
+      colBorder: '#d1d5db',
       borderWidth: 2,
       borderRadius: 5,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#3b82f6',
-      focusBorderColor: '#3b82f6'
+      colCheckedBackground: '#3b82f6',
+      colFocusBorder: '#3b82f6'
     },
     [GUIControlType.RadioButton]: {
-      backgroundColor: '#ffffff',
-      borderColor: '#d1d5db',
+      colBackground: '#ffffff',
+      colBorder: '#d1d5db',
       borderWidth: 2,
       borderRadius: 14,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#3b82f6',
-      focusBorderColor: '#3b82f6'
+      colCheckedBackground: '#3b82f6',
+      colFocusBorder: '#3b82f6'
     },
     [GUIControlType.Slider]: {
-      sliderTrackColor: '#d1d5db',
-      sliderThumbColor: '#3b82f6',
-      textColor: '#1f2937',
+      colSliderTrack: '#d1d5db',
+      colSliderThumb: '#3b82f6',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      backgroundColor: '#ffffff',
-      borderColor: '#d1d5db',
+      colBackground: '#ffffff',
+      colBorder: '#d1d5db',
       borderWidth: 1,
       borderRadius: 8,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 14,
-      hoverBackgroundColor: '#f3f4f6',
-      focusBorderColor: '#3b82f6'
+      colHoverBackground: '#f3f4f6',
+      colFocusBorder: '#3b82f6'
     },
     [GUIControlType.Label]: {
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      backgroundColor: '#ffffff',
-      borderColor: '#e5e7eb',
+      colBackground: '#ffffff',
+      colBorder: '#e5e7eb',
       borderWidth: 1,
       borderRadius: 10,
       duPadding: 20,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },
@@ -124,19 +124,19 @@ export const lightTheme: ThemeDefinition = {
 
 // Dark theme
 const darkButtonStyle: ControlStyle = {
-  backgroundColor: '#374151',
-  borderColor: '#4b5563',
+  colBackground: '#374151',
+  colBorder: '#4b5563',
   borderWidth: 1,
   borderRadius: 8,
-  textColor: '#f9fafb',
+  colText: '#f9fafb',
   fontSize: 16,
   fontFamily: 'system-ui, sans-serif',
   duPadding: 14,
-  hoverBackgroundColor: '#4b5563',
-  activeBackgroundColor: '#6b7280',
-  disabledBackgroundColor: '#1f2937',
-  disabledTextColor: '#6b7280',
-  focusBorderColor: '#60a5fa'
+  colHoverBackground: '#4b5563',
+  colActiveBackground: '#6b7280',
+  colDisabledBackground: '#1f2937',
+  colDisabledText: '#6b7280',
+  colFocusBorder: '#60a5fa'
 };
 
 export const darkTheme: ThemeDefinition = {
@@ -144,89 +144,89 @@ export const darkTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...darkButtonStyle,
-      backgroundColor: '#3b82f6',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#2563eb',
-      activeBackgroundColor: '#1d4ed8',
-      borderColor: '#3b82f6'
+      colBackground: '#3b82f6',
+      colText: '#ffffff',
+      colHoverBackground: '#2563eb',
+      colActiveBackground: '#1d4ed8',
+      colBorder: '#3b82f6'
     },
     'danger-button': {
       ...darkButtonStyle,
-      backgroundColor: '#ef4444',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#dc2626',
-      activeBackgroundColor: '#b91c1c',
-      borderColor: '#ef4444'
+      colBackground: '#ef4444',
+      colText: '#ffffff',
+      colHoverBackground: '#dc2626',
+      colActiveBackground: '#b91c1c',
+      colBorder: '#ef4444'
     }
   },
   defaults: {
     [GUIControlType.Button]: darkButtonStyle,
     [GUIControlType.TextBox]: {
-      backgroundColor: '#1f2937',
-      borderColor: '#4b5563',
+      colBackground: '#1f2937',
+      colBorder: '#4b5563',
       borderWidth: 1,
       borderRadius: 8,
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 14,
-      focusBorderColor: '#60a5fa',
-      disabledBackgroundColor: '#111827',
-      disabledTextColor: '#6b7280'
+      colFocusBorder: '#60a5fa',
+      colDisabledBackground: '#111827',
+      colDisabledText: '#6b7280'
     },
     [GUIControlType.CheckBox]: {
-      backgroundColor: '#1f2937',
-      borderColor: '#4b5563',
+      colBackground: '#1f2937',
+      colBorder: '#4b5563',
       borderWidth: 2,
       borderRadius: 5,
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#3b82f6',
-      focusBorderColor: '#60a5fa'
+      colCheckedBackground: '#3b82f6',
+      colFocusBorder: '#60a5fa'
     },
     [GUIControlType.RadioButton]: {
-      backgroundColor: '#1f2937',
-      borderColor: '#4b5563',
+      colBackground: '#1f2937',
+      colBorder: '#4b5563',
       borderWidth: 2,
       borderRadius: 14,
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#3b82f6',
-      focusBorderColor: '#60a5fa'
+      colCheckedBackground: '#3b82f6',
+      colFocusBorder: '#60a5fa'
     },
     [GUIControlType.Slider]: {
-      sliderTrackColor: '#4b5563',
-      sliderThumbColor: '#3b82f6',
-      textColor: '#f9fafb',
+      colSliderTrack: '#4b5563',
+      colSliderThumb: '#3b82f6',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      backgroundColor: '#1f2937',
-      borderColor: '#4b5563',
+      colBackground: '#1f2937',
+      colBorder: '#4b5563',
       borderWidth: 1,
       borderRadius: 8,
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 14,
-      hoverBackgroundColor: '#374151',
-      focusBorderColor: '#60a5fa'
+      colHoverBackground: '#374151',
+      colFocusBorder: '#60a5fa'
     },
     [GUIControlType.Label]: {
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 16,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      backgroundColor: '#1f2937',
-      borderColor: '#374151',
+      colBackground: '#1f2937',
+      colBorder: '#374151',
       borderWidth: 1,
       borderRadius: 10,
       duPadding: 20,
-      textColor: '#f9fafb',
+      colText: '#f9fafb',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },
@@ -241,19 +241,19 @@ export const darkTheme: ThemeDefinition = {
 
 // Colorful theme
 const colorfulButtonStyle: ControlStyle = {
-  backgroundColor: '#fbbf24',
-  borderColor: '#f59e0b',
+  colBackground: '#fbbf24',
+  colBorder: '#f59e0b',
   borderWidth: 2,
   borderRadius: 14,
-  textColor: '#1f2937',
+  colText: '#1f2937',
   fontSize: 17,
   fontFamily: 'system-ui, sans-serif',
   duPadding: 15,
-  hoverBackgroundColor: '#fcd34d',
-  activeBackgroundColor: '#f59e0b',
-  disabledBackgroundColor: '#fef3c7',
-  disabledTextColor: '#9ca3af',
-  focusBorderColor: '#ec4899'
+  colHoverBackground: '#fcd34d',
+  colActiveBackground: '#f59e0b',
+  colDisabledBackground: '#fef3c7',
+  colDisabledText: '#9ca3af',
+  colFocusBorder: '#ec4899'
 };
 
 export const colorfulTheme: ThemeDefinition = {
@@ -261,89 +261,89 @@ export const colorfulTheme: ThemeDefinition = {
   styles: {
     'primary-button': {
       ...colorfulButtonStyle,
-      backgroundColor: '#ec4899',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#db2777',
-      activeBackgroundColor: '#be185d',
-      borderColor: '#ec4899'
+      colBackground: '#ec4899',
+      colText: '#ffffff',
+      colHoverBackground: '#db2777',
+      colActiveBackground: '#be185d',
+      colBorder: '#ec4899'
     },
     'danger-button': {
       ...colorfulButtonStyle,
-      backgroundColor: '#f97316',
-      textColor: '#ffffff',
-      hoverBackgroundColor: '#ea580c',
-      activeBackgroundColor: '#c2410c',
-      borderColor: '#f97316'
+      colBackground: '#f97316',
+      colText: '#ffffff',
+      colHoverBackground: '#ea580c',
+      colActiveBackground: '#c2410c',
+      colBorder: '#f97316'
     }
   },
   defaults: {
     [GUIControlType.Button]: colorfulButtonStyle,
     [GUIControlType.TextBox]: {
-      backgroundColor: '#fef3c7',
-      borderColor: '#fbbf24',
+      colBackground: '#fef3c7',
+      colBorder: '#fbbf24',
       borderWidth: 2,
       borderRadius: 14,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 15,
-      focusBorderColor: '#ec4899',
-      disabledBackgroundColor: '#fffbeb',
-      disabledTextColor: '#9ca3af'
+      colFocusBorder: '#ec4899',
+      colDisabledBackground: '#fffbeb',
+      colDisabledText: '#9ca3af'
     },
     [GUIControlType.CheckBox]: {
-      backgroundColor: '#fef3c7',
-      borderColor: '#fbbf24',
+      colBackground: '#fef3c7',
+      colBorder: '#fbbf24',
       borderWidth: 2,
       borderRadius: 7,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#10b981',
-      focusBorderColor: '#ec4899'
+      colCheckedBackground: '#10b981',
+      colFocusBorder: '#ec4899'
     },
     [GUIControlType.RadioButton]: {
-      backgroundColor: '#fef3c7',
-      borderColor: '#fbbf24',
+      colBackground: '#fef3c7',
+      colBorder: '#fbbf24',
       borderWidth: 2,
       borderRadius: 16,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
-      checkedBackgroundColor: '#10b981',
-      focusBorderColor: '#ec4899'
+      colCheckedBackground: '#10b981',
+      colFocusBorder: '#ec4899'
     },
     [GUIControlType.Slider]: {
-      sliderTrackColor: '#fbbf24',
-      sliderThumbColor: '#ec4899',
-      textColor: '#1f2937',
+      colSliderTrack: '#fbbf24',
+      colSliderThumb: '#ec4899',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Dropdown]: {
-      backgroundColor: '#fef3c7',
-      borderColor: '#fbbf24',
+      colBackground: '#fef3c7',
+      colBorder: '#fbbf24',
       borderWidth: 2,
       borderRadius: 14,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif',
       duPadding: 15,
-      hoverBackgroundColor: '#fde68a',
-      focusBorderColor: '#ec4899'
+      colHoverBackground: '#fde68a',
+      colFocusBorder: '#ec4899'
     },
     [GUIControlType.Label]: {
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 17,
       fontFamily: 'system-ui, sans-serif'
     },
     [GUIControlType.Panel]: {
-      backgroundColor: '#fef3c7',
-      borderColor: '#fbbf24',
+      colBackground: '#fef3c7',
+      colBorder: '#fbbf24',
       borderWidth: 2,
       borderRadius: 18,
       duPadding: 24,
-      textColor: '#1f2937',
+      colText: '#1f2937',
       fontSize: 18,
       fontFamily: 'system-ui, sans-serif'
     },

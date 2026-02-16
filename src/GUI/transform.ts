@@ -17,8 +17,7 @@ import type {
   SliderProps,
   DropdownProps,
   StackProps,
-  HStackProps,
-  VStackProps,
+  StackLayoutProps,
   CarouselProps,
   GridProps,
   LabelProps,
@@ -199,15 +198,15 @@ function transformTextBox(
   const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fFocused
-    ? style.backgroundColor
+    ? style.colBackground
     : fHovered
-    ? style.hoverBackgroundColor || style.backgroundColor
-    : style.backgroundColor;
+    ? style.colHoverBackground || style.colBackground
+    : style.colBackground;
   
   const colBorder = fFocused
-    ? style.focusBorderColor || style.borderColor
-    : style.borderColor;
-  const colText = stValue ? style.textColor : (style.disabledTextColor || style.textColor);
+    ? style.colFocusBorder || style.colBorder
+    : style.colBorder;
+  const colText = stValue ? style.colText : (style.colDisabledText || style.colText);
   
   const children: Block[] = [];
   
@@ -264,7 +263,7 @@ function transformCheckBox(
   
   const dypBox = GUI_DEFAULTS.controls.checkBox.duBox;
   const dxpLabelSpacing = GUI_DEFAULTS.controls.checkBox.duLabelSpacing;
-  const { borderColor: colBorder, textColor: colText } = style;
+  const { colBorder, colText } = style;
   
   const children: Block[] = [];
   
@@ -275,10 +274,10 @@ function transformCheckBox(
 
   // Checkbox box
   const colBg = fChecked
-    ? style.checkedBackgroundColor
+    ? style.colCheckedBackground
     : fHovered
-    ? style.hoverBackgroundColor || style.backgroundColor
-    : style.backgroundColor;
+    ? style.colHoverBackground || style.colBackground
+    : style.colBackground;
   
   children.push(
     rectangle({
@@ -351,17 +350,17 @@ function transformRadioButton(
   const rl = GUI_DEFAULTS.controls.radioButton.duRadius;
   const dxpLabelSpacing = GUI_DEFAULTS.controls.radioButton.duLabelSpacing;
   const {
-    borderColor: colBorder,
-    checkedBackgroundColor: colChecked,
-    textColor: colText
+    colBorder,
+    colCheckedBackground: colChecked,
+    colText
   } = style;
   
   const children: Block[] = [];
   
   // Radio circle
   const colBg = fHovered
-    ? style.hoverBackgroundColor || style.backgroundColor
-    : style.backgroundColor;
+    ? style.colHoverBackground || style.colBackground
+    : style.colBackground;
   
   children.push(
     circle({
@@ -443,17 +442,17 @@ function transformButton(
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.button.dy);
   
   const colBg = !fEnabled && fEnabled !== undefined
-    ? style.disabledBackgroundColor
+    ? style.colDisabledBackground
     : fPressed
-    ? style.activeBackgroundColor
+    ? style.colActiveBackground
     : fHovered
-    ? style.hoverBackgroundColor
-    : style.backgroundColor;
+    ? style.colHoverBackground
+    : style.colBackground;
   
   const colText = !fEnabled && fEnabled !== undefined
-    ? style.disabledTextColor
-    : style.textColor;
-  const { borderColor: colBorder } = style;
+    ? style.colDisabledText
+    : style.colText;
+  const { colBorder } = style;
   
   const children: Block[] = [];
   
@@ -522,9 +521,9 @@ function transformSlider(
   const min = minProp ?? GUI_DEFAULTS.controls.slider.min;
   const max = maxProp ?? GUI_DEFAULTS.controls.slider.max;
   const value = valueProp ?? min;
-  const colTrackFill = style.sliderTrackColor || GUI_DEFAULTS.controls.slider.colTrackFill;
+  const colTrackFill = style.colSliderTrack || GUI_DEFAULTS.controls.slider.colTrackFill;
   const colTrackStroke = GUI_DEFAULTS.controls.slider.colTrackStroke;
-  const colThumbFill = style.sliderThumbColor || GUI_DEFAULTS.controls.slider.colThumbFill;
+  const colThumbFill = style.colSliderThumb || GUI_DEFAULTS.controls.slider.colThumbFill;
   const colThumbStroke = GUI_DEFAULTS.controls.slider.colThumbStroke;
   const normalizedValue = (value - min) / (max - min);
   const xlpThumb = normalizedValue * dxp;
@@ -625,9 +624,9 @@ function transformDropdown(
   const fVisible = resolveFlag(props as unknown as Record<string, unknown>, 'fVisible');
 
   const colBg = fHovered
-    ? style.hoverBackgroundColor || style.backgroundColor
-    : style.backgroundColor;
-  const { borderColor: colBorder } = style;
+    ? style.colHoverBackground || style.colBackground
+    : style.colBackground;
+  const { colBorder } = style;
   
   const children: Block[] = [];
   
@@ -645,7 +644,7 @@ function transformDropdown(
   
   // Display text
   const selectedOption = options.find(opt => opt.value === stValue);
-  const colText = selectedOption ? style.textColor : (style.disabledTextColor || style.textColor);
+  const colText = selectedOption ? style.colText : (style.colDisabledText || style.colText);
   const stDisplay = selectedOption?.stLabel || stPlaceholder || GUI_DEFAULTS.controls.dropdown.stPlaceholder;
   
   children.push(
@@ -700,7 +699,7 @@ function transformLabel(
     ...propsRest
   } = props;
   const style = getControlStyle(control, context);
-  const { textColor: colText } = style;
+  const { colText } = style;
   const stText = resolveUserString(propsRest as unknown as Record<string, unknown>, 'stText') || '';
   const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
   
@@ -773,9 +772,9 @@ function transformPanel(
   const dyp = resolveDy(props, GUI_DEFAULTS.controls.panel.dy);
   const padding = duPadding || style.duPadding || GUI_DEFAULTS.controls.panel.duPadding;
   const {
-    backgroundColor: colBg,
-    borderColor: colBorder,
-    textColor: colText
+    colBackground: colBg,
+    colBorder,
+    colText
   } = style;
   
   const children: Block[] = [];
@@ -834,14 +833,13 @@ function transformStack(
     x: xp = GUI_DEFAULTS.common.x,
     y: yp = GUI_DEFAULTS.common.y,
     id,
-    direction: directionProp,
+    direction,
     duSpacing,
     duPadding,
     ...propsRest
   } = props;
   const fVisible = resolveFlag(propsRest as unknown as Record<string, unknown>, 'fVisible');
 
-  const direction = directionProp || GUI_DEFAULTS.controls.stack.direction;
   const spacing = duSpacing || GUI_DEFAULTS.common.duSpacing;
   const padding = duPadding || GUI_DEFAULTS.common.duPadding;
   
@@ -901,7 +899,7 @@ function transformHStack(
   control: GUIControl,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: HStackProps };
+  const { props } = control as { props: StackLayoutProps };
   return transformStack(
     {
       ...control,
@@ -917,7 +915,7 @@ function transformVStack(
   control: GUIControl,
   context: TransformContext
 ): Block {
-  const { props } = control as { props: VStackProps };
+  const { props } = control as { props: StackLayoutProps };
   return transformStack(
     {
       ...control,

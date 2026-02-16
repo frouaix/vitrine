@@ -100,23 +100,14 @@ export interface DropdownProps extends GUIBaseProps {
 export type StackDirection = 'horizontal' | 'vertical';
 export type Alignment = 'start' | 'center' | 'end' | 'stretch';
 
-export interface StackProps extends GUIBaseProps {
-  direction?: StackDirection;
+export interface StackLayoutProps extends GUIBaseProps {
   duSpacing?: number;
   alignment?: Alignment;
   duPadding?: number;
 }
 
-export interface HStackProps extends GUIBaseProps {
-  duSpacing?: number;
-  alignment?: Alignment;
-  duPadding?: number;
-}
-
-export interface VStackProps extends GUIBaseProps {
-  duSpacing?: number;
-  alignment?: Alignment;
-  duPadding?: number;
+export interface StackProps extends StackLayoutProps {
+  direction: StackDirection;
 }
 
 export interface CarouselProps extends GUIBaseProps {
@@ -159,8 +150,8 @@ export type GUIPropsByType = {
   [GUIControlType.Slider]: SliderProps;
   [GUIControlType.Dropdown]: DropdownProps;
   [GUIControlType.Stack]: StackProps;
-  [GUIControlType.HStack]: HStackProps;
-  [GUIControlType.VStack]: VStackProps;
+  [GUIControlType.HStack]: StackLayoutProps & { direction?: never };
+  [GUIControlType.VStack]: StackLayoutProps & { direction?: never };
   [GUIControlType.Carousel]: CarouselProps;
   [GUIControlType.Grid]: GridProps;
   [GUIControlType.Label]: LabelProps;
@@ -182,22 +173,22 @@ export type GUIControlOfType<T extends GUIControlType> = Extract<GUIControl, { t
 
 // Theme system
 export interface ControlStyle {
-  backgroundColor?: GUIColor;
-  borderColor?: GUIColor;
+  colBackground?: GUIColor;
+  colBorder?: GUIColor;
   borderWidth?: number;
   borderRadius?: number;
-  textColor?: GUIColor;
+  colText?: GUIColor;
   fontSize?: number;
   fontFamily?: string;
   duPadding?: number;
-  hoverBackgroundColor?: GUIColor;
-  activeBackgroundColor?: GUIColor;
-  disabledBackgroundColor?: GUIColor;
-  disabledTextColor?: GUIColor;
-  focusBorderColor?: GUIColor;
-  checkedBackgroundColor?: GUIColor;
-  sliderTrackColor?: GUIColor;
-  sliderThumbColor?: GUIColor;
+  colHoverBackground?: GUIColor;
+  colActiveBackground?: GUIColor;
+  colDisabledBackground?: GUIColor;
+  colDisabledText?: GUIColor;
+  colFocusBorder?: GUIColor;
+  colCheckedBackground?: GUIColor;
+  colSliderTrack?: GUIColor;
+  colSliderThumb?: GUIColor;
 }
 
 export interface ThemeDefinition {

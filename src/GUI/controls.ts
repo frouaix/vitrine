@@ -66,10 +66,6 @@ export function dropdown(props: GUIPropsByType[GUIControlType.Dropdown]): GUICon
 }
 
 // Layout controls
-export function stack(props: GUIPropsByType[GUIControlType.Stack], children: GUIControl[]): GUIControlOfType<GUIControlType.Stack> {
-  return control(GUIControlType.Stack, props, children);
-}
-
 export function hstack(props: GUIPropsByType[GUIControlType.HStack], children: GUIControl[]): GUIControlOfType<GUIControlType.HStack> {
   return control(GUIControlType.HStack, props, children);
 }
