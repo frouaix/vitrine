@@ -40,6 +40,7 @@ Branch naming conventions:
 
 - Keep commits focused and small
 - Follow coding conventions in `.github/copilot-instructions.md`
+- Use hungarian notation when documented in `.github/hungarian-notation.md`
 - Update docs when behavior changes
 
 ### 3. Validate Changes
