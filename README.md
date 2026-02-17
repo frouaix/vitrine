@@ -82,11 +82,27 @@ render();
 
 ## Examples
 
-Run `pnpm dev` to explore the [demo gallery](examples/gallery.html) with 12 interactive examples, or try individual demos:
-- **[basic.html](examples/basic.html)** - Basic shapes and hierarchy
-- **[events.html](examples/events.html)** - Interactive events (click, hover, drag)
-- **[primitives.html](examples/primitives.html)** - All primitive types
-- **[performance.html](examples/performance.html)** - 10k+ blocks performance test
+Run `pnpm dev` to explore the [demo gallery](examples/gallery.html) with 12 interactive examples.
+
+### Live Demos (GitHub Pages)
+
+Try these standalone demos live:
+- **[Gallery](https://frouaix.github.io/vitrine/gallery.html)** - Interactive gallery with 12+ demos
+- **[Calendar](https://frouaix.github.io/vitrine/calendar.html)** - Month and day calendar views
+- **[Camera Controls](https://frouaix.github.io/vitrine/camera-controls.html)** - Pan and zoom controls
+- **[Basic](https://frouaix.github.io/vitrine/basic.html)** - Basic shapes and hierarchy
+- **[Events](https://frouaix.github.io/vitrine/events.html)** - Interactive events (click, hover, drag)
+- **[Primitives](https://frouaix.github.io/vitrine/primitives.html)** - All primitive types
+- **[Performance](https://frouaix.github.io/vitrine/performance.html)** - 10k+ blocks performance test
+
+### Local Development
+
+To run examples locally:
+```bash
+pnpm dev  # Opens gallery at localhost:8080
+```
+
+Or view individual example files in the [examples](examples/) directory.
 
 ## API Overview
 
