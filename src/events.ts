@@ -134,7 +134,14 @@ export class EventManager {
     const { currentScene } = this;
 
     const { xc, yc } = this.getCanvasCoordinates(event);
-    const hit = HitTester.hitTest(currentScene, xc, yc, this.cameraTransform);
+    
+    // Convert canvas coordinates to world coordinates using inverse camera transform
+    const inverseCameraTransform = this.cameraTransform.invert();
+    const worldCoords = inverseCameraTransform 
+      ? inverseCameraTransform.transformPoint(xc, yc)
+      : { x: xc, y: yc };
+    
+    const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
     if (!hit) return;
 
     this.decoratePointerEvent(event, hit);
@@ -189,7 +196,14 @@ export class EventManager {
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     this.ptcLastPointer = { xc, yc };
-    const hit = HitTester.hitTest(currentScene, xc, yc, this.cameraTransform);
+    
+    // Convert canvas coordinates to world coordinates using inverse camera transform
+    const inverseCameraTransform = this.cameraTransform.invert();
+    const worldCoords = inverseCameraTransform 
+      ? inverseCameraTransform.transformPoint(xc, yc)
+      : { x: xc, y: yc };
+    
+    const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
 
     if (hit) {
       this.decoratePointerEvent(event, hit);

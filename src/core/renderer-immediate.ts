@@ -156,14 +156,21 @@ export class ImmediateRenderer {
     if (this.debugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
       if (ptcLastPointer) {
-        // Get camera transform for hit testing
-        const cameraTransform = this.enableCameraControls
-          ? Matrix2D.identity()
-              .translate(this.cameraX, this.cameraY)
-              .scaleXY(this.cameraZoom, this.cameraZoom)
-          : Matrix2D.identity();
-        const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc, cameraTransform);
-        this.debugHoveredBlock = hit?.block || null;
+        // Convert canvas coordinates to world coordinates using inverse camera transform
+        if (this.enableCameraControls) {
+          const cameraTransform = Matrix2D.identity()
+            .translate(this.cameraX, this.cameraY)
+            .scaleXY(this.cameraZoom, this.cameraZoom);
+          const inverseCameraTransform = cameraTransform.invert();
+          if (inverseCameraTransform) {
+            const worldCoords = inverseCameraTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
+            const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            this.debugHoveredBlock = hit?.block || null;
+          }
+        } else {
+          const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc, Matrix2D.identity());
+          this.debugHoveredBlock = hit?.block || null;
+        }
       }
     }
     
