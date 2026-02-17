@@ -24,6 +24,7 @@ export interface RenderContext {
   drawText(text: string, xl: number, yl: number, props: any): void;
   drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void;
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void;
+  measureText?(text: string, props: any): { width: number; height: number; ascent: number; descent: number };
 }
 
 export class Canvas2DContext implements RenderContext {
@@ -162,6 +163,24 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.strokeStyle = stroke;
     this.ctx.lineWidth = strokeWidth ?? 1;
     this.ctx.stroke();
+  }
+
+  measureText(text: string, props: any): { width: number; height: number; ascent: number; descent: number } {
+    const { font, fontSize } = props;
+    // Apply font settings
+    if (font) this.ctx.font = font;
+    else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
+    
+    const metrics = this.ctx.measureText(text);
+    
+    // Use actualBoundingBox metrics if available (modern browsers)
+    // Otherwise fallback to approximation
+    const ascent = metrics.actualBoundingBoxAscent ?? (fontSize ?? 16);
+    const descent = metrics.actualBoundingBoxDescent ?? 0;
+    const width = metrics.width;
+    const height = ascent + descent;
+    
+    return { width, height, ascent, descent };
   }
 
   drawText(text: string, xl: number, yl: number, props: any): void {

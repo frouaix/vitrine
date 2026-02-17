@@ -443,10 +443,39 @@ export class ImmediateRenderer {
         return;
       }
       case BlockType.Text: {
-        const { fontSize: duFont, text } = block.props;
-        const fontSize = duFont ?? 16;
-        const textWidth = text.length * fontSize * 0.6;
-        this.context.drawRectangle(0, 0, textWidth, fontSize, propsOutline);
+        const { text, fontSize, align, baseline } = block.props;
+        
+        // Get actual text metrics
+        if (this.context.measureText) {
+          const metrics = this.context.measureText(text, block.props);
+          const { width, ascent, descent } = metrics;
+          const height = ascent + descent;
+          
+          // Calculate x offset based on alignment
+          let xOffset = 0;
+          if (align === 'center') {
+            xOffset = -width / 2;
+          } else if (align === 'right' || align === 'end') {
+            xOffset = -width;
+          }
+          
+          // Calculate y offset based on baseline
+          let yOffset = -ascent; // Default for 'alphabetic' baseline
+          if (baseline === 'top' || baseline === 'hanging') {
+            yOffset = 0;
+          } else if (baseline === 'middle') {
+            yOffset = -height / 2;
+          } else if (baseline === 'bottom') {
+            yOffset = -height;
+          }
+          
+          this.context.drawRectangle(xOffset, yOffset, width, height, propsOutline);
+        } else {
+          // Fallback to approximation if measureText not available
+          const duFont = fontSize ?? 16;
+          const textWidth = text.length * duFont * 0.6;
+          this.context.drawRectangle(0, 0, textWidth, duFont, propsOutline);
+        }
         return;
       }
       case BlockType.Image: {

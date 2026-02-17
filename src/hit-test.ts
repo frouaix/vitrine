@@ -108,12 +108,38 @@ export class HitTester {
         return this.hitTestLine(xl, yl, x1, y1, x2, y2, strokeWidth ?? 1);
       }
 
-      case BlockType.Text:
-        // Approximate text bounds - can be improved with actual text metrics
-        const { fontSize: duFont, text: stText } = props;
+      case BlockType.Text: {
+        // Calculate text bounds accounting for baseline and alignment
+        const { fontSize: duFont, text: stText, align, baseline } = props;
         const fontSize = duFont ?? 16;
         const textWidth = stText.length * fontSize * 0.6; // rough estimate
-        return this.hitTestRectangle(xl, yl, textWidth, fontSize);
+        const ascent = fontSize; // approximate
+        const descent = 0;
+        const height = ascent + descent;
+        
+        // Calculate x offset based on alignment
+        let xOffset = 0;
+        if (align === 'center') {
+          xOffset = -textWidth / 2;
+        } else if (align === 'right' || align === 'end') {
+          xOffset = -textWidth;
+        }
+        
+        // Calculate y offset based on baseline
+        let yOffset = -ascent; // Default for 'alphabetic' baseline
+        if (baseline === 'top' || baseline === 'hanging') {
+          yOffset = 0;
+        } else if (baseline === 'middle') {
+          yOffset = -height / 2;
+        } else if (baseline === 'bottom') {
+          yOffset = -height;
+        }
+        
+        // Translate hit point to text box space
+        const testX = xl - xOffset;
+        const testY = yl - yOffset;
+        return this.hitTestRectangle(testX, testY, textWidth, height);
+      }
 
       case BlockType.Arc: {
         const { radius, startAngle, endAngle } = props;

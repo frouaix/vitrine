@@ -132,7 +132,7 @@ export const demo = {
       // Digital time
       text({
         x: 400,
-        y: 520,
+        y: 550,
         text: state.time.toLocaleTimeString(),
         fontSize: 18,
         fill: '#666',
