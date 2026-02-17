@@ -3,7 +3,7 @@
 // Transform GUI DSL to Core DSL
 
 import type { Block } from '../core/types.ts';
-import { rectangle, circle, text, group, image } from '../core/blocks.ts';
+import { rectangle, circle, text, group, image, portal } from '../core/blocks.ts';
 import type {
   Rs,
   LayoutDirection,
@@ -842,11 +842,29 @@ function transformDropdown(
     const cVisibleItems = Math.floor(duMenuHeight / duItemHeight);
     const colItemSelected = colBgHover || colBg;
     
-    // Menu background
-    children.push(
+    // Build menu blocks
+    const menuBlocks: Block[] = [];
+    
+    // Invisible backdrop for click-blocking
+    menuBlocks.push(
       rectangle({
         x: 0,
-        y: dyp + 2,
+        y: 0,
+        dx: dxp,
+        dy: duMenuHeight,
+        fill: 'transparent',
+        onClick: () => {
+          // Click on empty menu space closes dropdown
+          if (onToggle) onToggle(false);
+        }
+      })
+    );
+    
+    // Menu background
+    menuBlocks.push(
+      rectangle({
+        x: 0,
+        y: 0,
         dx: dxp,
         dy: duMenuHeight,
         fill: colBg,
@@ -859,7 +877,7 @@ function transformDropdown(
     // Menu items
     const itemsToShow = options.slice(0, cVisibleItems);
     itemsToShow.forEach((option, index) => {
-      const ypItem = dyp + 2 + index * duItemHeight;
+      const ypItem = index * duItemHeight;
       const fSelected = option.value === stValue;
       
       // Item click handler
@@ -873,7 +891,7 @@ function transformDropdown(
       };
       
       // Item background (highlighted if selected)
-      children.push(
+      menuBlocks.push(
         rectangle({
           x: 0,
           y: ypItem,
@@ -885,7 +903,7 @@ function transformDropdown(
       );
       
       // Item text
-      children.push(
+      menuBlocks.push(
         text({
           text: option.stLabel || option.value,
           x: duPadding || GUI_DEFAULTS.dropdown.duTextPadding,
@@ -897,6 +915,17 @@ function transformDropdown(
         })
       );
     });
+    
+    // Wrap menu in portal so it renders on top
+    children.push(
+      portal(
+        {
+          x: 0,
+          y: dyp + 2  // Position relative to dropdown
+        },
+        menuBlocks
+      )
+    );
   }
   
   return group(

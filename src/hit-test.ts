@@ -122,7 +122,8 @@ export class HitTester {
 
       case BlockType.Group:
       case BlockType.Layer:
-        // Groups don't have intrinsic shape, rely on children
+      case BlockType.Portal:
+        // Groups, layers, and portals don't have intrinsic shape, rely on children
         return false;
 
       default:

@@ -33,6 +33,7 @@ type VitrinePointerEvent = PointerEvent & {
 export class EventManager {
   private canvas: HTMLCanvasElement;
   private currentScene: Block = EMPTY_SCENE;
+  private portalBlocks: Block[] = [];
   private hoveredBlock: Block | null = null;
   private draggedBlock: Block | null = null;
   private ptcDragStart: { xc: number; yc: number } | null = null;
@@ -65,6 +66,10 @@ export class EventManager {
 
   setScene(scene: Block): void {
     this.currentScene = scene;
+  }
+
+  setPortalBlocks(portals: Block[]): void {
+    this.portalBlocks = portals;
   }
 
   setCameraTransform(transform: Matrix2D): void {
@@ -145,16 +150,35 @@ export class EventManager {
     event: PointerEvent,
     handler: (hit: HitTestResult) => void
   ): void {
-    const { currentScene } = this;
-
     const { xc, yc } = this.getCanvasCoordinates(event);
     const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
-    const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
-    if (!hit) return;
-
-    this.decoratePointerEvent(event, hit);
-
-    handler(hit);
+    
+    // Test portals first (reverse order = top to bottom z-order)
+    for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
+      const hit = HitTester.hitTest(
+        this.portalBlocks[i],
+        worldCoords.x,
+        worldCoords.y,
+        Matrix2D.identity()
+      );
+      if (hit) {
+        this.decoratePointerEvent(event, hit);
+        handler(hit);
+        return; // Portal captured event, don't test main scene
+      }
+    }
+    
+    // No portal hit, test main scene
+    const hit = HitTester.hitTest(
+      this.currentScene,
+      worldCoords.x,
+      worldCoords.y,
+      Matrix2D.identity()
+    );
+    if (hit) {
+      this.decoratePointerEvent(event, hit);
+      handler(hit);
+    }
   }
 
   private decoratePointerEvent(event: PointerEvent, hit: HitTestResult): void {
@@ -200,12 +224,32 @@ export class EventManager {
   }
 
   private handlePointerMove(event: PointerEvent): void {
-    const { currentScene, draggedBlock, ptcDragStart, canvas } = this;
+    const { draggedBlock, ptcDragStart, canvas } = this;
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     this.ptcLastPointer = { xc, yc };
     const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
-    const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
+    
+    // Layer-aware hit testing (portals first, then main scene)
+    let hit: HitTestResult | null = null;
+    for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
+      hit = HitTester.hitTest(
+        this.portalBlocks[i],
+        worldCoords.x,
+        worldCoords.y,
+        Matrix2D.identity()
+      );
+      if (hit) break;
+    }
+    
+    if (!hit) {
+      hit = HitTester.hitTest(
+        this.currentScene,
+        worldCoords.x,
+        worldCoords.y,
+        Matrix2D.identity()
+      );
+    }
 
     if (hit) {
       this.decoratePointerEvent(event, hit);

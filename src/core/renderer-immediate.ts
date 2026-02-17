@@ -7,7 +7,7 @@ import type { RenderContext } from './context.ts';
 import { Canvas2DContext } from './context.ts';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
-import { HitTester } from '../hit-test.ts';
+import { HitTester, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
 
 export interface RendererConfig {
@@ -37,6 +37,7 @@ export class ImmediateRenderer {
   private cameraX: number = 0;
   private cameraY: number = 0;
   private cameraZoom: number = 1;
+  private portalBlocks: Array<{ block: Block; transform: Matrix2D }> = [];
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
@@ -152,6 +153,9 @@ export class ImmediateRenderer {
   render(block: Block): void {
     const startTime = performance.now();
 
+    // Clear portal collection
+    this.portalBlocks = [];
+
     this.debugHoveredBlock = null;
     if (this.debugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
@@ -169,7 +173,19 @@ export class ImmediateRenderer {
           const inverseCameraTransform = fullTransform.invert();
           if (inverseCameraTransform) {
             const worldCoords = inverseCameraTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
-            const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            
+            // Test portals first for debug hover
+            let hit: HitTestResult | null = null;
+            for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
+              hit = HitTester.hitTest(this.portalBlocks[i].block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+              if (hit) break;
+            }
+            
+            // Fall back to main scene
+            if (!hit) {
+              hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            }
+            
             this.debugHoveredBlock = hit?.block || null;
           } else {
             // Matrix inversion failed, keep debugHoveredBlock as null
@@ -182,7 +198,19 @@ export class ImmediateRenderer {
           const inverseTransform = pixelRatioTransform.invert();
           if (inverseTransform) {
             const worldCoords = inverseTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
-            const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            
+            // Test portals first for debug hover
+            let hit: HitTestResult | null = null;
+            for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
+              hit = HitTester.hitTest(this.portalBlocks[i].block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+              if (hit) break;
+            }
+            
+            // Fall back to main scene
+            if (!hit) {
+              hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            }
+            
             this.debugHoveredBlock = hit?.block || null;
           }
         }
@@ -208,10 +236,18 @@ export class ImmediateRenderer {
     
     this.renderBlock(block);
     this.context.restore();
+    
+    // Render portals on top
+    this.renderPortals();
 
-     // Update event system with current scene and camera transform
+    // Update event system with current scene and camera transform
     if (this.eventManager) {
       this.eventManager.setScene(block);
+      
+      // Pass portal blocks to event manager for layer-aware hit testing
+      const portalContainers = this.portalBlocks.map(p => p.block);
+      this.eventManager.setPortalBlocks(portalContainers);
+      
       if (this.enableCameraControls) {
         // Camera transform: scale first, then translate
         // For hit testing, we need the full transform from canvas buffer to world:
@@ -327,6 +363,16 @@ export class ImmediateRenderer {
       case BlockType.Arc:
         this.renderArc(block);
         break;
+      case BlockType.Portal:
+        // Collect portal instead of rendering inline
+        this.portalBlocks.push({
+          block,
+          transform: worldTransform.clone()
+        });
+        // Don't render children here - they'll be rendered in portal pass
+        this.context.transformStack.restore();
+        this.context.restore();
+        return;
       case BlockType.Group:
       case BlockType.Layer:
         // Container blocks - just render children
@@ -455,5 +501,45 @@ export class ImmediateRenderer {
     const { props } = block;
     const { radius, startAngle, endAngle } = props;
     this.context.drawArc(0, 0, radius, startAngle, endAngle, props);
+  }
+
+  private renderPortals(): void {
+    if (this.portalBlocks.length === 0) return;
+
+    // Render portals in collection order (first collected = bottom, last = top)
+    for (const { block, transform } of this.portalBlocks) {
+      this.context.save();
+      
+      // Reset transform stack and apply stored transform
+      this.context.transformStack.save();
+      const currentStack = this.context.transformStack.getCurrent();
+      
+      // Apply the stored portal transform
+      if (this.pixelRatio !== 1) {
+        const renderTransform = Matrix2D.identity()
+          .scaleXY(this.pixelRatio, this.pixelRatio)
+          .multiply(transform);
+        this.context.applyTransform(renderTransform);
+      } else {
+        this.context.applyTransform(transform);
+      }
+      
+      // Manually update transform stack to match the portal's transform
+      // This is necessary because we're bypassing normal hierarchy
+      this.context.transformStack.reset();
+      for (const key of ['a', 'b', 'c', 'd', 'e', 'f'] as const) {
+        (this.context.transformStack.getCurrent() as any)[key] = transform[key];
+      }
+      
+      // Render portal children
+      if (block.children) {
+        for (const child of block.children) {
+          this.renderBlock(child);
+        }
+      }
+      
+      this.context.transformStack.restore();
+      this.context.restore();
+    }
   }
 }

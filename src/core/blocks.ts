@@ -9,7 +9,7 @@ import type {
 } from './types.ts';
 import { BlockType } from './types.ts';
 
-type ContainerBlockType = BlockType.Group | BlockType.Layer;
+type ContainerBlockType = BlockType.Group | BlockType.Layer | BlockType.Portal;
 type LeafBlockType = Exclude<BlockType, ContainerBlockType>;
 
 export function block<T extends ContainerBlockType>(
@@ -72,4 +72,8 @@ export function group(props: BlockPropsByType[BlockType.Group], children: Block[
 
 export function layer(props: BlockPropsByType[BlockType.Layer], children: Block[]): BlockOfType<BlockType.Layer> {
   return block(BlockType.Layer, props, children);
+}
+
+export function portal(props: BlockPropsByType[BlockType.Portal], children: Block[]): BlockOfType<BlockType.Portal> {
+  return block(BlockType.Portal, props, children);
 }
