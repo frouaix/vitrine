@@ -9,6 +9,7 @@ import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
+import { group } from './blocks.ts';
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
@@ -508,13 +509,21 @@ export class ImmediateRenderer {
 
     // Render portals in collection order (first collected = bottom, last = top)
     for (const { block, transform } of this.portalBlocks) {
+      if (!block.children) continue;
+      
       this.context.save();
-      
-      // Reset transform stack and apply stored transform
       this.context.transformStack.save();
-      const currentStack = this.context.transformStack.getCurrent();
       
-      // Apply the stored portal transform
+      // The stored transform already includes:
+      // - Camera transform (if enabled)
+      // - All parent transforms up to the portal
+      // - The portal's own transform (x, y, etc.)
+      // We need to set this as the current transform for rendering children
+      
+      // Directly set the transform stack's current to the stored transform
+      (this.context.transformStack as any).current = transform.clone();
+      
+      // Apply to canvas context (with pixelRatio)
       if (this.pixelRatio !== 1) {
         const renderTransform = Matrix2D.identity()
           .scaleXY(this.pixelRatio, this.pixelRatio)
@@ -524,18 +533,9 @@ export class ImmediateRenderer {
         this.context.applyTransform(transform);
       }
       
-      // Manually update transform stack to match the portal's transform
-      // This is necessary because we're bypassing normal hierarchy
-      this.context.transformStack.reset();
-      for (const key of ['a', 'b', 'c', 'd', 'e', 'f'] as const) {
-        (this.context.transformStack.getCurrent() as any)[key] = transform[key];
-      }
-      
-      // Render portal children
-      if (block.children) {
-        for (const child of block.children) {
-          this.renderBlock(child);
-        }
+      // Now render portal children - they will apply their own transforms relative to this
+      for (const child of block.children) {
+        this.renderBlock(child);
       }
       
       this.context.transformStack.restore();
