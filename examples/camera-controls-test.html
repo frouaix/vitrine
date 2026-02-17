@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Camera Controls Test (with Click Handlers)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .controls {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: #4dabf7;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #339af0;
+    }
+    #status {
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #555;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎯 Camera Controls Test - Click Detection</h1>
+  <div class="info">
+    <strong>Test Instructions:</strong>
+    <ul>
+      <li><strong>Ctrl + Mouse Wheel:</strong> Zoom in/out (zooms towards mouse pointer)</li>
+      <li><strong>Mouse Wheel:</strong> Scroll vertically</li>
+      <li><strong>Shift + Mouse Wheel:</strong> Scroll horizontally</li>
+      <li><strong>Click on any shape</strong> - it should respond correctly even when zoomed/panned!</li>
+    </ul>
+    <div id="status">
+      <strong>Status:</strong> Ready<br>
+      <strong>Camera:</strong> x=0, y=0, zoom=1.00<br>
+      <strong>Clicks:</strong> 0
+    </div>
+  </div>
+  <div class="controls">
+    <button onclick="resetCamera()">Reset Camera</button>
+    <button onclick="zoomIn()">Zoom In (+)</button>
+    <button onclick="zoomOut()">Zoom Out (-)</button>
+    <button onclick="toggleDebug()">Toggle Debug Outline</button>
+  </div>
+  <canvas id="canvas"></canvas>
+  
+  <script type="module">
+    import { 
+      ImmediateRenderer, 
+      rectangle, 
+      circle, 
+      text, 
+      group,
+      line
+    } from '../dist/index.js';
+
+    const canvas = document.getElementById('canvas');
+    const statusDiv = document.getElementById('status');
+    
+    const renderer = new ImmediateRenderer({ 
+      canvas, 
+      width: 800, 
+      height: 600,
+      enableCameraControls: true,
+      debugHoverOutline: true
+    });
+
+    let clickCounts = {
+      center: 0,
+      topLeft: 0,
+      topRight: 0,
+      bottomLeft: 0,
+      bottomRight: 0,
+      total: 0
+    };
+
+    function updateStatus(message = '') {
+      const camera = renderer.getCameraTransform();
+      statusDiv.innerHTML = `
+        <strong>Status:</strong> ${message || 'Ready'}<br>
+        <strong>Camera:</strong> x=${camera.x.toFixed(0)}, y=${camera.y.toFixed(0)}, zoom=${camera.zoom.toFixed(2)}<br>
+        <strong>Clicks:</strong> ${clickCounts.total} (Center: ${clickCounts.center}, TL: ${clickCounts.topLeft}, TR: ${clickCounts.topRight}, BL: ${clickCounts.bottomLeft}, BR: ${clickCounts.bottomRight})
+      `;
+    }
+
+    // Make functions globally available for buttons
+    window.resetCamera = function() {
+      renderer.setCameraTransform(0, 0, 1);
+      updateStatus('Camera reset');
+    };
+
+    window.zoomIn = function() {
+      const camera = renderer.getCameraTransform();
+      renderer.setCameraTransform(camera.x, camera.y, Math.min(10, camera.zoom + 0.5));
+      updateStatus('Zoomed in');
+    };
+
+    window.zoomOut = function() {
+      const camera = renderer.getCameraTransform();
+      renderer.setCameraTransform(camera.x, camera.y, Math.max(0.1, camera.zoom - 0.5));
+      updateStatus('Zoomed out');
+    };
+
+    window.toggleDebug = function() {
+      const current = renderer.getDebugHoverOutline();
+      renderer.setDebugHoverOutline(!current);
+      updateStatus(`Debug outline ${!current ? 'enabled' : 'disabled'}`);
+    };
+
+    function render() {
+      // Create a grid pattern to show panning
+      const gridLines = [];
+      const gridSize = 50;
+      const gridExtent = 2000;
+      
+      // Vertical lines
+      for (let x = -gridExtent; x <= gridExtent; x += gridSize) {
+        const isMainLine = x === 0;
+        gridLines.push(
+          line({
+            x1: x,
+            y1: -gridExtent,
+            x2: x,
+            y2: gridExtent,
+            stroke: isMainLine ? '#999' : '#e0e0e0',
+            strokeWidth: isMainLine ? 2 : 1
+          })
+        );
+      }
+      
+      // Horizontal lines
+      for (let y = -gridExtent; y <= gridExtent; y += gridSize) {
+        const isMainLine = y === 0;
+        gridLines.push(
+          line({
+            x1: -gridExtent,
+            y1: y,
+            x2: gridExtent,
+            y2: y,
+            stroke: isMainLine ? '#999' : '#e0e0e0',
+            strokeWidth: isMainLine ? 2 : 1
+          })
+        );
+      }
+
+      // Create some colorful shapes at various positions with click handlers
+      const shapes = [
+        // Center
+        rectangle({ 
+          x: -50, 
+          y: -50, 
+          dx: 100, 
+          dy: 100, 
+          fill: '#ff6b6b',
+          cornerRadius: 10,
+          onClick: () => {
+            clickCounts.center++;
+            clickCounts.total++;
+            updateStatus('🎯 CENTER clicked!');
+          }
+        }),
+        text({
+          x: -30,
+          y: 5,
+          text: 'CENTER',
+          fill: 'white',
+          fontSize: 14,
+          font: 'bold 14px sans-serif'
+        }),
+
+        // Top-left quadrant
+        circle({ 
+          x: -200, 
+          y: -200, 
+          radius: 40, 
+          fill: '#4dabf7',
+          stroke: '#1971c2',
+          strokeWidth: 2,
+          onClick: () => {
+            clickCounts.topLeft++;
+            clickCounts.total++;
+            updateStatus('🎯 TOP-LEFT clicked!');
+          }
+        }),
+        text({
+          x: -235,
+          y: -195,
+          text: 'Top-Left',
+          fill: '#1971c2',
+          fontSize: 12
+        }),
+
+        // Top-right quadrant
+        rectangle({ 
+          x: 150, 
+          y: -220, 
+          dx: 100, 
+          dy: 80, 
+          fill: '#51cf66',
+          cornerRadius: 5,
+          onClick: () => {
+            clickCounts.topRight++;
+            clickCounts.total++;
+            updateStatus('🎯 TOP-RIGHT clicked!');
+          }
+        }),
+        text({
+          x: 165,
+          y: -175,
+          text: 'Top-Right',
+          fill: '#2f9e44',
+          fontSize: 12
+        }),
+
+        // Bottom-left quadrant
+        circle({ 
+          x: -180, 
+          y: 180, 
+          radius: 50, 
+          fill: '#ffd43b',
+          stroke: '#fab005',
+          strokeWidth: 3,
+          onClick: () => {
+            clickCounts.bottomLeft++;
+            clickCounts.total++;
+            updateStatus('🎯 BOTTOM-LEFT clicked!');
+          }
+        }),
+        text({
+          x: -220,
+          y: 185,
+          text: 'Bottom-Left',
+          fill: '#e67700',
+          fontSize: 12
+        }),
+
+        // Bottom-right quadrant
+        rectangle({ 
+          x: 160, 
+          y: 160, 
+          dx: 80, 
+          dy: 80, 
+          fill: '#ff8787',
+          rotation: Math.PI / 4,
+          onClick: () => {
+            clickCounts.bottomRight++;
+            clickCounts.total++;
+            updateStatus('🎯 BOTTOM-RIGHT clicked!');
+          }
+        }),
+        text({
+          x: 165,
+          y: 255,
+          text: 'Bottom-Right',
+          fill: '#e03131',
+          fontSize: 12
+        }),
+      ];
+
+      const scene = group({ x: 0, y: 0 }, [
+        ...gridLines,
+        ...shapes
+      ]);
+
+      renderer.render(scene);
+      updateStatus();
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+</body>
+</html>

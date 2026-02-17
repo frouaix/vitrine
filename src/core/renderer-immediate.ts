@@ -166,6 +166,9 @@ export class ImmediateRenderer {
             const worldCoords = inverseCameraTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
             const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
             this.debugHoveredBlock = hit?.block || null;
+          } else {
+            // Matrix inversion failed, keep debugHoveredBlock as null
+            this.debugHoveredBlock = null;
           }
         } else {
           const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc, Matrix2D.identity());

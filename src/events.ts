@@ -75,6 +75,13 @@ export class EventManager {
     return this.ptcLastPointer;
   }
 
+  private convertCanvasToWorldCoordinates(xc: number, yc: number): { x: number; y: number } {
+    const inverseCameraTransform = this.cameraTransform.invert();
+    return inverseCameraTransform 
+      ? inverseCameraTransform.transformPoint(xc, yc)
+      : { x: xc, y: yc };
+  }
+
   private setupEventListeners(): void {
     this.canvas.addEventListener('pointerdown', this.boundHandlers.pointerdown);
     this.canvas.addEventListener('pointerup', this.boundHandlers.pointerup);
@@ -134,13 +141,7 @@ export class EventManager {
     const { currentScene } = this;
 
     const { xc, yc } = this.getCanvasCoordinates(event);
-    
-    // Convert canvas coordinates to world coordinates using inverse camera transform
-    const inverseCameraTransform = this.cameraTransform.invert();
-    const worldCoords = inverseCameraTransform 
-      ? inverseCameraTransform.transformPoint(xc, yc)
-      : { x: xc, y: yc };
-    
+    const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
     const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
     if (!hit) return;
 
@@ -196,13 +197,7 @@ export class EventManager {
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     this.ptcLastPointer = { xc, yc };
-    
-    // Convert canvas coordinates to world coordinates using inverse camera transform
-    const inverseCameraTransform = this.cameraTransform.invert();
-    const worldCoords = inverseCameraTransform 
-      ? inverseCameraTransform.transformPoint(xc, yc)
-      : { x: xc, y: yc };
-    
+    const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
     const hit = HitTester.hitTest(currentScene, worldCoords.x, worldCoords.y, Matrix2D.identity());
 
     if (hit) {
