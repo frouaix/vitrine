@@ -110,20 +110,35 @@ export class ImmediateRenderer {
       const panSpeed = 1;
       
       if (e.ctrlKey) {
-        // Ctrl+MouseWheel: zoom in/out
+        // Ctrl+MouseWheel: zoom in/out towards mouse pointer
         const zoomDelta = -e.deltaY * zoomSpeed;
         const newZoom = Math.max(0.1, Math.min(10, this.cameraZoom + zoomDelta));
         
-        // Zoom towards mouse pointer
+        // Convert mouse position from CSS pixels to logical canvas coordinates
         const rect = this.canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const cssX = e.clientX - rect.left;
+        const cssY = e.clientY - rect.top;
         
-        // Adjust camera position to zoom towards pointer
-        const zoomRatio = newZoom / this.cameraZoom;
-        this.cameraX = mouseX - (mouseX - this.cameraX) * zoomRatio;
-        this.cameraY = mouseY - (mouseY - this.cameraY) * zoomRatio;
+        // Convert CSS pixels to canvas buffer coordinates (account for display scaling)
+        // rect.width is CSS pixels, canvas.width is buffer pixels (dxc * pixelRatio)
+        const bufferX = cssX * (this.canvas.width / rect.width);
+        const bufferY = cssY * (this.canvas.height / rect.height);
         
+        // Convert buffer coordinates to logical canvas coordinates (remove pixelRatio)
+        const logicalX = bufferX / this.pixelRatio;
+        const logicalY = bufferY / this.pixelRatio;
+        
+        // Calculate world position under mouse (before zoom)
+        // World → Screen transform: screen = world * zoom + camera
+        // Inverse: world = (screen - camera) / zoom
+        const worldX = (logicalX - this.cameraX) / this.cameraZoom;
+        const worldY = (logicalY - this.cameraY) / this.cameraZoom;
+        
+        // Calculate new camera position to keep world point under mouse
+        // After zoom: screen = world * newZoom + newCamera
+        // So: newCamera = screen - world * newZoom
+        this.cameraX = logicalX - worldX * newZoom;
+        this.cameraY = logicalY - worldY * newZoom;
         this.cameraZoom = newZoom;
       } else if (e.shiftKey) {
         // Shift+MouseWheel: scroll horizontally
