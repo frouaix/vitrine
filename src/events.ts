@@ -77,9 +77,16 @@ export class EventManager {
 
   private convertCanvasToWorldCoordinates(xc: number, yc: number): { x: number; y: number } {
     const inverseCameraTransform = this.cameraTransform.invert();
-    return inverseCameraTransform 
+    const result = inverseCameraTransform 
       ? inverseCameraTransform.transformPoint(xc, yc)
       : { x: xc, y: yc };
+    
+    // Debug logging
+    if (typeof window !== 'undefined' && (window as any).__vitrineDebugHitTest) {
+      console.log('Canvas→World:', { canvas: { xc, yc }, world: result, cameraTransform: this.cameraTransform });
+    }
+    
+    return result;
   }
 
   private setupEventListeners(): void {
