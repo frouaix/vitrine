@@ -3,7 +3,7 @@
 <head>
   <title>GUI Interaction Test</title>
   <script type="module">
-    import { ImmediateRenderer } from '/vitrine/dist/index.js';
+    import { ImmediateRenderer } from 'vitrine';
     import {
       button,
       checkbox,
@@ -12,7 +12,7 @@
       panel,
       transformGUIControl,
       lightTheme
-    } from '/vitrine/src/GUI/index.js';
+    } from 'vitrine';
 
     const canvas = document.getElementById('canvas');
     const renderer = new ImmediateRenderer(canvas);
