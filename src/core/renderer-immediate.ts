@@ -156,14 +156,36 @@ export class ImmediateRenderer {
     if (this.debugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
       if (ptcLastPointer) {
-        // Get camera transform for hit testing
-        const cameraTransform = this.enableCameraControls
-          ? Matrix2D.identity()
-              .translate(this.cameraX, this.cameraY)
-              .scaleXY(this.cameraZoom, this.cameraZoom)
-          : Matrix2D.identity();
-        const hit = HitTester.hitTest(block, ptcLastPointer.xc, ptcLastPointer.yc, cameraTransform);
-        this.debugHoveredBlock = hit?.block || null;
+        // Convert canvas coordinates to world coordinates using inverse camera transform
+        if (this.enableCameraControls) {
+          // Camera transform: scale first, then translate
+          // Full transform includes pixelRatio: Scale(pixelRatio) * Camera
+          const cameraTransform = Matrix2D.identity()
+            .scaleXY(this.cameraZoom, this.cameraZoom)
+            .translate(this.cameraX, this.cameraY);
+          const fullTransform = Matrix2D.identity()
+            .scaleXY(this.pixelRatio, this.pixelRatio)
+            .multiply(cameraTransform);
+          const inverseCameraTransform = fullTransform.invert();
+          if (inverseCameraTransform) {
+            const worldCoords = inverseCameraTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
+            const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            this.debugHoveredBlock = hit?.block || null;
+          } else {
+            // Matrix inversion failed, keep debugHoveredBlock as null
+            this.debugHoveredBlock = null;
+          }
+        } else {
+          // No camera controls, but still account for pixelRatio
+          const pixelRatioTransform = Matrix2D.identity()
+            .scaleXY(this.pixelRatio, this.pixelRatio);
+          const inverseTransform = pixelRatioTransform.invert();
+          if (inverseTransform) {
+            const worldCoords = inverseTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
+            const hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
+            this.debugHoveredBlock = hit?.block || null;
+          }
+        }
       }
     }
     
@@ -172,26 +194,44 @@ export class ImmediateRenderer {
     this.context.save();
 
     // Apply camera transform (pan and zoom) to root transform stack
+    // Note: Scale first, then translate (for correct camera behavior)
     if (this.enableCameraControls) {
       this.context.transformStack.apply({
-        x: this.cameraX,
-        y: this.cameraY,
         scaleX: this.cameraZoom,
         scaleY: this.cameraZoom
+      });
+      this.context.transformStack.apply({
+        x: this.cameraX,
+        y: this.cameraY
       });
     }
     
     this.renderBlock(block);
     this.context.restore();
 
-    // Update event system with current scene and camera transform
+     // Update event system with current scene and camera transform
     if (this.eventManager) {
       this.eventManager.setScene(block);
       if (this.enableCameraControls) {
+        // Camera transform: scale first, then translate
+        // For hit testing, we need the full transform from canvas buffer to world:
+        // CanvasBuffer → Logical Canvas → World
+        // The camera transform is in logical space, so we need to account for pixelRatio
         const cameraTransform = Matrix2D.identity()
-          .translate(this.cameraX, this.cameraY)
-          .scaleXY(this.cameraZoom, this.cameraZoom);
-        this.eventManager.setCameraTransform(cameraTransform);
+          .scaleXY(this.cameraZoom, this.cameraZoom)
+          .translate(this.cameraX, this.cameraY);
+        
+        // Full transform: Scale(pixelRatio) * Camera
+        const fullTransform = Matrix2D.identity()
+          .scaleXY(this.pixelRatio, this.pixelRatio)
+          .multiply(cameraTransform);
+        
+        this.eventManager.setCameraTransform(fullTransform);
+      } else if (this.pixelRatio !== 1) {
+        // No camera controls, but still need to account for pixelRatio
+        const pixelRatioTransform = Matrix2D.identity()
+          .scaleXY(this.pixelRatio, this.pixelRatio);
+        this.eventManager.setCameraTransform(pixelRatioTransform);
       }
     }
 
