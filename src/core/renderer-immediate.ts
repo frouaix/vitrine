@@ -129,16 +129,20 @@ export class ImmediateRenderer {
         const logicalY = bufferY / this.pixelRatio;
         
         // Calculate world position under mouse (before zoom)
-        // World → Screen transform: screen = world * zoom + camera
-        // Inverse: world = (screen - camera) / zoom
-        const worldX = (logicalX - this.cameraX) / this.cameraZoom;
-        const worldY = (logicalY - this.cameraY) / this.cameraZoom;
+        // The camera transform is: scale(zoom) then translate(camera)
+        // In canvas 2D, this means: screen = world * zoom + camera * zoom
+        // Inverse: world = screen / zoom - camera
+        const worldX = logicalX / this.cameraZoom - this.cameraX;
+        const worldY = logicalY / this.cameraZoom - this.cameraY;
         
         // Calculate new camera position to keep world point under mouse
-        // After zoom: screen = world * newZoom + newCamera
-        // So: newCamera = screen - world * newZoom
-        this.cameraX = logicalX - worldX * newZoom;
-        this.cameraY = logicalY - worldY * newZoom;
+        // After zoom: screen = world * newZoom + newCamera * newZoom
+        // So: newCamera = screen / newZoom - world
+        const newCameraX = logicalX / newZoom - worldX;
+        const newCameraY = logicalY / newZoom - worldY;
+        
+        this.cameraX = newCameraX;
+        this.cameraY = newCameraY;
         this.cameraZoom = newZoom;
       } else if (e.shiftKey) {
         // Shift+MouseWheel: scroll horizontally
