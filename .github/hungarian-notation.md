@@ -3,10 +3,11 @@
 ## Geometric variables
 
 All variables denoting coordinates should include the coordinate system they refer to
-- xl, yl: local coordinate system of an object
+- xl, yl: local coordinate system of an object (after all parent+block transforms inverted)
 - xp, yp: coordinate system of the parent container
-- xc, yc: coordinate system of the enclosing canvas
-- xw, yw: coordinate system of the browser / window
+- xs, ys: scene coordinate system (root of scene graph, after camera inverse, before block transforms)
+- xc, yc: coordinate system of the enclosing canvas buffer
+- xw, yw: coordinate system of the browser / window (CSS pixels)
 
 Widths are denoted using dx, using the same coordinate system convention (dxl, dxp, dxc, dxw).
 Heights are similarly denoted using dy (dyl, dyp, dyc, dyw).

@@ -7,10 +7,14 @@ import { Matrix2D } from './transform.ts';
 
 export interface HitTestResult {
   block: Block;
-  localX: number;
-  localY: number;
-  worldX: number;
-  worldY: number;
+  /** Block-local X coordinate */
+  xl: number;
+  /** Block-local Y coordinate */
+  yl: number;
+  /** Scene X coordinate (before block transforms) */
+  xs: number;
+  /** Scene Y coordinate (before block transforms) */
+  ys: number;
 }
 
 export class HitTester {
@@ -52,10 +56,10 @@ export class HitTester {
     if (this.hitTestShape(block, local.x, local.y)) {
       return {
         block,
-        localX: local.x,
-        localY: local.y,
-        worldX,
-        worldY
+        xl: local.x,
+        yl: local.y,
+        xs: worldX,
+        ys: worldY
       };
     }
 

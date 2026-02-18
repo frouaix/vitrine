@@ -1,7 +1,7 @@
 // Copyright (c) 2026 François Rouaix
 
 // Event system for handling user interactions
-import { BlockType, type Block } from './core/types.ts';
+import { BlockType, type Block, type VitrinePointerEvent } from './core/types.ts';
 import { HitTester, type HitTestResult } from './hit-test.ts';
 import { Matrix2D } from './transform.ts';
 
@@ -22,13 +22,6 @@ export interface PointerEventData {
   metaKey: boolean;
   originalEvent: PointerEvent;
 }
-
-type VitrinePointerEvent = PointerEvent & {
-  vtrLocalX?: number;
-  vtrLocalY?: number;
-  vtrWorldX?: number;
-  vtrWorldY?: number;
-};
 
 export class EventManager {
   private canvas: HTMLCanvasElement;
@@ -183,10 +176,16 @@ export class EventManager {
 
   private decoratePointerEvent(event: PointerEvent, hit: HitTestResult): void {
     const vitrineEvent = event as VitrinePointerEvent;
-    vitrineEvent.vtrLocalX = hit.localX;
-    vitrineEvent.vtrLocalY = hit.localY;
-    vitrineEvent.vtrWorldX = hit.worldX;
-    vitrineEvent.vtrWorldY = hit.worldY;
+    vitrineEvent.xl = hit.xl;
+    vitrineEvent.yl = hit.yl;
+    vitrineEvent.xs = hit.xs;
+    vitrineEvent.ys = hit.ys;
+  }
+
+  private decoratePointerEventSceneOnly(event: PointerEvent, xs: number, ys: number): void {
+    const vitrineEvent = event as VitrinePointerEvent;
+    vitrineEvent.xs = xs;
+    vitrineEvent.ys = ys;
   }
 
   private handleClick(event: PointerEvent): void {
@@ -206,7 +205,7 @@ export class EventManager {
       // Start drag if handler exists
       if (onDrag) {
         this.draggedBlock = block;
-        this.ptcDragStart = { xc: hit.worldX, yc: hit.worldY };
+        this.ptcDragStart = { xc: hit.xs, yc: hit.ys };
       }
     });
   }
@@ -255,9 +254,10 @@ export class EventManager {
       this.decoratePointerEvent(event, hit);
     }
 
-    // Handle dragging
+    // Handle dragging — always set scene coordinates even if hit block differs
     if (draggedBlock && ptcDragStart) {
-      draggedBlock.props.onDrag?.(event);
+      this.decoratePointerEventSceneOnly(event, worldCoords.x, worldCoords.y);
+      draggedBlock.props.onDrag?.(event as VitrinePointerEvent);
     }
 
     // Handle hover

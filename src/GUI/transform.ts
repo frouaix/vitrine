@@ -2,7 +2,7 @@
 
 // Transform GUI DSL to Core DSL
 
-import type { Block } from '../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../core/types.ts';
 import { rectangle, circle, text, group, image, portal } from '../core/blocks.ts';
 import type {
   Rs,
@@ -590,15 +590,14 @@ function transformSlider(
   const duThumbMax = Math.max(duThumbMin, duLength - rlThumb);
   const duThumbAxis = duThumbMin + (fVertical ? (1 - normalizedValue) : normalizedValue) * (duThumbMax - duThumbMin);
 
-  type VitrinePointerEvent = PointerEvent & {
-    vtrLocalX?: number;
-    vtrLocalY?: number;
+  const getEventLocalPosition = (event: VitrinePointerEvent): number | null => {
+    const local = fVertical ? event.yl : event.xl;
+    return typeof local === 'number' ? local : null;
   };
 
-  const getEventLocalPosition = (event: PointerEvent): number | null => {
-    const eventWithLocal = event as VitrinePointerEvent;
-    const local = fVertical ? eventWithLocal.vtrLocalY : eventWithLocal.vtrLocalX;
-    return typeof local === 'number' ? local : null;
+  const getEventScenePosition = (event: VitrinePointerEvent): number | null => {
+    const scene = fVertical ? event.ys : event.xs;
+    return typeof scene === 'number' ? scene : null;
   };
 
   const getValueFromLocalPosition = (duLocal: number): number => {
@@ -617,18 +616,31 @@ function transformSlider(
     return nextValue;
   };
 
-  const startTrackDrag = (event: PointerEvent): void => {
+  const startTrackDrag = (event: VitrinePointerEvent): void => {
+    // If already dragging (thumb's handler fired first), don't jump
+    if (dragState.fDragging) {
+      return;
+    }
+
     const duLocal = getEventLocalPosition(event);
     const startValue = duLocal !== null
       ? applyFromTrackPosition(duLocal)
       : value;
 
+    const xsStart = getEventScenePosition(event);
     dragState.fDragging = true;
-    dragState.xwStart = fVertical ? event.clientY : event.clientX;
+    dragState.xsStart = xsStart ?? 0;
     dragState.startValue = startValue;
   };
 
-  const clickTrack = (event: PointerEvent): void => {
+  const startThumbDrag = (event: VitrinePointerEvent): void => {
+    const xsStart = getEventScenePosition(event);
+    dragState.fDragging = true;
+    dragState.xsStart = xsStart ?? 0;
+    dragState.startValue = value;
+  };
+
+  const clickTrack = (event: VitrinePointerEvent): void => {
     const duLocal = getEventLocalPosition(event);
     if (duLocal === null) {
       return;
@@ -637,25 +649,25 @@ function transformSlider(
     applyFromTrackPosition(duLocal);
   };
 
-  const dragToValue = (event: PointerEvent): void => {
+  const dragToValue = (event: VitrinePointerEvent): void => {
     if (!dragState.fDragging) {
       return;
     }
-
-    const { target: canvas } = event as PointerEvent & { target: HTMLCanvasElement };
-    const rect = canvas.getBoundingClientRect();
-    const scale = fVertical
-      ? (canvas.height / rect.height)
-      : (canvas.width / rect.width);
 
     if (range === 0) {
       onChange?.(minActual);
       return;
     }
 
-    const duDeltaWorld = (fVertical ? event.clientY : event.clientX) - dragState.xwStart;
-    const duDeltaCanvas = duDeltaWorld * scale;
-    const normalizedDelta = duDeltaCanvas / duLength;
+    // Use scene coordinates (xs/ys) for drag delta — they are stable
+    // regardless of which block the pointer is currently over.
+    const xsCurrent = getEventScenePosition(event);
+    if (xsCurrent === null) {
+      return;
+    }
+
+    const dxsScene = xsCurrent - dragState.xsStart;
+    const normalizedDelta = dxsScene / duLength;
     const deltaValue = (fVertical ? -normalizedDelta : normalizedDelta) * range;
     const newValue = Math.max(minActual, Math.min(maxActual, dragState.startValue + deltaValue));
 
@@ -664,7 +676,7 @@ function transformSlider(
   
   // Persistent drag state (stored on props to survive re-renders)
   if (!(props as any)._dragState) {
-    (props as any)._dragState = { fDragging: false, xwStart: 0, startValue: 0 };
+    (props as any)._dragState = { fDragging: false, xsStart: 0, startValue: 0 };
   }
   const dragState = (props as any)._dragState;
   
@@ -691,9 +703,8 @@ function transformSlider(
       dx: fVertical ? dypHitArea : duLength,
       dy: fVertical ? duLength : dypHitArea,
       fill: 'transparent',
-      onClick: onChange ? (event: PointerEvent) => clickTrack(event) : undefined,
-      onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag(event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue(event) : undefined,
+      onClick: onChange ? clickTrack : undefined,
+      onPointerDown: onChange ? startTrackDrag : undefined,
       onPointerUp: () => {
         dragState.fDragging = false;
       }
@@ -710,12 +721,8 @@ function transformSlider(
       fill: colThumbFill,
       stroke: colThumbStroke,
       strokeWidth: GUI_DEFAULTS.slider.duThumbStroke,
-      onPointerDown: onChange ? (e: PointerEvent) => {
-        dragState.fDragging = true;
-        dragState.xwStart = e.clientX;
-        dragState.startValue = value;
-      } : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue(event) : undefined,
+      onPointerDown: onChange ? startThumbDrag : undefined,
+      onDrag: onChange ? dragToValue : undefined,
       onPointerUp: () => {
         dragState.fDragging = false;
       }

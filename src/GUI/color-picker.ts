@@ -3,7 +3,7 @@
 // GUI Color Picker control (props + factory + transform)
 
 import { circle, group, rectangle, text } from '../core/blocks.ts';
-import type { Block } from '../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../core/types.ts';
 import type {
   ControlStyle,
   GUIBaseProps,
@@ -33,15 +33,11 @@ export interface ColorPickerProps extends GUIBaseProps {
 
 interface ColorPickerDragState {
   stChannel: 'hue' | 'saturation' | 'value' | null;
-  xwStart: number;
+  xsStart: number;  // Start position in scene coordinates
   hueStart: number;
   saturationStart: number;
   valueStart: number;
 }
-
-type VitrinePointerEvent = PointerEvent & {
-  vtrLocalX?: number;
-};
 
 export const DEFAULTS = {
   x: 0,
@@ -213,19 +209,12 @@ function emitColorChange(
   });
 }
 
-function getCanvasScaleX(event: PointerEvent): number | null {
-  const eventTarget = event.target;
-  if (!(eventTarget instanceof HTMLCanvasElement)) {
-    return null;
-  }
-
-  const canvasRect = eventTarget.getBoundingClientRect();
-  return eventTarget.width / canvasRect.width;
+function getEventLocalX(event: VitrinePointerEvent): number | null {
+  return typeof event.xl === 'number' ? event.xl : null;
 }
 
-function getEventLocalX(event: PointerEvent): number | null {
-  const localX = (event as VitrinePointerEvent).vtrLocalX;
-  return typeof localX === 'number' ? localX : null;
+function getEventSceneX(event: VitrinePointerEvent): number | null {
+  return typeof event.xs === 'number' ? event.xs : null;
 }
 
 function ensureDragState(props: ColorPickerProps): ColorPickerDragState {
@@ -235,7 +224,7 @@ function ensureDragState(props: ColorPickerProps): ColorPickerDragState {
   if (!propsWithState[key]) {
     propsWithState[key] = {
       stChannel: null,
-      xwStart: 0,
+      xsStart: 0,
       hueStart: 0,
       saturationStart: 0,
       valueStart: 0
@@ -371,39 +360,43 @@ export function transformColorPicker(
   const cSvSegments = DEFAULTS.cSvSegments;
   const dyTrackOffset = (dyBar - duTrackHeight) / 2;
 
-  const startDrag = (stChannel: 'hue' | 'saturation' | 'value', event: PointerEvent): void => {
+  const startDrag = (stChannel: 'hue' | 'saturation' | 'value', event: VitrinePointerEvent): void => {
+    const xsStart = getEventSceneX(event);
     dragState.stChannel = stChannel;
-    dragState.xwStart = event.clientX;
+    dragState.xsStart = xsStart ?? 0;
     dragState.hueStart = hue;
     dragState.saturationStart = saturation;
     dragState.valueStart = value;
   };
 
-  const dragToValue = (stChannel: 'hue' | 'saturation' | 'value', event: PointerEvent): void => {
+  const dragToValue = (stChannel: 'hue' | 'saturation' | 'value', event: VitrinePointerEvent): void => {
     if (dragState.stChannel !== stChannel) {
       return;
     }
 
-    const scaleX = getCanvasScaleX(event);
-    if (scaleX === null) {
+    // Use scene coordinates (xs) for drag delta — stable regardless
+    // of which block the pointer is currently over.
+    const xsCurrent = getEventSceneX(event);
+    if (xsCurrent === null) {
       return;
     }
 
-    const dxc = (event.clientX - dragState.xwStart) * scaleX;
+    const dxsScene = xsCurrent - dragState.xsStart;
+    const normalizedDelta = dxsScene / dxpBars;
 
     if (stChannel === 'hue') {
-      const deltaHue = (dxc / dxpBars) * 359;
+      const deltaHue = normalizedDelta * 359;
       emitColorChange(dragState.hueStart + deltaHue, dragState.saturationStart, dragState.valueStart, onChange);
       return;
     }
 
     if (stChannel === 'saturation') {
-      const deltaSat = (dxc / dxpBars) * 100;
+      const deltaSat = normalizedDelta * 100;
       emitColorChange(dragState.hueStart, dragState.saturationStart + deltaSat, dragState.valueStart, onChange);
       return;
     }
 
-    const deltaVal = (dxc / dxpBars) * 100;
+    const deltaVal = normalizedDelta * 100;
     emitColorChange(dragState.hueStart, dragState.saturationStart, dragState.valueStart + deltaVal, onChange);
   };
 
@@ -445,20 +438,26 @@ export function transformColorPicker(
     return next;
   };
 
-  const startTrackDrag = (stChannel: 'hue' | 'saturation' | 'value', event: PointerEvent): void => {
+  const startTrackDrag = (stChannel: 'hue' | 'saturation' | 'value', event: VitrinePointerEvent): void => {
+    // If already dragging (thumb's handler fired first), don't jump
+    if (dragState.stChannel !== null) {
+      return;
+    }
+
     const xlpLocal = getEventLocalX(event);
     const next = xlpLocal !== null
       ? applyFromTrackPosition(stChannel, xlpLocal)
       : { hue, saturation, value };
 
+    const xsStart = getEventSceneX(event);
     dragState.stChannel = stChannel;
-    dragState.xwStart = event.clientX;
+    dragState.xsStart = xsStart ?? 0;
     dragState.hueStart = next.hue;
     dragState.saturationStart = next.saturation;
     dragState.valueStart = next.value;
   };
 
-  const clickTrack = (stChannel: 'hue' | 'saturation' | 'value', event: PointerEvent): void => {
+  const clickTrack = (stChannel: 'hue' | 'saturation' | 'value', event: VitrinePointerEvent): void => {
     const xlpLocal = getEventLocalX(event);
     if (xlpLocal === null) {
       return;
@@ -510,7 +509,7 @@ export function transformColorPicker(
       cornerRadius: duTrackHeight / 2,
       onClick: onChange ? (event: PointerEvent) => clickTrack('hue', event) : undefined,
       onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('hue', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('hue', event) : undefined,
+      // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
   );
@@ -565,7 +564,7 @@ export function transformColorPicker(
       cornerRadius: duTrackHeight / 2,
       onClick: onChange ? (event: PointerEvent) => clickTrack('saturation', event) : undefined,
       onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('saturation', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('saturation', event) : undefined,
+      // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
   );
@@ -620,7 +619,7 @@ export function transformColorPicker(
       cornerRadius: duTrackHeight / 2,
       onClick: onChange ? (event: PointerEvent) => clickTrack('value', event) : undefined,
       onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('value', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('value', event) : undefined,
+      // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
   );

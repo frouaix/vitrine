@@ -5,6 +5,18 @@
 export type Color = string; // CSS color format
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 
+/** Pointer event enriched with Vitrine coordinate data. */
+export type VitrinePointerEvent = PointerEvent & {
+  /** Block-local X coordinate (after all parent+block transforms inverted) */
+  xl?: number;
+  /** Block-local Y coordinate (after all parent+block transforms inverted) */
+  yl?: number;
+  /** Scene X coordinate (root scene graph, camera-inverse applied, before block transforms) */
+  xs?: number;
+  /** Scene Y coordinate (root scene graph, camera-inverse applied, before block transforms) */
+  ys?: number;
+};
+
 export interface Transform {
   x?: number;
   y?: number;
@@ -23,12 +35,12 @@ export interface ShadowProps {
 }
 
 export interface EventHandlers {
-  onClick?: (event: PointerEvent) => void;
-  onPointerDown?: (event: PointerEvent) => void;
-  onPointerUp?: (event: PointerEvent) => void;
-  onPointerMove?: (event: PointerEvent) => void;
-  onHover?: (event: PointerEvent) => void;
-  onDrag?: (event: PointerEvent) => void;
+  onClick?: (event: VitrinePointerEvent) => void;
+  onPointerDown?: (event: VitrinePointerEvent) => void;
+  onPointerUp?: (event: VitrinePointerEvent) => void;
+  onPointerMove?: (event: VitrinePointerEvent) => void;
+  onHover?: (event: VitrinePointerEvent) => void;
+  onDrag?: (event: VitrinePointerEvent) => void;
 }
 
 export interface BaseBlockProps extends Transform, EventHandlers {
