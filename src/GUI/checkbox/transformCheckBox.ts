@@ -1,6 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
-import type { Block } from '../../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../../core/types.ts';
 import { rectangle, text, circle, group } from '../../core/blocks.ts';
 import type { GUIControlOfType, TransformContext } from '../types.ts';
 import { GUIControlType } from '../types.ts';
@@ -50,7 +50,7 @@ export function transformCheckBox(
       stroke: colBorder,
       strokeWidth: borderWidth,
       cornerRadius: borderRadius,
-      onClick: onChange ? (event: PointerEvent) => onChange(!fCheckedActual) : undefined,
+      onClick: onChange ? (_event: VitrinePointerEvent) => onChange(!fCheckedActual) : undefined,
       onHover
     })
   );

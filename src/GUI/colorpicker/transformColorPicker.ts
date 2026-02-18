@@ -455,8 +455,8 @@ export function transformColorPicker(
       stroke: colTrackStroke,
       strokeWidth: 1,
       cornerRadius: duTrackHeight / 2,
-      onClick: onChange ? (event: PointerEvent) => clickTrack('hue', event) : undefined,
-      onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('hue', event) : undefined,
+      onClick: onChange ? (event: VitrinePointerEvent) => clickTrack('hue', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startTrackDrag('hue', event) : undefined,
       // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
@@ -469,8 +469,8 @@ export function transformColorPicker(
       fill: colThumbFill,
       stroke: colTrackStroke,
       strokeWidth: 2,
-      onPointerDown: onChange ? (event: PointerEvent) => startDrag('hue', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('hue', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startDrag('hue', event) : undefined,
+      onDrag: onChange ? (event: VitrinePointerEvent) => dragToValue('hue', event) : undefined,
       onPointerUp: endDrag
     })
   );
@@ -510,8 +510,8 @@ export function transformColorPicker(
       stroke: colTrackStroke,
       strokeWidth: 1,
       cornerRadius: duTrackHeight / 2,
-      onClick: onChange ? (event: PointerEvent) => clickTrack('saturation', event) : undefined,
-      onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('saturation', event) : undefined,
+      onClick: onChange ? (event: VitrinePointerEvent) => clickTrack('saturation', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startTrackDrag('saturation', event) : undefined,
       // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
@@ -524,8 +524,8 @@ export function transformColorPicker(
       fill: colThumbFill,
       stroke: colTrackStroke,
       strokeWidth: 2,
-      onPointerDown: onChange ? (event: PointerEvent) => startDrag('saturation', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('saturation', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startDrag('saturation', event) : undefined,
+      onDrag: onChange ? (event: VitrinePointerEvent) => dragToValue('saturation', event) : undefined,
       onPointerUp: endDrag
     })
   );
@@ -565,8 +565,8 @@ export function transformColorPicker(
       stroke: colTrackStroke,
       strokeWidth: 1,
       cornerRadius: duTrackHeight / 2,
-      onClick: onChange ? (event: PointerEvent) => clickTrack('value', event) : undefined,
-      onPointerDown: onChange ? (event: PointerEvent) => startTrackDrag('value', event) : undefined,
+      onClick: onChange ? (event: VitrinePointerEvent) => clickTrack('value', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startTrackDrag('value', event) : undefined,
       // Note: No onDrag handler - only the thumb handles dragging
       onPointerUp: endDrag
     })
@@ -579,8 +579,8 @@ export function transformColorPicker(
       fill: colThumbFill,
       stroke: colTrackStroke,
       strokeWidth: 2,
-      onPointerDown: onChange ? (event: PointerEvent) => startDrag('value', event) : undefined,
-      onDrag: onChange ? (event: PointerEvent) => dragToValue('value', event) : undefined,
+      onPointerDown: onChange ? (event: VitrinePointerEvent) => startDrag('value', event) : undefined,
+      onDrag: onChange ? (event: VitrinePointerEvent) => dragToValue('value', event) : undefined,
       onPointerUp: endDrag
     })
   );

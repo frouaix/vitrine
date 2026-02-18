@@ -1,6 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
-import type { Block } from '../../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../../core/types.ts';
 import { rectangle, text, group, portal } from '../../core/blocks.ts';
 import type { GUIControlOfType, TransformContext } from '../types.ts';
 import { GUIControlType } from '../types.ts';
@@ -53,7 +53,7 @@ export function transformDropdown(
     : colBg;
   
   // Main dropdown click handler
-  const handleMainClick = (event: PointerEvent) => {
+  const handleMainClick = (event: VitrinePointerEvent) => {
     if (onToggle) {
       onToggle(!fOpen);
     }

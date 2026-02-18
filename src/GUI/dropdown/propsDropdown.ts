@@ -1,5 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
+import type { VitrinePointerEvent } from '../../core/types.ts';
 import type { GUIBaseProps } from '../types.ts';
 
 export interface DropdownProps extends GUIBaseProps {
@@ -9,6 +10,6 @@ export interface DropdownProps extends GUIBaseProps {
   fOpen?: boolean;
   onChange?: (stValue: string) => void;
   onToggle?: (fOpen: boolean) => void;
-  onClick?: (event: PointerEvent) => void;
-  onHover?: (event: PointerEvent) => void;
+  onClick?: (event: VitrinePointerEvent) => void;
+  onHover?: (event: VitrinePointerEvent) => void;
 }

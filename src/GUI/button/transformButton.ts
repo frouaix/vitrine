@@ -1,6 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
-import type { Block } from '../../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../../core/types.ts';
 import { rectangle, text, group } from '../../core/blocks.ts';
 import type { GUIControl, GUIControlOfType, TransformContext } from '../types.ts';
 import { GUIControlType } from '../types.ts';
@@ -100,7 +100,7 @@ export function transformButton(
       y: yp,
       visible: fVisible !== false,
       id,
-      onClick: fEnabled !== false && onClick ? (event: PointerEvent) => onClick() : undefined,
+      onClick: fEnabled !== false && onClick ? (_event: VitrinePointerEvent) => onClick() : undefined,
       onHover
     },
     children

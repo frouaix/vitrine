@@ -1,5 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
+import type { VitrinePointerEvent } from '../../core/types.ts';
 import type { GUIBaseProps } from '../types.ts';
 
 export interface TextBoxProps extends GUIBaseProps {
@@ -10,6 +11,6 @@ export interface TextBoxProps extends GUIBaseProps {
   onChange?: (stValue: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
-  onClick?: (event: PointerEvent) => void;
-  onHover?: (event: PointerEvent) => void;
+  onClick?: (event: VitrinePointerEvent) => void;
+  onHover?: (event: VitrinePointerEvent) => void;
 }

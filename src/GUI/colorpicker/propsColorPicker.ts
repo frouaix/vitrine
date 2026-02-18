@@ -1,5 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
+import type { VitrinePointerEvent } from '../../core/types.ts';
 import type { GUIBaseProps } from '../types.ts';
 
 export interface ColorPickerChange {
@@ -18,5 +19,5 @@ export interface ColorPickerProps extends GUIBaseProps {
   fShowPreview?: boolean;
   fShowPresets?: boolean;
   onChange?: (value: ColorPickerChange) => void;
-  onHover?: (event: PointerEvent) => void;
+  onHover?: (event: VitrinePointerEvent) => void;
 }

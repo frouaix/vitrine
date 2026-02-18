@@ -1,6 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
-import type { Block } from '../../core/types.ts';
+import type { Block, VitrinePointerEvent } from '../../core/types.ts';
 import { circle, text, group } from '../../core/blocks.ts';
 import type { GUIControlOfType, TransformContext } from '../types.ts';
 import { GUIControlType } from '../types.ts';
@@ -43,7 +43,7 @@ export function transformRadioButton(
       fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
-      onClick: onChange && stValue ? (event: PointerEvent) => onChange(stValue) : undefined,
+      onClick: onChange && stValue ? (_event: VitrinePointerEvent) => onChange(stValue) : undefined,
       onHover
     })
   );

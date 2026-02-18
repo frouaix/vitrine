@@ -1,5 +1,6 @@
 // Copyright (c) 2026 François Rouaix
 
+import type { VitrinePointerEvent } from '../../core/types.ts';
 import type { GUIBaseProps } from '../types.ts';
 
 export interface SliderProps extends GUIBaseProps {
@@ -9,5 +10,5 @@ export interface SliderProps extends GUIBaseProps {
   max?: number;
   step?: number;
   onChange?: (value: number) => void;
-  onHover?: (event: PointerEvent) => void;
+  onHover?: (event: VitrinePointerEvent) => void;
 }
