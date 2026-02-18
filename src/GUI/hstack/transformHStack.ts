@@ -18,6 +18,7 @@ export function transformStack(
     id,
     duSpacing,
     duPadding,
+    alignment,
     fVisible
   } = props;
   const direction: LayoutDirection = control.type === GUIControlType.HStack ? 'horizontal' : 'vertical';
@@ -29,28 +30,43 @@ export function transformStack(
     return group({ x: xp, y: yp }, []);
   }
   
-  const children: Block[] = [];
-  let dypOffset = padding;
+  // First pass: measure children to determine cross-axis extent for alignment
+  const childData: Array<{ block: Block; rs: Rs }> = [];
   let maxCrossAxis = 0;
   
   for (const child of control.children) {
     const transformed = transformGUIControl(child, context);
-    const rsChild = rsControl(child);
-    
-    const positionedBlock = repositionBlock(
-      transformed,
-      direction === 'horizontal' ? dypOffset : padding,
-      direction === 'horizontal' ? padding : dypOffset
-    );
-    
-    dypOffset += (direction === 'horizontal' ? rsChild.width : rsChild.height) + spacing;
-    
+    const rs = rsControl(child);
+    childData.push({ block: transformed, rs });
     if (direction === 'horizontal') {
-      maxCrossAxis = Math.max(maxCrossAxis, rsChild.height);
+      maxCrossAxis = Math.max(maxCrossAxis, rs.height);
     } else {
-      maxCrossAxis = Math.max(maxCrossAxis, rsChild.width);
+      maxCrossAxis = Math.max(maxCrossAxis, rs.width);
+    }
+  }
+  
+  // Second pass: position children with alignment
+  const children: Block[] = [];
+  let mainOffset = padding;
+  
+  for (const { block, rs } of childData) {
+    let crossOffset = padding;
+    
+    if (alignment === 'center') {
+      const crossSize = direction === 'horizontal' ? rs.height : rs.width;
+      crossOffset = padding + (maxCrossAxis - crossSize) / 2;
+    } else if (alignment === 'end') {
+      const crossSize = direction === 'horizontal' ? rs.height : rs.width;
+      crossOffset = padding + maxCrossAxis - crossSize;
     }
     
+    const positionedBlock = repositionBlock(
+      block,
+      direction === 'horizontal' ? mainOffset : crossOffset,
+      direction === 'horizontal' ? crossOffset : mainOffset
+    );
+    
+    mainOffset += (direction === 'horizontal' ? rs.width : rs.height) + spacing;
     children.push(positionedBlock);
   }
   

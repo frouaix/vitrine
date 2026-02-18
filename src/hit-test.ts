@@ -7,6 +7,8 @@ import { Matrix2D } from './transform.ts';
 
 export interface HitTestResult {
   block: Block;
+  /** Ancestry chain from root to hit block (excludes hit block itself) */
+  ancestors: Block[];
   /** Block-local X coordinate */
   xl: number;
   /** Block-local Y coordinate */
@@ -23,7 +25,8 @@ export class HitTester {
     block: Block,
     worldX: number,
     worldY: number,
-    worldTransform: Matrix2D = Matrix2D.identity()
+    worldTransform: Matrix2D = Matrix2D.identity(),
+    ancestors: Block[] = []
   ): HitTestResult | null {
     const { props, children } = block;
     const { visible } = props;
@@ -39,14 +42,24 @@ export class HitTester {
 
     const local = inverse.transformPoint(worldX, worldY);
 
+    // Reject points outside clip region
+    const { clip, dx: dxClip, dy: dyClip } = props as any;
+    if (clip && dxClip !== undefined && dyClip !== undefined) {
+      if (local.x < 0 || local.x > dxClip || local.y < 0 || local.y > dyClip) {
+        return null;
+      }
+    }
+
     // Test children first (reverse order for top-to-bottom)
     if (children) {
+      const childAncestors = [...ancestors, block];
       for (let i = children.length - 1; i >= 0; i--) {
         const childHit = this.hitTest(
           children[i],
           worldX,
           worldY,
-          currentTransform
+          currentTransform,
+          childAncestors
         );
         if (childHit) return childHit;
       }
@@ -56,6 +69,7 @@ export class HitTester {
     if (this.hitTestShape(block, local.x, local.y)) {
       return {
         block,
+        ancestors,
         xl: local.x,
         yl: local.y,
         xs: worldX,

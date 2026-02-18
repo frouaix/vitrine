@@ -352,9 +352,19 @@ export class ImmediateRenderer {
         this.context.restore();
         return;
       case BlockType.Group:
-      case BlockType.Layer:
-        // Container blocks - just render children
+      case BlockType.Layer: {
+        // Apply clipping if clip is set with dimensions
+        const { clip, dx: dxClip, dy: dyClip } = props as any;
+        if (clip && dxClip !== undefined && dyClip !== undefined) {
+          const ctx = (this.context as any).ctx as CanvasRenderingContext2D;
+          if (ctx) {
+            ctx.beginPath();
+            ctx.rect(0, 0, dxClip, dyClip);
+            ctx.clip();
+          }
+        }
         break;
+      }
     }
 
     // Render children if any

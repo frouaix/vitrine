@@ -203,9 +203,21 @@ export class EventManager {
     vitrineEvent.ys = ys;
   }
 
+  /**
+   * Find the nearest block with a given handler, checking the hit block first then ancestors.
+   */
+  private static findBlockWithHandler(hit: HitTestResult, handlerKey: keyof Block['props']): Block | null {
+    if (hit.block.props[handlerKey]) return hit.block;
+    for (let i = hit.ancestors.length - 1; i >= 0; i--) {
+      if (hit.ancestors[i].props[handlerKey]) return hit.ancestors[i];
+    }
+    return null;
+  }
+
   private handleClick(event: PointerEvent): void {
     this.withPointerHit(event, (hit) => {
-      hit.block.props.onClick?.(event);
+      const target = EventManager.findBlockWithHandler(hit, 'onClick');
+      target?.props.onClick?.(event as VitrinePointerEvent);
     });
   }
 
@@ -213,13 +225,13 @@ export class EventManager {
     this.ptcLastPointer = this.getCanvasCoordinates(event);
 
     this.withPointerHit(event, (hit) => {
-      const { block } = hit;
-      const { onPointerDown, onDrag } = block.props;
-      onPointerDown?.(event);
+      const downTarget = EventManager.findBlockWithHandler(hit, 'onPointerDown');
+      downTarget?.props.onPointerDown?.(event as VitrinePointerEvent);
 
-      // Start drag if handler exists
-      if (onDrag) {
-        this.draggedBlock = block;
+      // Start drag — find nearest ancestor with onDrag
+      const dragTarget = EventManager.findBlockWithHandler(hit, 'onDrag');
+      if (dragTarget) {
+        this.draggedBlock = dragTarget;
         this.ptcDragStart = { xc: hit.xs, yc: hit.ys };
       }
     });
@@ -229,7 +241,8 @@ export class EventManager {
     this.ptcLastPointer = this.getCanvasCoordinates(event);
 
     this.withPointerHit(event, (hit) => {
-      hit.block.props.onPointerUp?.(event);
+      const target = EventManager.findBlockWithHandler(hit, 'onPointerUp');
+      target?.props.onPointerUp?.(event as VitrinePointerEvent);
     });
 
     // End drag
@@ -278,34 +291,31 @@ export class EventManager {
       draggedBlock.props.onDrag?.(event as VitrinePointerEvent);
     }
 
-    // Handle hover
-    const newHoveredBlock = hit ? hit.block : null;
+    // Handle hover — bubble to nearest ancestor with onHover
+    const hoverTarget = hit ? EventManager.findBlockWithHandler(hit, 'onHover') : null;
     const { hoveredBlock } = this;
 
-    if (newHoveredBlock !== hoveredBlock) {
-      // Hover state changed
-      if (hoveredBlock) {
-        const { onHover } = hoveredBlock.props;
-        if (onHover) {
-        // Trigger hover end (could add onHoverEnd if needed)
-        }
+    if (hoverTarget !== hoveredBlock) {
+      this.hoveredBlock = hoverTarget;
+
+      if (hoverTarget) {
+        hoverTarget.props.onHover?.(event as VitrinePointerEvent);
       }
 
-      this.hoveredBlock = newHoveredBlock;
-
-      if (newHoveredBlock) {
-        const { onHover } = newHoveredBlock.props;
-        if (onHover) {
-          onHover(event);
-        }
-      }
-
-      // Update cursor
-      canvas.style.cursor = newHoveredBlock ? 'pointer' : 'default';
+      // Update cursor — show pointer if any ancestor has interactive handlers
+      const fInteractive = hit ? (
+        EventManager.findBlockWithHandler(hit, 'onClick') !== null ||
+        EventManager.findBlockWithHandler(hit, 'onDrag') !== null ||
+        hoverTarget !== null
+      ) : false;
+      canvas.style.cursor = fInteractive ? 'pointer' : 'default';
     }
 
-    // Always trigger pointer move if handler exists
-    hit?.block.props.onPointerMove?.(event);
+    // Bubble pointer move to nearest ancestor with handler
+    if (hit) {
+      const moveTarget = EventManager.findBlockWithHandler(hit, 'onPointerMove');
+      moveTarget?.props.onPointerMove?.(event as VitrinePointerEvent);
+    }
   }
 
   private handlePointerLeave(event: PointerEvent): void {
