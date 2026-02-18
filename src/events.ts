@@ -31,7 +31,8 @@ export class EventManager {
   private draggedBlock: Block | null = null;
   private ptcDragStart: { xc: number; yc: number } | null = null;
   private ptcLastPointer: { xc: number; yc: number } | null = null;
-  private cameraTransform: Matrix2D = Matrix2D.identity();
+  private pixelRatio: number = 1;
+  private sceneTransform: Matrix2D = Matrix2D.identity();
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -66,25 +67,34 @@ export class EventManager {
   }
 
   setCameraTransform(transform: Matrix2D): void {
-    this.cameraTransform = transform;
+    this.sceneTransform = transform;
+  }
+
+  setPixelRatio(ratio: number): void {
+    this.pixelRatio = ratio;
   }
 
   getLastPointerCanvasPosition(): { xc: number; yc: number } | null {
     return this.ptcLastPointer;
   }
 
-  private convertCanvasToWorldCoordinates(xc: number, yc: number): { x: number; y: number } {
-    const inverseCameraTransform = this.cameraTransform.invert();
-    const result = inverseCameraTransform 
-      ? inverseCameraTransform.transformPoint(xc, yc)
-      : { x: xc, y: yc };
-    
-    // Debug logging
-    if (typeof window !== 'undefined' && (window as any).__vitrineDebugHitTest) {
-      console.log('Canvas→World:', { canvas: { xc, yc }, world: result, cameraTransform: this.cameraTransform });
-    }
-    
-    return result;
+  /**
+   * Convert canvas buffer coordinates to logical coordinates (pixelRatio only).
+   * Used for hit testing — the camera group in the scene tree handles camera inverse.
+   */
+  private convertCanvasToLogicalCoordinates(xc: number, yc: number): { x: number; y: number } {
+    return { x: xc / this.pixelRatio, y: yc / this.pixelRatio };
+  }
+
+  /**
+   * Convert canvas buffer coordinates to scene coordinates (pixelRatio + camera inverse).
+   * Used for xs, ys on VitrinePointerEvent — stable coords inside the camera group.
+   */
+  private convertCanvasToSceneCoordinates(xc: number, yc: number): { x: number; y: number } {
+    const inverse = this.sceneTransform.invert();
+    return inverse
+      ? inverse.transformPoint(xc, yc)
+      : { x: xc / this.pixelRatio, y: yc / this.pixelRatio };
   }
 
   private setupEventListeners(): void {
@@ -144,17 +154,20 @@ export class EventManager {
     handler: (hit: HitTestResult) => void
   ): void {
     const { xc, yc } = this.getCanvasCoordinates(event);
-    const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
+    const logicalCoords = this.convertCanvasToLogicalCoordinates(xc, yc);
+    const sceneCoords = this.convertCanvasToSceneCoordinates(xc, yc);
     
     // Test portals first (reverse order = top to bottom z-order)
     for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
       const hit = HitTester.hitTest(
         this.portalBlocks[i],
-        worldCoords.x,
-        worldCoords.y,
+        logicalCoords.x,
+        logicalCoords.y,
         Matrix2D.identity()
       );
       if (hit) {
+        hit.xs = sceneCoords.x;
+        hit.ys = sceneCoords.y;
         this.decoratePointerEvent(event, hit);
         handler(hit);
         return; // Portal captured event, don't test main scene
@@ -164,11 +177,13 @@ export class EventManager {
     // No portal hit, test main scene
     const hit = HitTester.hitTest(
       this.currentScene,
-      worldCoords.x,
-      worldCoords.y,
+      logicalCoords.x,
+      logicalCoords.y,
       Matrix2D.identity()
     );
     if (hit) {
+      hit.xs = sceneCoords.x;
+      hit.ys = sceneCoords.y;
       this.decoratePointerEvent(event, hit);
       handler(hit);
     }
@@ -227,15 +242,16 @@ export class EventManager {
 
     const { xc, yc } = this.getCanvasCoordinates(event);
     this.ptcLastPointer = { xc, yc };
-    const worldCoords = this.convertCanvasToWorldCoordinates(xc, yc);
+    const logicalCoords = this.convertCanvasToLogicalCoordinates(xc, yc);
+    const sceneCoords = this.convertCanvasToSceneCoordinates(xc, yc);
     
     // Layer-aware hit testing (portals first, then main scene)
     let hit: HitTestResult | null = null;
     for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
       hit = HitTester.hitTest(
         this.portalBlocks[i],
-        worldCoords.x,
-        worldCoords.y,
+        logicalCoords.x,
+        logicalCoords.y,
         Matrix2D.identity()
       );
       if (hit) break;
@@ -244,19 +260,21 @@ export class EventManager {
     if (!hit) {
       hit = HitTester.hitTest(
         this.currentScene,
-        worldCoords.x,
-        worldCoords.y,
+        logicalCoords.x,
+        logicalCoords.y,
         Matrix2D.identity()
       );
     }
 
     if (hit) {
+      hit.xs = sceneCoords.x;
+      hit.ys = sceneCoords.y;
       this.decoratePointerEvent(event, hit);
     }
 
     // Handle dragging — always set scene coordinates even if hit block differs
     if (draggedBlock && ptcDragStart) {
-      this.decoratePointerEventSceneOnly(event, worldCoords.x, worldCoords.y);
+      this.decoratePointerEventSceneOnly(event, sceneCoords.x, sceneCoords.y);
       draggedBlock.props.onDrag?.(event as VitrinePointerEvent);
     }
 

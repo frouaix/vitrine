@@ -65,6 +65,7 @@ export class ImmediateRenderer {
     // Enable event handling by default
     if (config.enableEvents !== false) {
       this.eventManager = new EventManager(this.canvas);
+      this.eventManager.setPixelRatio(this.pixelRatio);
       
       // Setup camera controls if enabled
       if (this.enableCameraControls) {
