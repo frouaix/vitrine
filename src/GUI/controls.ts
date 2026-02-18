@@ -9,7 +9,7 @@ import type {
   GUIPropsByType
 } from './types.ts';
 import { GUIControlType } from './types.ts';
-export { colorpicker } from './color-picker.ts';
+export { colorpicker } from './colorpicker/transformColorPicker.ts';
 
 type RequiredChildrenControlType =
   | GUIControlType.HStack

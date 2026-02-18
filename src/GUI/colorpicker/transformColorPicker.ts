@@ -1,75 +1,23 @@
 // Copyright (c) 2026 François Rouaix
 
-// GUI Color Picker control (props + factory + transform)
+// GUI Color Picker transform
 
-import { circle, group, rectangle, text } from '../core/blocks.ts';
-import type { Block, VitrinePointerEvent } from '../core/types.ts';
+import { circle, group, rectangle, text } from '../../core/blocks.ts';
+import type { Block, VitrinePointerEvent } from '../../core/types.ts';
 import type {
   ControlStyle,
-  GUIBaseProps,
   GUIControlOfType,
   TransformContext
-} from './types.ts';
-import { GUIControlType } from './types.ts';
+} from '../types.ts';
+import { GUIControlType } from '../types.ts';
+import type { ColorPickerProps, ColorPickerChange } from './propsColorPicker.ts';
+import type { ColorPickerDragState } from './stateColorPicker.ts';
+import { COLORPICKER_DEFAULTS } from './defaultsColorPicker.ts';
 
-export interface ColorPickerChange {
-  hue: number;
-  saturation: number;
-  value: number;
-  stHex: string;
-  stRgb: string;
-}
+const DEFAULTS = COLORPICKER_DEFAULTS;
 
-export interface ColorPickerProps extends GUIBaseProps {
-  hue?: number;
-  saturation?: number;
-  value?: number;
-  presets?: string[];
-  fShowPreview?: boolean;
-  fShowPresets?: boolean;
-  onChange?: (value: ColorPickerChange) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-interface ColorPickerDragState {
-  stChannel: 'hue' | 'saturation' | 'value' | null;
-  xsStart: number;  // Start position in scene coordinates
-  hueStart: number;
-  saturationStart: number;
-  valueStart: number;
-}
-
-export const DEFAULTS = {
-  x: 0,
-  y: 0,
-  dx: 520,
-  dy: 330,
-  hue: 200,
-  saturation: 80,
-  value: 90,
-  duPadding: 14,
-  dxLabel: 36,
-  dxLabelGap: 10,
-  dyPreview: 56,
-  duPreviewRadius: 8,
-  dySectionGap: 14,
-  dyBar: 30,
-  dyBarGap: 14,
-  duTrackHeight: 10,
-  duThumbRadius: 9,
-  cHueSegments: 120,
-  cSvSegments: 80,
-  colTrackStroke: '#888888',
-  colThumbFill: '#3b82f6',
-  dyPresetGap: 20,
-  dyPresetLabelGap: 24,
-  duPresetRadius: 14,
-  duPresetSpacing: 12,
-  presets: [
-    '#ff6b6b', '#4dabf7', '#51cf66', '#ffd43b',
-    '#ff8787', '#a9e34b', '#cc5de8', '#ff922b'
-  ]
-} as const;
+// Re-export for backward compatibility
+export { COLORPICKER_DEFAULTS as DEFAULTS } from './defaultsColorPicker.ts';
 
 function clamp(unValue: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, unValue));

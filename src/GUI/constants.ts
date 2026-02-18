@@ -1,100 +1,48 @@
 // Copyright (c) 2026 François Rouaix
 
-// Default constants for GUI DSL to Core block transformation
+// Shared constants and helpers for GUI DSL
 
-export const GUI_DEFAULTS = {
-  common: {
-    x: 0,
-    y: 0,
-    duAxisStart: 0,
-    duPadding: 0,
-    duSpacing: 10,
-    stEmpty: ''
-  },
-  text: {
-    alignCenter: 'center',
-    baselineMiddle: 'middle'
-  },
-  textBox: {
-    dx: 300,
-    dy: 50,
-    duTextPadding: 12
-  },
-  button: {
-    dx: 160,
-    dy: 50
-  },
-  checkBox: {
-    dx: 200,
-    dy: 28,
-    duBox: 28,
-    duLabelSpacing: 12,
-    checkmark: {
-      stText: '✓',
-      colFill: '#ffffff',
-      duFont: 18
-    }
-  },
-  radioButton: {
-    dx: 200,
-    dy: 28,
-    duInnerDotRadius: 8,
-    duLabelSpacing: 12,
-    duRadius: 14
-  },
-  slider: {
-    dx: 300,
-    dy: 24,
-    min: 0,
-    max: 100,
-    duThumbRadius: 12,
-    duThumbStroke: 3,
-    duTrack: 6,
-    duTrackStroke: 1,
-    colThumbFill: '#3b82f6',
-    colThumbStroke: '#ffffff',
-    colTrackFill: '#4b5563',
-    colTrackStroke: '#888888',
-  },
-  dropdown: {
-    dx: 300,
-    dy: 50,
-    duArrowFont: 14,
-    duArrowOffsetX: 8,
-    duTextPadding: 12,
-    stArrow: '▼',
-    stPlaceholder: 'Select...'
-  },
-  label: {
-    dx: 200,
-    dy: 20
-  },
-  panel: {
-    dx: 400,
-    dy: 300,
-    duPadding: 16,
-    duTitleFont: 16,
-    duTitleGap: 10
-  },
-  image: {
-    dx: 100,
-    dy: 100
-  },
-  carousel: {
-    dx: 300,
-    dy: 200,
-    currentIndex: 0,
-    duDotOffsetY: 20,
-    duDotRadius: 4,
-    duDotSpacing: 15,
-    colActiveDotFill: '#3b82f6',
-    colInactiveDotFill: '#d1d5db'
-  },
-  grid: {
-    cColumns: 3
-  },
-  fallback: {
-    dx: 100,
-    dy: 40
-  }
+import type { GUIControl, ControlStyle, TransformContext } from './types.ts';
+
+export const COMMON_DEFAULTS = {
+  x: 0,
+  y: 0,
+  duAxisStart: 0,
+  duPadding: 0,
+  duSpacing: 10,
+  stEmpty: ''
 } as const;
+
+export const TEXT_DEFAULTS = {
+  alignCenter: 'center',
+  baselineMiddle: 'middle'
+} as const;
+
+export const FALLBACK_DEFAULTS = {
+  dx: 100,
+  dy: 40
+} as const;
+
+// Helper to get style for a control from the theme
+export function getControlStyle(
+  control: GUIControl,
+  context: TransformContext
+): ControlStyle {
+  const { theme } = context;
+  const { props, type } = control;
+  const { className } = props;
+
+  if (className && theme.styles[className]) {
+    return { ...(theme.defaults[type] || {}), ...theme.styles[className] };
+  }
+
+  return theme.defaults[type] || {};
+}
+
+// Legacy aggregate object kept for backward compatibility within transform.ts
+export const GUI_DEFAULTS = {
+  common: COMMON_DEFAULTS,
+  text: TEXT_DEFAULTS,
+  fallback: FALLBACK_DEFAULTS
+} as const;
+

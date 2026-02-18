@@ -2,7 +2,7 @@
 
 // Sample event data for calendar testing
 
-import type { CalendarEvent } from './calendar-types.ts';
+import type { CalendarEvent } from './propsCalendar.ts';
 
 export function generateSampleEvents(): CalendarEvent[] {
   const rgEvent: CalendarEvent[] = [];

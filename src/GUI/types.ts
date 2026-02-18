@@ -2,9 +2,45 @@
 
 // GUI DSL type definitions for high-level UI controls
 
-import type { Block } from '../core/types.ts';
-import type { ColorPickerProps } from './color-picker.ts';
-import type { CalendarDayViewProps, CalendarMonthViewProps } from './calendar-types.ts';
+// Re-export per-control props from their directories
+export type { TextBoxProps } from './textbox/propsTextBox.ts';
+export type { CheckBoxProps } from './checkbox/propsCheckBox.ts';
+export type { RadioButtonProps } from './radiobutton/propsRadioButton.ts';
+export type { ButtonProps } from './button/propsButton.ts';
+export type { SliderProps } from './slider/propsSlider.ts';
+export type { DropdownProps } from './dropdown/propsDropdown.ts';
+export type { ColorPickerProps, ColorPickerChange } from './colorpicker/propsColorPicker.ts';
+export type { StackLayoutProps } from './hstack/propsHStack.ts';
+export type { CarouselProps } from './carousel/propsCarousel.ts';
+export type { GridProps } from './grid/propsGrid.ts';
+export type { LabelProps } from './label/propsLabel.ts';
+export type { GUIImageProps } from './image/propsImage.ts';
+export type { PanelProps } from './panel/propsPanel.ts';
+export type {
+  CalendarEvent,
+  DateRange,
+  CalendarViewBaseProps,
+  CalendarDayViewProps,
+  CalendarMonthViewProps,
+  CalendarNavProps
+} from './calendar/propsCalendar.ts';
+export { CalendarViewType } from './calendar/propsCalendar.ts';
+
+// Import the concrete types for use in GUIPropsByType
+import type { TextBoxProps } from './textbox/propsTextBox.ts';
+import type { CheckBoxProps } from './checkbox/propsCheckBox.ts';
+import type { RadioButtonProps } from './radiobutton/propsRadioButton.ts';
+import type { ButtonProps } from './button/propsButton.ts';
+import type { SliderProps } from './slider/propsSlider.ts';
+import type { DropdownProps } from './dropdown/propsDropdown.ts';
+import type { ColorPickerProps } from './colorpicker/propsColorPicker.ts';
+import type { StackLayoutProps } from './hstack/propsHStack.ts';
+import type { CarouselProps } from './carousel/propsCarousel.ts';
+import type { GridProps } from './grid/propsGrid.ts';
+import type { LabelProps } from './label/propsLabel.ts';
+import type { GUIImageProps } from './image/propsImage.ts';
+import type { PanelProps } from './panel/propsPanel.ts';
+import type { CalendarDayViewProps, CalendarMonthViewProps } from './calendar/propsCalendar.ts';
 
 export type GUIColor = string; // CSS color format
 export type Rs = { width: number; height: number };
@@ -49,103 +85,7 @@ export interface GUIBaseProps {
   y?: number;
 }
 
-// Interactive control properties
-export interface TextBoxProps extends GUIBaseProps {
-  stValue?: string;
-  stPlaceholder?: string;
-  fMultiline?: boolean;
-  maxLength?: number;
-  onChange?: (stValue: string) => void;
-  onFocus?: () => void;
-  onBlur?: () => void;
-  onClick?: (event: PointerEvent) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-export interface CheckBoxProps extends GUIBaseProps {
-  fChecked?: boolean;
-  stLabel?: string;
-  onChange?: (fChecked: boolean) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-export interface RadioButtonProps extends GUIBaseProps {
-  fChecked?: boolean;
-  stLabel?: string;
-  stValue?: string;
-  group?: string;
-  onChange?: (stValue: string) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-export interface ButtonProps extends GUIBaseProps {
-  stLabel?: string;
-  onClick?: () => void;
-  variant?: 'primary' | 'secondary' | 'danger';
-  onHover?: (event: PointerEvent) => void;
-}
-
-export interface SliderProps extends GUIBaseProps {
-  orientation?: 'horizontal' | 'vertical';
-  value?: number;
-  min?: number;
-  max?: number;
-  step?: number;
-  onChange?: (value: number) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-export interface DropdownProps extends GUIBaseProps {
-  stValue?: string;
-  options: Array<{ stLabel?: string; value: string }>;
-  stPlaceholder?: string;
-  fOpen?: boolean;
-  onChange?: (stValue: string) => void;
-  onToggle?: (fOpen: boolean) => void;
-  onClick?: (event: PointerEvent) => void;
-  onHover?: (event: PointerEvent) => void;
-}
-
-// Layout control properties
 export type Alignment = 'start' | 'center' | 'end' | 'stretch';
-
-export interface StackLayoutProps extends GUIBaseProps {
-  duPadding?: number;
-  duSpacing?: number;
-  alignment?: Alignment;
-}
-
-export interface CarouselProps extends GUIBaseProps {
-  currentIndex?: number;
-  fAutoPlay?: boolean;
-  interval?: number;
-  onIndexChange?: (index: number) => void;
-}
-
-export interface GridProps extends GUIBaseProps {
-  cColumns?: number;
-  rows?: number;
-  duPadding?: number;
-  duSpacing?: number;
-}
-
-// Content control properties
-export interface LabelProps extends GUIBaseProps {
-  stText?: string;
-  fontSize?: number;
-  fontWeight?: 'normal' | 'bold';
-  align?: 'left' | 'center' | 'right';
-}
-
-export interface GUIImageProps extends GUIBaseProps {
-  src: string | HTMLImageElement;
-  fit?: 'cover' | 'contain' | 'fill';
-}
-
-export interface PanelProps extends GUIBaseProps {
-  stTitle?: string;
-  duPadding?: number;
-}
 
 export type GUIPropsByType = {
   [GUIControlType.TextBox]: TextBoxProps;
