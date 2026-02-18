@@ -72,9 +72,7 @@ export function transformDropdown(
       fill: colBgActual,
       stroke: colBorder,
       strokeWidth: borderWidth,
-      cornerRadius: borderRadius,
-      onClick: handleMainClick,
-      onHover
+      cornerRadius: borderRadius
     })
   );
   
@@ -201,7 +199,9 @@ export function transformDropdown(
       x: xp,
       y: yp,
       visible: fVisible !== false,
-      id
+      id,
+      onClick: handleMainClick,
+      onHover
     },
     children
   );
