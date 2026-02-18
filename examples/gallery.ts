@@ -219,7 +219,11 @@ function loadDemo(demo: GalleryDemo): void {
 
     // Render
     const scene = demo.render(state);
-    activeRenderer.render(scene as never);
+    if (activeRenderer instanceof ImmediateRenderer) {
+      activeRenderer.render(activeRenderer.camera([scene]));
+    } else {
+      activeRenderer.render(scene as never);
+    }
 
     // Update stats
     updateStats();

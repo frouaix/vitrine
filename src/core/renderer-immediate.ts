@@ -118,37 +118,28 @@ export class ImmediateRenderer {
         const rect = this.canvas.getBoundingClientRect();
         const cssX = e.clientX - rect.left;
         const cssY = e.clientY - rect.top;
-        
-        // Convert CSS pixels to canvas buffer coordinates (account for display scaling)
-        // rect.width is CSS pixels, canvas.width is buffer pixels (dxc * pixelRatio)
         const bufferX = cssX * (this.canvas.width / rect.width);
         const bufferY = cssY * (this.canvas.height / rect.height);
-        
-        // Convert buffer coordinates to logical canvas coordinates (remove pixelRatio)
         const logicalX = bufferX / this.pixelRatio;
         const logicalY = bufferY / this.pixelRatio;
         
-        // Calculate world position under mouse (before zoom)
-        // The camera transform is: scale(zoom) then translate(camera)
-        // In canvas 2D, this means: screen = world * zoom + camera * zoom
-        // Inverse: world = screen / zoom - camera
-        const worldX = logicalX / this.cameraZoom - this.cameraX;
-        const worldY = logicalY / this.cameraZoom - this.cameraY;
+        // Camera group uses Translate × Scale convention:
+        // screen = world * zoom + translate
+        // world = (screen - translate) / zoom
+        const worldX = (logicalX - this.cameraX) / this.cameraZoom;
+        const worldY = (logicalY - this.cameraY) / this.cameraZoom;
         
-        // Calculate new camera position to keep world point under mouse
-        // After zoom: screen = world * newZoom + newCamera * newZoom
-        // So: newCamera = screen / newZoom - world
-        const newCameraX = logicalX / newZoom - worldX;
-        const newCameraY = logicalY / newZoom - worldY;
-        
-        this.cameraX = newCameraX;
-        this.cameraY = newCameraY;
+        // Keep world point under mouse after zoom change:
+        // logicalX = worldX * newZoom + newTranslateX
+        // newTranslateX = logicalX - worldX * newZoom
+        this.cameraX = logicalX - worldX * newZoom;
+        this.cameraY = logicalY - worldY * newZoom;
         this.cameraZoom = newZoom;
       } else if (e.shiftKey) {
-        // Shift+MouseWheel: scroll horizontally
+        // Shift+MouseWheel: scroll horizontally (translate is in screen units)
         this.cameraX -= e.deltaY * panSpeed;
       } else {
-        // MouseWheel: scroll vertically
+        // MouseWheel: scroll vertically (translate is in screen units)
         this.cameraY -= e.deltaY * panSpeed;
       }
     };
@@ -170,6 +161,31 @@ export class ImmediateRenderer {
     this.cameraZoom = zoom;
   }
 
+  /**
+   * Creates a camera group block from internal camera state and syncs the
+   * transform to the EventManager. Wrap your scene children with this method
+   * so that camera controls (pan/zoom) are applied as a regular group transform.
+   */
+  camera(children: Block[]): Block {
+    // Build the camera transform matrix (Translate × Scale) and sync to EventManager
+    const cameraTransform = Matrix2D.identity()
+      .translate(this.cameraX, this.cameraY)
+      .scaleXY(this.cameraZoom, this.cameraZoom);
+    const fullTransform = Matrix2D.identity()
+      .scaleXY(this.pixelRatio, this.pixelRatio)
+      .multiply(cameraTransform);
+    if (this.eventManager) {
+      this.eventManager.setCameraTransform(fullTransform);
+    }
+
+    return group({
+      x: this.cameraX,
+      y: this.cameraY,
+      scaleX: this.cameraZoom,
+      scaleY: this.cameraZoom
+    }, children);
+  }
+
   render(block: Block): void {
     const startTime = performance.now();
 
@@ -180,60 +196,25 @@ export class ImmediateRenderer {
     if (this.debugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
       if (ptcLastPointer) {
-        // Convert canvas coordinates to world coordinates using inverse camera transform
-        if (this.enableCameraControls) {
-          // Camera transform: scale first, then translate
-          // Full transform includes pixelRatio: Scale(pixelRatio) * Camera
-          const cameraTransform = Matrix2D.identity()
-            .scaleXY(this.cameraZoom, this.cameraZoom)
-            .translate(this.cameraX, this.cameraY);
-          const fullTransform = Matrix2D.identity()
-            .scaleXY(this.pixelRatio, this.pixelRatio)
-            .multiply(cameraTransform);
-          const inverseCameraTransform = fullTransform.invert();
-          if (inverseCameraTransform) {
-            const worldCoords = inverseCameraTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
-            
-            // Test portals first for debug hover
-            let hit: HitTestResult | null = null;
-            for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
-              hit = HitTester.hitTest(this.portalBlocks[i].block, worldCoords.x, worldCoords.y, Matrix2D.identity());
-              if (hit) break;
-            }
-            
-            // Fall back to main scene
-            if (!hit) {
-              hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
-            }
-            
-            this.debugHoveredBlock = hit?.block || null;
-          } else {
-            // Matrix inversion failed, keep debugHoveredBlock as null
-            this.debugHoveredBlock = null;
-          }
-        } else {
-          // No camera controls, but still account for pixelRatio
-          const pixelRatioTransform = Matrix2D.identity()
-            .scaleXY(this.pixelRatio, this.pixelRatio);
-          const inverseTransform = pixelRatioTransform.invert();
-          if (inverseTransform) {
-            const worldCoords = inverseTransform.transformPoint(ptcLastPointer.xc, ptcLastPointer.yc);
-            
-            // Test portals first for debug hover
-            let hit: HitTestResult | null = null;
-            for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
-              hit = HitTester.hitTest(this.portalBlocks[i].block, worldCoords.x, worldCoords.y, Matrix2D.identity());
-              if (hit) break;
-            }
-            
-            // Fall back to main scene
-            if (!hit) {
-              hit = HitTester.hitTest(block, worldCoords.x, worldCoords.y, Matrix2D.identity());
-            }
-            
-            this.debugHoveredBlock = hit?.block || null;
-          }
+        // Convert canvas buffer coordinates to logical coordinates (remove pixelRatio).
+        // The camera transform is now part of the scene tree (camera group),
+        // so the hit tester handles it during recursive traversal.
+        const logicalX = ptcLastPointer.xc / this.pixelRatio;
+        const logicalY = ptcLastPointer.yc / this.pixelRatio;
+        
+        // Test portals first for debug hover
+        let hit: HitTestResult | null = null;
+        for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
+          hit = HitTester.hitTest(this.portalBlocks[i].block, logicalX, logicalY, Matrix2D.identity());
+          if (hit) break;
         }
+        
+        // Fall back to main scene
+        if (!hit) {
+          hit = HitTester.hitTest(block, logicalX, logicalY, Matrix2D.identity());
+        }
+        
+        this.debugHoveredBlock = hit?.block || null;
       }
     }
     
@@ -241,18 +222,8 @@ export class ImmediateRenderer {
     this.context.clear();
     this.context.save();
 
-    // Apply camera transform (pan and zoom) to root transform stack
-    // Note: Scale first, then translate (for correct camera behavior)
-    if (this.enableCameraControls) {
-      this.context.transformStack.apply({
-        scaleX: this.cameraZoom,
-        scaleY: this.cameraZoom
-      });
-      this.context.transformStack.apply({
-        x: this.cameraX,
-        y: this.cameraY
-      });
-    }
+    // Camera transform is now applied via the camera group block in the scene tree.
+    // No special camera transform application here.
     
     this.renderBlock(block);
     this.context.restore();
@@ -260,7 +231,7 @@ export class ImmediateRenderer {
     // Render portals on top
     this.renderPortals();
 
-    // Update event system with current scene and camera transform
+    // Update event system with current scene
     if (this.eventManager) {
       this.eventManager.setScene(block);
       
@@ -268,23 +239,9 @@ export class ImmediateRenderer {
       const portalContainers = this.portalBlocks.map(p => p.block);
       this.eventManager.setPortalBlocks(portalContainers);
       
-      if (this.enableCameraControls) {
-        // Camera transform: scale first, then translate
-        // For hit testing, we need the full transform from canvas buffer to world:
-        // CanvasBuffer → Logical Canvas → World
-        // The camera transform is in logical space, so we need to account for pixelRatio
-        const cameraTransform = Matrix2D.identity()
-          .scaleXY(this.cameraZoom, this.cameraZoom)
-          .translate(this.cameraX, this.cameraY);
-        
-        // Full transform: Scale(pixelRatio) * Camera
-        const fullTransform = Matrix2D.identity()
-          .scaleXY(this.pixelRatio, this.pixelRatio)
-          .multiply(cameraTransform);
-        
-        this.eventManager.setCameraTransform(fullTransform);
-      } else if (this.pixelRatio !== 1) {
-        // No camera controls, but still need to account for pixelRatio
+      // Camera transform is synced to EventManager via camera() method.
+      // For non-camera scenes, still account for pixelRatio.
+      if (!this.enableCameraControls && this.pixelRatio !== 1) {
         const pixelRatioTransform = Matrix2D.identity()
           .scaleXY(this.pixelRatio, this.pixelRatio);
         this.eventManager.setCameraTransform(pixelRatioTransform);
