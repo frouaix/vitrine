@@ -89,6 +89,10 @@ export {
   transformGUIControl
 } from './GUI/index.ts';
 
+// Component system
+export { VitrineComponent } from './component.ts';
+export type { VitrineComponentConfig, GUIControlBuilder, BlockBuilder, RenderFunction } from './component.ts';
+
 // Legacy exports (for backwards compatibility)
 export * from './core/renderer.ts';
 export * from './core/renderer-canvas.ts';
