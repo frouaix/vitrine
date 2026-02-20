@@ -103,6 +103,22 @@ function init() {
     }
   });
 
+  // Hamburger toggle for mobile sidebar
+  const sidebarEl = getRequiredElement<HTMLElement>('sidebar');
+  const backdropEl = getRequiredElement<HTMLElement>('sidebarBackdrop');
+  const hamburgerEl = getRequiredElement<HTMLElement>('hamburger');
+
+  const closeSidebar = () => {
+    sidebarEl.classList.remove('open');
+    backdropEl.classList.remove('visible');
+  };
+
+  hamburgerEl.addEventListener('click', () => {
+    const isOpen = sidebarEl.classList.toggle('open');
+    backdropEl.classList.toggle('visible', isOpen);
+  });
+  backdropEl.addEventListener('click', closeSidebar);
+
   // Render demo list
   renderDemoList();
   
@@ -149,7 +165,12 @@ function renderDemoList() {
     item.addEventListener('click', () => {
       const demoId = item.dataset.demoId;
       const demo = demos.find(d => d.id === demoId);
-      if (demo) loadDemo(demo);
+      if (demo) {
+        loadDemo(demo);
+        // Close sidebar on mobile
+        document.getElementById('sidebar')?.classList.remove('open');
+        document.getElementById('sidebarBackdrop')?.classList.remove('visible');
+      }
     });
   });
 }
