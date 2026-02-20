@@ -3,39 +3,32 @@
 [![CI](https://github.com/frouaix/vitrine/actions/workflows/ci.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml)
 
-**Immediate-mode graphics library for TypeScript** with declarative block-based DSL, optimized for rendering tens of thousands of visual elements in productivity applications.
+**Immediate-mode graphics library for TypeScript** — a declarative, block-based DSL for canvas rendering, optimized for productivity applications that need to render tens of thousands of visual elements at 60 FPS.
 
-## 🎨 [Interactive Demo Gallery](https://frouaix.github.io/vitrine/)
+### 🎨 [Interactive Demo Gallery](https://frouaix.github.io/vitrine/)
 
-Explore 12 interactive examples including data visualization, productivity apps, particle systems, UI components, and games.
+Explore 12+ interactive examples including data visualization, productivity apps, particle systems, UI components, and games.
 
 ## Features
 
-✅ **Immediate Mode Rendering** - No retained scene graph, full control every frame  
-✅ **Declarative DSL** - Function-based API for describing visual hierarchies  
-✅ **Rich Primitives** - Rectangle, Circle, Ellipse, Line, Arc, Path, Text, Image  
-✅ **Interactive Events** - Click, hover, drag with transform-aware hit testing  
-✅ **High Performance** - Frustum culling, optimized for 10k+ blocks at 60 FPS  
-✅ **Hierarchical Transforms** - Relative coordinates with 2D matrix transforms  
-✅ **Full TypeScript** - Type-safe API with complete type definitions
+✅ **Immediate Mode Rendering** — No retained scene graph; the visual hierarchy is re-described each frame  
+✅ **Declarative DSL** — Pure function-based API for describing visual hierarchies  
+✅ **Rich Primitives** — Rectangle, Circle, Ellipse, Line, Arc, Path, Text, Image  
+✅ **Interactive Events** — Click, hover, drag, tooltips with transform-aware hit testing  
+✅ **High Performance** — Frustum culling, optimized for 10k+ blocks at 60 FPS  
+✅ **Hierarchical Transforms** — Nested coordinate spaces with full 2D affine matrices  
+✅ **Full TypeScript** — Type-safe API with complete type definitions  
+✅ **Zero Dependencies** — No runtime dependencies; only TypeScript, Vite, and gh-pages as dev tooling
 
-> **Note**: The WebGL renderer is currently non-functional. Use `ImmediateRenderer` (Canvas 2D) for all rendering.
+## Architecture
 
-## Naming and Style Conventions
+Vitrine uses an immediate-mode rendering model: every frame, your code builds a tree of lightweight block descriptors using factory functions (`rectangle()`, `circle()`, `group()`, …). The renderer walks that tree, applies hierarchical transforms, and draws to a Canvas 2D context. Because there is no retained scene graph, there is no lifecycle to manage — what you describe is exactly what gets rendered.
 
-This project uses Hungarian-style naming for several types. See [.github/hungarian-notation.md](.github/hungarian-notation.md) for details.
+Portal blocks allow overlay content (tooltips, dropdown menus) to render above the main scene. An integrated event system performs transform-aware hit testing so pointer events are delivered in block-local coordinates.
 
+> **Note**: A WebGL renderer stub exists but is currently non-functional. Use `ImmediateRenderer` (Canvas 2D) for all rendering.
 
-## Import Conventions
-
-- Use explicit `.ts` extensions for all relative TypeScript imports and exports (for example `./foo.ts`, `../bar.ts`).
-- Keep package imports extensionless (for example `vitrine`, `react`).
-
-## Installation
-
-```bash
-pnpm install
-```
+---
 
 ## Quick Start
 
@@ -80,30 +73,6 @@ function render() {
 render();
 ```
 
-## Examples
-
-Run `pnpm dev` to explore the [demo gallery](examples/gallery.html) with 12 interactive examples.
-
-### Live Demos (GitHub Pages)
-
-Try these standalone demos live:
-- **[Gallery](https://frouaix.github.io/vitrine/gallery.html)** - Interactive gallery with 12+ demos
-- **[Calendar](https://frouaix.github.io/vitrine/calendar.html)** - Month and day calendar views
-- **[Camera Controls](https://frouaix.github.io/vitrine/camera-controls.html)** - Pan and zoom controls
-- **[Basic](https://frouaix.github.io/vitrine/basic.html)** - Basic shapes and hierarchy
-- **[Events](https://frouaix.github.io/vitrine/events.html)** - Interactive events (click, hover, drag)
-- **[Primitives](https://frouaix.github.io/vitrine/primitives.html)** - All primitive types
-- **[Performance](https://frouaix.github.io/vitrine/performance.html)** - 10k+ blocks performance test
-
-### Local Development
-
-To run examples locally:
-```bash
-pnpm dev  # Opens gallery at localhost:8080
-```
-
-Or view individual example files in the [examples](examples/) directory.
-
 ## API Overview
 
 ### Block Types
@@ -137,11 +106,12 @@ All blocks support:
 ### Events
 
 All blocks support event handlers:
-- `onClick` - Click event
-- `onPointerDown` / `onPointerUp` - Pointer press/release
-- `onPointerMove` - Pointer movement
-- `onHover` - Hover state
-- `onDrag` - Drag interaction
+- `onClick` — Click event
+- `onPointerDown` / `onPointerUp` — Pointer press/release
+- `onPointerMove` — Pointer movement
+- `onHover` — Hover state change
+- `onDrag` — Drag interaction
+- `tooltip` — Function returning a string or block tree, displayed on hover
 
 ### Performance
 
@@ -155,56 +125,36 @@ const stats = renderer.getPerformanceStats();
 console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
 ```
 
+## Examples
+
+Try the live demos on GitHub Pages:
+- **[Gallery](https://frouaix.github.io/vitrine/gallery.html)** — 12+ interactive demos
+- **[Calendar](https://frouaix.github.io/vitrine/calendar.html)** — Month and day calendar views
+- **[Camera Controls](https://frouaix.github.io/vitrine/camera-controls.html)** — Pan and zoom
+- **[Basic](https://frouaix.github.io/vitrine/basic.html)** — Shapes and hierarchy
+- **[Events](https://frouaix.github.io/vitrine/events.html)** — Click, hover, drag
+- **[Primitives](https://frouaix.github.io/vitrine/primitives.html)** — All primitive types
+- **[Performance](https://frouaix.github.io/vitrine/performance.html)** — 10k+ blocks stress test
+
+Or run locally with `pnpm dev` (opens the gallery at localhost:8080).
+
+---
+
 ## Development
 
 ```bash
 pnpm install         # Install dependencies
 pnpm dev             # Start dev server with gallery
 pnpm build           # Compile TypeScript library
-pnpm lint            # Run lint/type checks
+pnpm lint            # Run type checks (tsc --noEmit)
 pnpm build:examples  # Build examples for production
-pnpm deploy          # Deploy to GitHub Pages
+pnpm deploy          # Deploy demo gallery to GitHub Pages
 pnpm clean           # Remove build artifacts
 ```
 
-## Deployment
-
-The demo gallery is automatically deployed to GitHub Pages at [https://frouaix.github.io/vitrine/](https://frouaix.github.io/vitrine/)
-
-This section was touched in a trivial docs-only change to validate the deployment path after push.
-
-To deploy manually:
-```bash
-pnpm run deploy
-```
-
-This builds the examples with Vite and pushes to the `gh-pages` branch.
-
-### Branch Protection
-
-The `main` branch should be protected with the following rules:
-- ✅ **Required CI checks**: `test / Build Library and Examples`, `lint / Type Check`
-- 🚫 **Force pushes blocked**
-- 🚫 **Branch deletion blocked**
-- 🔀 **Pull request required before merge**
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for branch naming and PR workflow.
-
-## Architecture
-
-Vitrine uses an immediate-mode rendering model where the visual hierarchy is re-described each frame. This provides:
-
-- **Simplicity** - No complex state management or lifecycle
-- **Flexibility** - Easy integration with any state management (React, Vue, etc.)
-- **Performance** - Optimized rendering pipeline with culling
-- **Predictability** - What you describe is what you get
-
 ## Contributing
 
-Contributions are welcome.
-
-- See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow, validation, and branch policy
-- See [.github/copilot-instructions.md](.github/copilot-instructions.md) for coding conventions
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for workflow, validation, and branch policy, and [.github/copilot-instructions.md](.github/copilot-instructions.md) for coding conventions.
 
 ## License
 
