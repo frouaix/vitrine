@@ -9,7 +9,22 @@ import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
-import { group } from './blocks.ts';
+import { group, rectangle, text, portal } from './blocks.ts';
+
+const TOOLTIP_DEFAULTS = {
+  colBg: '#1f2937',
+  colBorder: '#4b5563',
+  colText: '#f9fafb',
+  borderWidth: 1,
+  borderRadius: 6,
+  duPadding: 8,
+  duPaddingX: 10,
+  fontSize: 13,
+  fontFamily: 'system-ui, sans-serif',
+  duOffsetY: 16,
+  duMaxDistance: 120,
+  duMaxWidth: 300
+} as const;
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
@@ -231,6 +246,9 @@ export class ImmediateRenderer {
     
     // Render portals on top
     this.renderPortals();
+
+    // Render tooltip on top of everything
+    this.renderTooltip();
 
     // Update event system with current scene
     if (this.eventManager) {
@@ -557,5 +575,114 @@ export class ImmediateRenderer {
       this.context.transformStack.restore();
       this.context.restore();
     }
+  }
+
+  private renderTooltip(): void {
+    if (!this.eventManager) return;
+    const activeTooltip = this.eventManager.getActiveTooltip();
+    if (!activeTooltip) return;
+
+    const content = activeTooltip.fn();
+    if (!content) return;
+
+    const { xs, ys } = activeTooltip;
+    const { duPadding, duPaddingX, fontSize, fontFamily, colBg, colBorder, colText,
+            borderWidth, borderRadius, duOffsetY, duMaxDistance, duMaxWidth } = TOOLTIP_DEFAULTS;
+
+    // Normalize: convert string content to a text block
+    const lineHeight = fontSize * 1.4;
+    let contentBlock: Block;
+    let dxContent: number;
+    let dyContent: number;
+
+    if (typeof content === 'string') {
+      const lines = content.split('\n');
+      const textProps = { fontSize, font: `${fontSize}px ${fontFamily}` };
+
+      // Measure each line using the canvas context for exact widths
+      const lineWidths = lines.map(line =>
+        this.context.measureText
+          ? this.context.measureText(line, textProps).width
+          : line.length * fontSize * 0.6
+      );
+      dxContent = Math.min(
+        duMaxWidth - duPaddingX * 2,
+        Math.max(...lineWidths)
+      );
+      dyContent = lines.length * lineHeight;
+
+      contentBlock = group({}, lines.map((line, i) =>
+        text({
+          text: line,
+          y: i * lineHeight,
+          fill: colText,
+          fontSize,
+          font: `${fontSize}px ${fontFamily}`,
+          baseline: 'top' as const
+        })
+      ));
+    } else {
+      contentBlock = content;
+      // Estimate block content size via bounding box or fallback
+      const bounds = HitTester.getBounds(content);
+      dxContent = bounds ? bounds.width : duMaxWidth - duPaddingX * 2;
+      dyContent = bounds ? bounds.height : 40;
+    }
+
+    // Compute tooltip frame dimensions
+    const dxTooltip = dxContent + duPaddingX * 2;
+    const dyTooltip = dyContent + duPadding * 2;
+
+    // Position: centered horizontally on pointer, below pointer
+    let xTooltip = xs - dxTooltip / 2;
+    let yTooltip = ys + duOffsetY;
+
+    // Clamp horizontally
+    xTooltip = Math.max(4, Math.min(this.dxc - dxTooltip - 4, xTooltip));
+
+    // Flip above pointer if it would go below canvas
+    if (yTooltip + dyTooltip > this.dyc - 4) {
+      yTooltip = ys - dyTooltip - duOffsetY;
+    }
+
+    // Enforce max distance from pointer
+    const dyCenterToPointer = Math.abs((yTooltip + dyTooltip / 2) - ys);
+    if (dyCenterToPointer > duMaxDistance) {
+      yTooltip = ys > yTooltip
+        ? ys - duMaxDistance - dyTooltip / 2
+        : ys + duMaxDistance - dyTooltip / 2;
+    }
+
+    // Clamp vertically
+    yTooltip = Math.max(4, Math.min(this.dyc - dyTooltip - 4, yTooltip));
+
+    const tooltipBlock = group({ x: xTooltip, y: yTooltip }, [
+      rectangle({
+        dx: dxTooltip,
+        dy: dyTooltip,
+        fill: colBg,
+        stroke: colBorder,
+        strokeWidth: borderWidth,
+        cornerRadius: borderRadius,
+        opacity: 0.95
+      }),
+      group({ x: duPaddingX, y: duPadding }, [contentBlock])
+    ]);
+
+    // Render tooltip as overlay (identity transform + pixelRatio)
+    this.context.save();
+    this.context.transformStack.save();
+    (this.context.transformStack as any).current = Matrix2D.identity();
+
+    if (this.pixelRatio !== 1) {
+      this.context.applyTransform(Matrix2D.identity().scaleXY(this.pixelRatio, this.pixelRatio));
+    } else {
+      this.context.applyTransform(Matrix2D.identity());
+    }
+
+    this.renderBlock(tooltipBlock);
+
+    this.context.transformStack.restore();
+    this.context.restore();
   }
 }

@@ -74,7 +74,12 @@ export const demo = {
         startAngle,
         endAngle: valueAngle,
         stroke: getColor(state.value),
-        strokeWidth: 30
+        strokeWidth: 30,
+        tooltip: () => {
+          const val = Math.round(state.value);
+          const zone = val < 33 ? 'Normal' : val < 66 ? 'Moderate' : 'High';
+          return `Speed: ${val} km/h\nZone: ${zone}`;
+        }
       }),
 
       // Tick marks

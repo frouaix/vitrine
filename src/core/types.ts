@@ -49,6 +49,7 @@ export interface BaseBlockProps extends Transform, EventHandlers {
   disableCulling?: boolean;
   shadow?: ShadowProps;
   id?: string;
+  tooltip?: () => string | Block;
 }
 
 export interface StrokeProps {

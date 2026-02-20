@@ -20,7 +20,7 @@ export type { Viewport } from './performance.ts';
 
 // Event system
 export { EventManager } from './events.ts';
-export type { PointerEventData } from './events.ts';
+export type { PointerEventData, ActiveTooltip } from './events.ts';
 export { HitTester } from './hit-test.ts';
 export type { HitTestResult } from './hit-test.ts';
 

@@ -63,7 +63,8 @@ export const demo = {
             onClick: () => { 
               state.selectedIndex = state.selectedIndex === i ? -1 : i;
               console.log(`Selected: ${item.label}`);
-            }
+            },
+            tooltip: () => `${item.label}\n${item.value}% of total sales`
           })
         ])
       );

@@ -64,7 +64,8 @@ export const demo = {
           opacity: isHovered ? 1 : 0.8,
           cornerRadius: 4,
           onHover: () => { state.hoveredIndex = i; },
-          onClick: () => console.log(`Clicked: ${item.label}`)
+          onClick: () => console.log(`Clicked: ${item.label}`),
+          tooltip: () => `${item.label}: ${item.value} units\n${Math.round(item.value / 100 * 100)}% of target`
         }),
 
         // Value label on hover

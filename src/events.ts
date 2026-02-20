@@ -23,6 +23,14 @@ export interface PointerEventData {
   originalEvent: PointerEvent;
 }
 
+export interface ActiveTooltip {
+  fn: () => string | Block;
+  /** Pointer X in scene coordinates */
+  xs: number;
+  /** Pointer Y in scene coordinates */
+  ys: number;
+}
+
 export class EventManager {
   private canvas: HTMLCanvasElement;
   private currentScene: Block = EMPTY_SCENE;
@@ -31,6 +39,7 @@ export class EventManager {
   private draggedBlock: Block | null = null;
   private ptcDragStart: { xc: number; yc: number } | null = null;
   private ptcLastPointer: { xc: number; yc: number } | null = null;
+  private activeTooltip: ActiveTooltip | null = null;
   private pixelRatio: number = 1;
   private sceneTransform: Matrix2D = Matrix2D.identity();
   
@@ -78,6 +87,10 @@ export class EventManager {
     return this.ptcLastPointer;
   }
 
+  getActiveTooltip(): ActiveTooltip | null {
+    return this.activeTooltip;
+  }
+
   /**
    * Convert canvas buffer coordinates to logical coordinates (pixelRatio only).
    * Used for hit testing — the camera group in the scene tree handles camera inverse.
@@ -117,6 +130,7 @@ export class EventManager {
     this.hoveredBlock = null;
     this.draggedBlock = null;
     this.ptcDragStart = null;
+    this.activeTooltip = null;
   }
 
   private getCanvasCoordinates(event: PointerEvent): { xc: number; yc: number } {
@@ -210,6 +224,17 @@ export class EventManager {
     if (hit.block.props[handlerKey]) return hit.block;
     for (let i = hit.ancestors.length - 1; i >= 0; i--) {
       if (hit.ancestors[i].props[handlerKey]) return hit.ancestors[i];
+    }
+    return null;
+  }
+
+  /**
+   * Find the nearest block with a tooltip function, checking the hit block first then ancestors.
+   */
+  private static findBlockWithTooltip(hit: HitTestResult): Block | null {
+    if ((hit.block.props as any).tooltip) return hit.block;
+    for (let i = hit.ancestors.length - 1; i >= 0; i--) {
+      if ((hit.ancestors[i].props as any).tooltip) return hit.ancestors[i];
     }
     return null;
   }
@@ -311,6 +336,18 @@ export class EventManager {
       canvas.style.cursor = fInteractive ? 'pointer' : 'default';
     }
 
+    // Track tooltip — find nearest block with tooltip property
+    const tooltipBlock = hit ? EventManager.findBlockWithTooltip(hit) : null;
+    if (tooltipBlock) {
+      this.activeTooltip = {
+        fn: (tooltipBlock.props as any).tooltip,
+        xs: sceneCoords.x,
+        ys: sceneCoords.y
+      };
+    } else {
+      this.activeTooltip = null;
+    }
+
     // Bubble pointer move to nearest ancestor with handler
     if (hit) {
       const moveTarget = EventManager.findBlockWithHandler(hit, 'onPointerMove');
@@ -323,6 +360,7 @@ export class EventManager {
     this.draggedBlock = null;
     this.ptcDragStart = null;
     this.ptcLastPointer = null;
+    this.activeTooltip = null;
     this.canvas.style.cursor = 'default';
   }
 
