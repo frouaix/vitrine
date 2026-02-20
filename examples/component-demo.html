@@ -37,7 +37,9 @@
     .page-nav {
       display: flex;
       justify-content: space-between;
-      padding: 10px 20px;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
       font-size: 14px;
     }
     .page-nav a {
@@ -50,10 +52,6 @@
   </style>
 </head>
 <body>
-  <nav class="page-nav">
-    <a href="calendar.html">← Calendar</a>
-    <a href="gallery.html">Gallery →</a>
-  </nav>
   <h1>Vitrine Component Demo</h1>
   <p>Multiple independent Vitrine components, each with its own canvas and render loop.</p>
 
@@ -173,5 +171,10 @@
     controlsComponent.mount(document.getElementById('controls-component'));
     blocksComponent.mount(document.getElementById('blocks-component'));
   </script>
+
+  <nav class="page-nav">
+    <a href="calendar.html">← Calendar</a>
+    <a href="gallery.html">Gallery →</a>
+  </nav>
 </body>
 </html>

@@ -92,7 +92,9 @@
     .page-nav {
       display: flex;
       justify-content: space-between;
-      padding: 10px 20px;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
       font-size: 14px;
     }
     .page-nav a {
@@ -105,10 +107,6 @@
   </style>
 </head>
 <body>
-  <nav class="page-nav">
-    <a href="camera-controls.html">← Camera Controls</a>
-    <a href="component-demo.html">Component Demo →</a>
-  </nav>
   <div class="container">
     <div class="header">
       <h1>📅 Calendar Views Demo</h1>
@@ -243,5 +241,10 @@
     // Initial render
     render();
   </script>
+
+  <nav class="page-nav">
+    <a href="camera-controls.html">← Camera Controls</a>
+    <a href="component-demo.html">Component Demo →</a>
+  </nav>
 </body>
 </html>

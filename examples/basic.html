@@ -25,7 +25,9 @@
     .page-nav {
       display: flex;
       justify-content: space-between;
-      padding: 10px 20px;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
       font-size: 14px;
     }
     .page-nav a {
@@ -38,10 +40,6 @@
   </style>
 </head>
 <body>
-  <nav class="page-nav">
-    <a href="gallery.html">← Gallery</a>
-    <a href="primitives.html">Primitives →</a>
-  </nav>
   <h1>Vitrine Basic Blocks</h1>
   <canvas id="canvas"></canvas>
   
@@ -143,5 +141,10 @@
 
     render();
   </script>
+
+  <nav class="page-nav">
+    <a href="gallery.html">← Gallery</a>
+    <a href="primitives.html">Primitives →</a>
+  </nav>
 </body>
 </html>
