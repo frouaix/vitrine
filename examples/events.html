@@ -134,17 +134,17 @@
             updateStatus(`Rectangle clicked ${state.rectangleClicks} times`);
             render();
           }
-        }),
-
-        text({ 
-          x: 200, 
-          y: 175, 
-          text: 'Click me!', 
-          fontSize: 18,
-          fill: 'white',
-          align: 'center',
-          baseline: 'middle'
-        }),
+        }, [
+          text({ 
+            x: 100, 
+            y: 75, 
+            text: 'Click me!', 
+            fontSize: 18,
+            fill: 'white',
+            align: 'center',
+            baseline: 'middle'
+          })
+        ]),
 
         // Hoverable circle
         circle({ 
@@ -157,17 +157,17 @@
           onHover: (e) => {
             updateStatus('Hovering over blue circle');
           }
-        }),
-
-        text({ 
-          x: 500, 
-          y: 175, 
-          text: 'Hover me!', 
-          fontSize: 16,
-          fill: 'white',
-          align: 'center',
-          baseline: 'middle'
-        }),
+        }, [
+          text({ 
+            x: 0, 
+            y: 0, 
+            text: 'Hover me!', 
+            fontSize: 16,
+            fill: 'white',
+            align: 'center',
+            baseline: 'middle'
+          })
+        ]),
 
         // Draggable square
         group({ 
@@ -217,17 +217,17 @@
             alert('🎉 You clicked the orange circle!');
             updateStatus('Alert shown!');
           }
-        }),
-
-        text({ 
-          x: 650, 
-          y: 450, 
-          text: 'Alert!', 
-          fontSize: 16,
-          fill: 'white',
-          align: 'center',
-          baseline: 'middle'
-        }),
+        }, [
+          text({ 
+            x: 0, 
+            y: 0, 
+            text: 'Alert!', 
+            fontSize: 16,
+            fill: 'white',
+            align: 'center',
+            baseline: 'middle'
+          })
+        ]),
 
         // Instructions
         text({ 
