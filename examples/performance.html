@@ -266,6 +266,7 @@
     document.getElementById('blockCount').addEventListener('input', (e) => {
       config.blockCount = parseInt(e.target.value);
       document.getElementById('blockCountLabel').textContent = config.blockCount.toLocaleString();
+      blocks = generateBlocks(config.blockCount);
     });
 
     document.getElementById('regenerate').addEventListener('click', () => {
