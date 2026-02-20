@@ -1,9 +1,7 @@
 // Copyright (c) 2026 François Rouaix
 
 // Demo Gallery Framework
-import { ImmediateRenderer, WebGLRenderer } from 'vitrine';
-
-type RendererInstance = ImmediateRenderer | WebGLRenderer;
+import { ImmediateRenderer } from 'vitrine';
 
 interface DemoDefinition<S = unknown> {
   id: string;
@@ -13,7 +11,7 @@ interface DemoDefinition<S = unknown> {
   code?: string;
   size?: { width: number; height: number };
   enableCulling?: boolean;
-  init: (renderer: RendererInstance) => S;
+  init: (renderer: ImmediateRenderer) => S;
   update?: (state: S, dt: number) => void;
   render: (state: S) => unknown;
   cleanup?: () => void;
@@ -66,10 +64,9 @@ const demos: GalleryDemo[] = [
 ] as GalleryDemo[];
 
 let currentDemo: GalleryDemo | null = null;
-let renderer: RendererInstance | null = null;
+let renderer: ImmediateRenderer | null = null;
 let animationId: number | null = null;
 let canvas: HTMLCanvasElement;
-let rendererMode = 'canvas2d';
 let debugHoverOutline = false;
 
 // UI Elements
@@ -95,13 +92,6 @@ function init() {
   getRequiredElement<HTMLElement>('toggleStats').addEventListener('click', toggleStats);
   getRequiredElement<HTMLElement>('resetDemo').addEventListener('click', resetDemo);
   getRequiredElement<HTMLElement>('toggleDebugHover').addEventListener('click', toggleDebugHover);
-  getRequiredElement<HTMLSelectElement>('rendererMode').addEventListener('change', (event: Event) => {
-    const select = event.currentTarget as HTMLSelectElement;
-    rendererMode = select.value;
-    if (currentDemo) {
-      loadDemo(currentDemo);
-    }
-  });
 
   // Hamburger toggle for mobile sidebar
   const sidebarEl = getRequiredElement<HTMLElement>('sidebar');
@@ -202,29 +192,20 @@ function loadDemo(demo: GalleryDemo): void {
 
   // Initialize renderer
   const size = demo.size || { width: 800, height: 600 };
-  if (rendererMode === 'webgl') {
-    renderer = new WebGLRenderer({
-      canvas,
-      width: size.width,
-      height: size.height
-    });
-  } else {
-    renderer = new ImmediateRenderer({
-      canvas,
-      width: size.width,
-      height: size.height,
-      enableCulling: demo.enableCulling !== false,
-      enableCameraControls: true,
-      debugHoverOutline
-    });
-  }
+  renderer = new ImmediateRenderer({
+    canvas,
+    width: size.width,
+    height: size.height,
+    enableCulling: demo.enableCulling !== false,
+    enableCameraControls: true,
+    debugHoverOutline
+  });
 
   syncDebugHoverButton();
 
   // Initialize demo
   currentDemo = demo;
-  const activeRenderer = renderer;
-  const state = demo.init(activeRenderer);
+  const state = demo.init(renderer);
 
   // Animation loop
   let lastTime = performance.now();
@@ -240,11 +221,7 @@ function loadDemo(demo: GalleryDemo): void {
 
     // Render
     const scene = demo.render(state);
-    if (activeRenderer instanceof ImmediateRenderer) {
-      activeRenderer.render(activeRenderer.camera([scene]));
-    } else {
-      activeRenderer.render(scene as never);
-    }
+    renderer!.render(renderer!.camera([scene]));
 
     // Update stats
     updateStats();
@@ -284,7 +261,7 @@ function resetDemo(): void {
 function toggleDebugHover(): void {
   debugHoverOutline = !debugHoverOutline;
 
-  if (renderer instanceof ImmediateRenderer) {
+  if (renderer) {
     renderer.setDebugHoverOutline(debugHoverOutline);
   }
 
@@ -293,11 +270,7 @@ function toggleDebugHover(): void {
 
 function syncDebugHoverButton(): void {
   const button = getRequiredElement<HTMLElement>('toggleDebugHover');
-  const fEnabled = renderer instanceof ImmediateRenderer;
-
   button.textContent = `Debug Hover: ${debugHoverOutline ? 'ON' : 'OFF'}`;
-  button.style.opacity = fEnabled ? '1' : '0.6';
-  button.style.pointerEvents = fEnabled ? 'auto' : 'none';
 }
 
 // Start gallery

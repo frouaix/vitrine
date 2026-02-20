@@ -34,9 +34,26 @@
     .component-container canvas {
       display: block;
     }
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+  <nav class="page-nav">
+    <a href="calendar.html">← Calendar</a>
+    <a href="gallery.html">Gallery →</a>
+  </nav>
   <h1>Vitrine Component Demo</h1>
   <p>Multiple independent Vitrine components, each with its own canvas and render loop.</p>
 

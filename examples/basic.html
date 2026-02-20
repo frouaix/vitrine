@@ -22,9 +22,26 @@
     h1 {
       text-align: center;
     }
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
+  <nav class="page-nav">
+    <a href="gallery.html">← Gallery</a>
+    <a href="primitives.html">Primitives →</a>
+  </nav>
   <h1>Vitrine Basic Blocks</h1>
   <canvas id="canvas"></canvas>
   

@@ -294,6 +294,26 @@
       color: #666;
     }
 
+    /* Page navigation */
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      font-size: 13px;
+    }
+
+    .page-nav a {
+      color: #4dabf7;
+      text-decoration: none;
+    }
+
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+
     /* Hamburger toggle (hidden on desktop) */
     .hamburger {
       display: none;
@@ -450,10 +470,6 @@
           <p id="demo-description">Choose from the sidebar</p>
         </div>
         <div class="controls">
-          <select class="btn" id="rendererMode" title="Renderer Mode">
-            <option value="canvas2d">Canvas 2D</option>
-            <option value="webgl">WebGL</option>
-          </select>
           <button class="btn" id="toggleDebugHover">Debug Hover: OFF</button>
           <button class="btn" id="toggleCode">View Code</button>
           <button class="btn" id="toggleStats">Stats</button>
@@ -495,6 +511,11 @@
           </div>
         </div>
       </div>
+
+      <nav class="page-nav">
+        <a href="component-demo.html">← Component Demo</a>
+        <a href="basic.html">Basic Blocks →</a>
+      </nav>
     </div>
   </div>
 
