@@ -232,6 +232,11 @@ export interface PortalProps extends BaseBlockProps {
   // Future: could add targetLayer property for multiple overlay layers
 }
 
+export interface LinkProps extends BaseBlockProps {
+  /** URL to open when the link is clicked. Opens in a new tab. */
+  href: string;
+}
+
 export interface Rc {
   x: number;
   y: number;

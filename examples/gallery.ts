@@ -47,6 +47,7 @@ import { demo as lineStylesDemo } from './demos/line-styles.ts';
 import { demo as gradientsDemo } from './demos/gradients.ts';
 import { demo as imageFiltersDemo } from './demos/image-filters.ts';
 import { demo as textWrappingDemo } from './demos/text-wrapping.ts';
+import { demo as linksDemo } from './demos/links.ts';
 
 // Demo registry
 const demos: GalleryDemo[] = [
@@ -64,6 +65,7 @@ const demos: GalleryDemo[] = [
   { ...imageFiltersDemo, category: 'creative' },
   { ...textWrappingDemo, category: 'creative' },
   { ...clockDemo, category: 'creative' },
+  { ...linksDemo, category: 'creative' },
   { ...colorPickerDemo, category: 'ui' },
   { ...guiFormDemo, category: 'ui' },
   { ...guiDashboardDemo, category: 'ui' },

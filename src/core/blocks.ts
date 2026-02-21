@@ -77,3 +77,19 @@ export function layer(props: BlockPropsByType[BlockType.Layer], children: Block[
 export function portal(props: BlockPropsByType[BlockType.Portal], children: Block[]): BlockOfType<BlockType.Portal> {
   return block(BlockType.Portal, props, children);
 }
+
+/** Convenience factory: wraps children in a group that opens `href` in a new tab on click. */
+export function link(props: { href: string } & BlockPropsByType[BlockType.Group], children: Block[]): BlockOfType<BlockType.Group> {
+  const { href, onClick: userOnClick, tooltip: userTooltip, ...rest } = props;
+  return group(
+    {
+      ...rest,
+      tooltip: userTooltip ?? (() => href),
+      onClick: (event) => {
+        window.open(href, '_blank', 'noopener');
+        if (userOnClick) userOnClick(event);
+      }
+    },
+    children
+  );
+}
