@@ -52,9 +52,17 @@ export interface BaseBlockProps extends Transform, EventHandlers {
   tooltip?: () => string | Block;
 }
 
+export type LineCap = 'butt' | 'round' | 'square';
+export type LineJoin = 'bevel' | 'round' | 'miter';
+export type FillRule = 'nonzero' | 'evenodd';
+
 export interface StrokeProps {
   stroke?: Color;
   strokeWidth?: number;
+  lineCap?: LineCap;
+  lineJoin?: LineJoin;
+  lineDash?: number[];
+  lineDashOffset?: number;
 }
 
 export interface FillProps {
@@ -138,12 +146,14 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
   pathData: string; // SVG path format
   closed?: boolean;
+  fillRule?: FillRule;
 }
 
 export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
   radius: number;
   startAngle: number;
   endAngle: number;
+  fillRule?: FillRule;
 }
 
 export interface ImageProps extends BaseBlockProps, Rs {

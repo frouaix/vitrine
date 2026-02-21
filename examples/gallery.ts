@@ -43,6 +43,7 @@ import { demo as snakeDemo } from './demos/snake.ts';
 import { demo as guiFormDemo } from './demos/gui-form.ts';
 import { demo as guiDashboardDemo } from './demos/gui-dashboard.ts';
 import { demo as guiGalleryDemo } from './demos/gui-gallery.ts';
+import { demo as lineStylesDemo } from './demos/line-styles.ts';
 
 // Demo registry
 const demos: GalleryDemo[] = [
@@ -55,6 +56,7 @@ const demos: GalleryDemo[] = [
   { ...mindMapDemo, category: 'productivity' },
   { ...particlesDemo, category: 'creative' },
   { ...patternsDemo, category: 'creative' },
+  { ...lineStylesDemo, category: 'creative' },
   { ...clockDemo, category: 'creative' },
   { ...colorPickerDemo, category: 'ui' },
   { ...guiFormDemo, category: 'ui' },

@@ -371,6 +371,17 @@ export class ImmediateRenderer {
         return;
       case BlockType.Group:
       case BlockType.Layer: {
+        // Apply blend mode for Layer blocks
+        if (block.type === BlockType.Layer) {
+          const { blendMode } = props as any;
+          if (blendMode) {
+            const ctx = (this.context as any).ctx as CanvasRenderingContext2D;
+            if (ctx) {
+              ctx.globalCompositeOperation = blendMode;
+            }
+          }
+        }
+
         // Apply clipping if clip is set with dimensions
         const { clip, dx: dxClip, dy: dyClip } = props as any;
         if (clip && dxClip !== undefined && dyClip !== undefined) {
