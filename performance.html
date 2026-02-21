@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Performance Test (10k+ blocks)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px 20px 50px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a1a;
+      color: white;
+    }
+    canvas {
+      border: 2px solid #444;
+      background: #0d0d0d;
+      display: block;
+      margin: 20px auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #4dabf7;
+    }
+    .controls {
+      max-width: 900px;
+      margin: 0 auto 20px;
+      padding: 20px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    .stat-box {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #4dabf7;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: #4dabf7;
+    }
+    .controls button {
+      background: #4dabf7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      transition: background 0.2s;
+    }
+    .controls button:hover {
+      background: #339af0;
+    }
+    .controls button:active {
+      background: #1971c2;
+    }
+    label {
+      margin-right: 15px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+    input[type="range"] {
+      width: 200px;
+      vertical-align: middle;
+    }
+    input[type="checkbox"] {
+      margin-left: 5px;
+    }
+    .page-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid #444;
+      background: #1a1a1a;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #4dabf7;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/performance-Cmsn2rj3.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/themes-FCzjyZF4.js">
+</head>
+<body>
+  <h1>Vitrine Performance Test</h1>
+  
+  <div class="controls">
+    <div>
+      <label>
+        Block Count: <span id="blockCountLabel">10000</span>
+        <input type="range" id="blockCount" min="1000" max="50000" step="1000" value="10000">
+      </label>
+      
+      <label>
+        <input type="checkbox" id="culling" checked> Enable Culling
+      </label>
+      
+      <label>
+        <input type="checkbox" id="animate" checked> Animate
+      </label>
+    </div>
+    
+    <div style="margin-top: 15px;">
+      <button id="regenerate">Regenerate Scene</button>
+      <button id="toggleFullscreen">Fullscreen Canvas</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-label">FPS</div>
+        <div class="stat-value" id="fps">60</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Blocks Rendered</div>
+        <div class="stat-value" id="rendered">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Blocks Culled</div>
+        <div class="stat-value" id="culled">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Render Time (ms)</div>
+        <div class="stat-value" id="renderTime">0</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+  
+
+  <nav class="page-nav">
+    <a href="events.html">← Events</a>
+    <a href="camera-controls.html">Camera Controls →</a>
+  </nav>
+</body>
+</html>

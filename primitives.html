@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - All Primitives Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px 20px 50px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .page-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid #ccc;
+      background: #f0f0f0;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/primitives-Xqu-k1cy.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/themes-FCzjyZF4.js">
+</head>
+<body>
+  <h1>Vitrine All Primitives</h1>
+  <div class="info">
+    <strong>Demonstrating all block types:</strong>
+    Rectangle, Circle, Ellipse, Line, Arc, Path, Text, and Image
+  </div>
+  <canvas id="canvas"></canvas>
+  
+
+  <nav class="page-nav">
+    <a href="basic.html">← Basic Blocks</a>
+    <a href="events.html">Events →</a>
+  </nav>
+</body>
+</html>

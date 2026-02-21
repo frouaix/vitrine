@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GUI Interaction Test</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: system-ui; background: #1a1a1a; color: white; }
+    #canvas { border: 1px solid #444; display: block; margin-bottom: 20px; }
+    #log { 
+      background: #2a2a2a; 
+      padding: 15px; 
+      border-radius: 8px; 
+      max-height: 200px; 
+      overflow-y: auto;
+      font-size: 14px;
+    }
+    #log div { margin: 5px 0; }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/testGuiInteractions-8rsgU-n6.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/themes-FCzjyZF4.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/transformCalendar-BqUYK5JF.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/transform-Cq1y9VD4.js">
+</head>
+<body>
+  <h1>GUI Controls Interaction Test</h1>
+  <canvas id="canvas" width="500" height="500"></canvas>
+  <h2>Event Log:</h2>
+  <div id="log"></div>
+</body>
+</html>

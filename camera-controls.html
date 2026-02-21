@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Camera Controls Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px 20px 50px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .controls {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: #4dabf7;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #339af0;
+    }
+    #status {
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #555;
+    }
+    .page-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid #ccc;
+      background: #f0f0f0;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/cameraControls-mcPP0ice.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/themes-FCzjyZF4.js">
+</head>
+<body>
+  <h1>Vitrine Canvas-Wide Camera Controls</h1>
+  <div class="info">
+    <strong>Try these camera controls:</strong>
+    <ul>
+      <li><strong>Ctrl + Mouse Wheel:</strong> Zoom in/out (zooms towards mouse pointer)</li>
+      <li><strong>Mouse Wheel:</strong> Scroll vertically</li>
+      <li><strong>Shift + Mouse Wheel:</strong> Scroll horizontally</li>
+    </ul>
+    <div id="status">Camera: x=0, y=0, zoom=1.00</div>
+  </div>
+  <div class="controls">
+    <button onclick="resetCamera()">Reset Camera</button>
+    <button onclick="zoomIn()">Zoom In (+)</button>
+    <button onclick="zoomOut()">Zoom Out (-)</button>
+  </div>
+  <canvas id="canvas"></canvas>
+  
+
+  <nav class="page-nav">
+    <a href="performance.html">← Performance</a>
+    <a href="calendar.html">Calendar →</a>
+  </nav>
+</body>
+</html>

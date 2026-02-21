@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Camera Controls Test (with Click Handlers)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    canvas {
+      border: 1px solid #ccc;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .info {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .controls {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+      background: #4dabf7;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover {
+      background: #339af0;
+    }
+    #status {
+      margin-top: 10px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #555;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/cameraControlsTest-DipjMqhG.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/themes-FCzjyZF4.js">
+</head>
+<body>
+  <h1>🎯 Camera Controls Test - Click Detection</h1>
+  <div class="info">
+    <strong>Test Instructions:</strong>
+    <ul>
+      <li><strong>Ctrl + Mouse Wheel:</strong> Zoom in/out (zooms towards mouse pointer)</li>
+      <li><strong>Mouse Wheel:</strong> Scroll vertically</li>
+      <li><strong>Shift + Mouse Wheel:</strong> Scroll horizontally</li>
+      <li><strong>Click on any shape</strong> - it should respond correctly even when zoomed/panned!</li>
+    </ul>
+    <div id="status">
+      <strong>Status:</strong> Ready<br>
+      <strong>Camera:</strong> x=0, y=0, zoom=1.00<br>
+      <strong>Clicks:</strong> 0
+    </div>
+  </div>
+  <div class="controls">
+    <button onclick="resetCamera()">Reset Camera</button>
+    <button onclick="zoomIn()">Zoom In (+)</button>
+    <button onclick="zoomOut()">Zoom Out (-)</button>
+    <button onclick="toggleDebug()">Toggle Debug Outline</button>
+  </div>
+  <canvas id="canvas"></canvas>
+  
+</body>
+</html>
