@@ -188,6 +188,12 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   fontSize?: number;
   align?: 'left' | 'center' | 'right' | 'start' | 'end';
   baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
+  /** When set, word-wrap text to fit within this width. */
+  dx?: number;
+  /** When set (with dx), clip text vertically at this height. */
+  dy?: number;
+  /** Line spacing in pixels. Defaults to fontSize * 1.4. */
+  lineHeight?: number;
 }
 
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {

@@ -571,23 +571,61 @@ export class WebGLRenderer extends Renderer {
       strokeWidth: duStrokeWidth,
       text: stText,
       fill,
-      stroke
+      stroke,
+      dx: dxMax,
+      lineHeight: lineHeightProp
     } = props;
     const font = fontProp || `${duFont ?? 16}px sans-serif`;
     const align = alignProp || 'left';
     const baseline = baselineProp || 'alphabetic';
     const strokeWidth = duStrokeWidth ?? 1;
-    const key = [stText, font, fill || '', stroke || '', strokeWidth, align, baseline].join('|');
+    const key = [stText, font, fill || '', stroke || '', strokeWidth, align, baseline, dxMax ?? '', lineHeightProp ?? ''].join('|');
 
     const cached = this.textTextureCache.get(key);
     if (cached) return cached;
 
     this.textMeasureCtx.font = font;
-    const metrics = this.textMeasureCtx.measureText(stText);
-    const textWidth = Math.max(1, Math.ceil(metrics.width));
-    const ascent = Math.max(1, Math.ceil(metrics.actualBoundingBoxAscent || (duFont ?? 16) * 0.8));
-    const descent = Math.max(1, Math.ceil(metrics.actualBoundingBoxDescent || (duFont ?? 16) * 0.2));
-    const textHeight = ascent + descent;
+
+    // Wrap text if dx is set
+    let lines: string[];
+    if (dxMax !== undefined) {
+      const words = stText.split(/\s+/);
+      lines = [];
+      if (words.length > 0) {
+        let currentLine = words[0];
+        for (let i = 1; i < words.length; i++) {
+          const testLine = currentLine + ' ' + words[i];
+          if (this.textMeasureCtx.measureText(testLine).width > dxMax) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+      } else {
+        lines = [''];
+      }
+    } else {
+      lines = [stText];
+    }
+
+    const duLineHeight = lineHeightProp ?? (duFont ?? 16) * 1.4;
+    const lineMetrics = lines.map(line => {
+      const m = this.textMeasureCtx.measureText(line);
+      return {
+        width: Math.max(1, Math.ceil(m.width)),
+        ascent: Math.max(1, Math.ceil(m.actualBoundingBoxAscent || (duFont ?? 16) * 0.8)),
+        descent: Math.max(1, Math.ceil(m.actualBoundingBoxDescent || (duFont ?? 16) * 0.2))
+      };
+    });
+
+    const textWidth = Math.max(...lineMetrics.map(m => m.width));
+    const firstAscent = lineMetrics[0].ascent;
+    const lastDescent = lineMetrics[lineMetrics.length - 1].descent;
+    const totalHeight = lines.length === 1
+      ? firstAscent + lastDescent
+      : (lines.length - 1) * duLineHeight + firstAscent + lastDescent;
 
     let xMin = 0;
     let xMax = textWidth;
@@ -599,20 +637,20 @@ export class WebGLRenderer extends Renderer {
       xMax = 0;
     }
 
-    let yMin = -ascent;
-    let yMax = descent;
+    let yMin = -firstAscent;
+    let yMax = yMin + totalHeight;
     if (baseline === 'top') {
       yMin = 0;
-      yMax = textHeight;
+      yMax = totalHeight;
     } else if (baseline === 'middle') {
-      yMin = -textHeight / 2;
-      yMax = textHeight / 2;
+      yMin = -totalHeight / 2;
+      yMax = totalHeight / 2;
     } else if (baseline === 'bottom') {
-      yMin = -textHeight;
+      yMin = -totalHeight;
       yMax = 0;
     } else if (baseline === 'hanging') {
-      yMin = -(ascent * 0.8);
-      yMax = descent + ascent * 0.2;
+      yMin = -(firstAscent * 0.8);
+      yMax = yMin + totalHeight;
     }
 
     const pad = Math.ceil(strokeWidth + 2);
@@ -632,14 +670,17 @@ export class WebGLRenderer extends Renderer {
     const anchorX = -xMin + pad;
     const anchorY = -yMin + pad;
 
-    if (fill) {
-      ctx.fillStyle = typeof fill === 'string' ? fill : 'transparent';
-      ctx.fillText(stText, anchorX, anchorY);
-    }
-    if (stroke) {
-      ctx.strokeStyle = typeof stroke === 'string' ? stroke : 'transparent';
-      ctx.lineWidth = strokeWidth;
-      ctx.strokeText(stText, anchorX, anchorY);
+    for (let i = 0; i < lines.length; i++) {
+      const lineY = anchorY + i * duLineHeight;
+      if (fill) {
+        ctx.fillStyle = typeof fill === 'string' ? fill : 'transparent';
+        ctx.fillText(lines[i], anchorX, lineY);
+      }
+      if (stroke) {
+        ctx.strokeStyle = typeof stroke === 'string' ? stroke : 'transparent';
+        ctx.lineWidth = strokeWidth;
+        ctx.strokeText(lines[i], anchorX, lineY);
+      }
     }
 
     const texture = this.createTextureFromCanvas(canvas);
