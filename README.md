@@ -152,6 +152,15 @@ pnpm deploy          # Deploy demo gallery to GitHub Pages
 pnpm clean           # Remove build artifacts
 ```
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/BLOCK_DSL.md](docs/BLOCK_DSL.md) | Core block language: all block types, transform hierarchy, event system, and event bubbling |
+| [docs/GUI_CONTROLS.md](docs/GUI_CONTROLS.md) | GUI controls reference: interactive controls, layout, themes, and rendering lifecycle |
+| [docs/COORDINATES.md](docs/COORDINATES.md) | Coordinate spaces, Hungarian notation, camera transform, and `VitrinePointerEvent` |
+| [docs/GUI_NEW_CONTROLS.md](docs/GUI_NEW_CONTROLS.md) | Architecture guide for adding new complex GUI controls |
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for workflow, validation, and branch policy, and [.github/copilot-instructions.md](.github/copilot-instructions.md) for coding conventions.

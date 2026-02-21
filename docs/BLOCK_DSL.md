@@ -1,0 +1,470 @@
+# Core Block Language Reference
+
+This document describes the core block-based DSL used to describe visual hierarchies in Vitrine. It covers all block types, their properties, the transform system, the event system (including event bubbling), portals, tooltips, and performance controls.
+
+---
+
+## 1. Overview
+
+Vitrine uses an **immediate-mode rendering** model. Every frame, your code calls factory functions to build a tree of lightweight *block descriptors*. The renderer then walks that tree, applies hierarchical transforms, and draws to a Canvas 2D context. There is no retained scene graph: what you describe each frame is exactly what is drawn.
+
+```typescript
+import { ImmediateRenderer, group, rectangle, circle, text } from 'vitrine';
+
+const renderer = new ImmediateRenderer({ canvas, width: 800, height: 600 });
+
+function render(): void {
+  renderer.render(
+    group({}, [
+      rectangle({ x: 50, y: 50, dx: 200, dy: 100, fill: '#3498db' }),
+      circle({ x: 350, y: 100, radius: 50, fill: '#e74c3c' }),
+      text({ x: 50, y: 200, text: 'Hello Vitrine', fontSize: 24, fill: '#111' })
+    ])
+  );
+  requestAnimationFrame(render);
+}
+
+render();
+```
+
+---
+
+## 2. Common Base Properties
+
+All block types extend `BaseBlockProps`, which provides the following optional fields:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `x` | `number` | X position in the parent's local coordinate space |
+| `y` | `number` | Y position in the parent's local coordinate space |
+| `rotation` | `number` | Rotation angle in **radians**, applied around `(x, y)` |
+| `scaleX` | `number` | Horizontal scale factor (default `1`) |
+| `scaleY` | `number` | Vertical scale factor (default `1`) |
+| `skewX` | `number` | Horizontal skew (tangent units) |
+| `skewY` | `number` | Vertical skew (tangent units) |
+| `opacity` | `number` | Opacity in the range `0`–`1` (default `1`) |
+| `visible` | `boolean` | When `false`, the block and its children are skipped entirely |
+| `disableCulling` | `boolean` | When `true`, the block is never culled by the frustum optimizer |
+| `shadow` | `ShadowProps` | Drop shadow (`{ offsetX, offsetY, blur, color }`) |
+| `id` | `string` | Optional identifier (not used by the renderer, but useful for debugging) |
+| `tooltip` | `() => string \| Block` | Tooltip factory — see [§7 Tooltips](#7-tooltips) |
+| `onClick` | `(event: VitrinePointerEvent) => void` | Click handler |
+| `onPointerDown` | `(event: VitrinePointerEvent) => void` | Pointer press handler |
+| `onPointerUp` | `(event: VitrinePointerEvent) => void` | Pointer release handler |
+| `onPointerMove` | `(event: VitrinePointerEvent) => void` | Pointer move handler |
+| `onHover` | `(event: VitrinePointerEvent) => void` | Hover state change handler |
+| `onDrag` | `(event: VitrinePointerEvent) => void` | Drag handler |
+
+---
+
+## 3. Block Types
+
+### 3.1 `rectangle`
+
+A filled or stroked axis-aligned rectangle.
+
+```typescript
+rectangle(props: RectangleProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `dx` | `number` | ✅ | Width |
+| `dy` | `number` | ✅ | Height |
+| `fill` | `Color` | | Fill colour (CSS colour string) |
+| `stroke` | `Color` | | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width in logical units |
+| `cornerRadius` | `number` | | Rounded corner radius |
+
+```typescript
+rectangle({ x: 10, y: 10, dx: 120, dy: 60, fill: '#3498db', cornerRadius: 8 })
+```
+
+---
+
+### 3.2 `circle`
+
+A circle centred at `(x, y)`.
+
+```typescript
+circle(props: CircleProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `radius` | `number` | ✅ | Radius in logical units |
+| `fill` | `Color` | | Fill colour |
+| `stroke` | `Color` | | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width |
+
+```typescript
+circle({ x: 200, y: 150, radius: 40, fill: '#e74c3c' })
+```
+
+---
+
+### 3.3 `ellipse`
+
+An ellipse centred at `(x, y)` with independent horizontal and vertical radii.
+
+```typescript
+ellipse(props: EllipseProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `radiusX` | `number` | ✅ | Horizontal radius |
+| `radiusY` | `number` | ✅ | Vertical radius |
+| `fill` | `Color` | | Fill colour |
+| `stroke` | `Color` | | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width |
+
+---
+
+### 3.4 `line`
+
+A straight line segment.
+
+```typescript
+line(props: LineProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `x1` | `number` | ✅ | Start X |
+| `y1` | `number` | ✅ | Start Y |
+| `x2` | `number` | ✅ | End X |
+| `y2` | `number` | ✅ | End Y |
+| `stroke` | `Color` | ✅ | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width |
+
+> **Note**: `x1/y1` and `x2/y2` are in the block's local coordinate space. The `x/y` transform props on the block itself shift the entire line.
+
+---
+
+### 3.5 `arc`
+
+A circular arc segment centred at `(x, y)`.
+
+```typescript
+arc(props: ArcProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `radius` | `number` | ✅ | Radius |
+| `startAngle` | `number` | ✅ | Start angle in radians |
+| `endAngle` | `number` | ✅ | End angle in radians |
+| `fill` | `Color` | | Fill colour (fills the arc segment to the centre) |
+| `stroke` | `Color` | | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width |
+
+---
+
+### 3.6 `path`
+
+A freeform shape described with an SVG path string.
+
+```typescript
+path(props: PathProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `pathData` | `string` | ✅ | SVG path commands (`M`, `L`, `C`, `Z`, …) |
+| `closed` | `boolean` | | Auto-close the path |
+| `fill` | `Color` | | Fill colour |
+| `stroke` | `Color` | | Stroke colour |
+| `strokeWidth` | `number` | | Stroke width |
+
+```typescript
+path({ x: 0, y: 0, pathData: 'M 0 0 L 100 0 L 50 80 Z', fill: '#9b59b6' })
+```
+
+---
+
+### 3.7 `text`
+
+Text rendered on the canvas.
+
+```typescript
+text(props: TextProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `text` | `string` | ✅ | The text to render |
+| `fontSize` | `number` | | Font size in logical units |
+| `font` | `string` | | Full CSS font string (overrides `fontSize`) |
+| `fill` | `Color` | | Text colour |
+| `stroke` | `Color` | | Text stroke colour |
+| `strokeWidth` | `number` | | Text stroke width |
+| `align` | `'left' \| 'center' \| 'right' \| 'start' \| 'end'` | | Horizontal alignment |
+| `baseline` | `'top' \| 'middle' \| 'bottom' \| 'alphabetic' \| 'hanging'` | | Vertical baseline |
+
+```typescript
+text({ x: 10, y: 30, text: 'Score: 42', fontSize: 20, fill: '#fff', baseline: 'top' })
+```
+
+---
+
+### 3.8 `image`
+
+A raster image drawn to the canvas.
+
+```typescript
+image(props: ImageProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `src` | `string \| HTMLImageElement` | ✅ | URL or pre-loaded `HTMLImageElement` |
+| `dx` | `number` | ✅ | Width |
+| `dy` | `number` | ✅ | Height |
+
+Pre-loading the image via `HTMLImageElement` is recommended for smooth animation (avoids a frame of blank while the image loads).
+
+---
+
+### 3.9 `group`
+
+An invisible container that establishes a new local coordinate space for its children. Use `group` to compose transforms (position, rotation, scale) that apply to a subtree.
+
+```typescript
+group(props: GroupProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `clip` | `boolean` | | When `true`, clips children to the bounding rectangle defined by `dx × dy` (requires the group to also have `dx`/`dy` via `BaseBlockProps`) |
+
+```typescript
+group({ x: 200, y: 100, rotation: Math.PI / 6 }, [
+  rectangle({ dx: 80, dy: 40, fill: '#27ae60' }),
+  circle({ x: 100, radius: 20, fill: '#e67e22' })
+])
+```
+
+---
+
+### 3.10 `layer`
+
+A compositing layer. Internally the renderer renders the layer's children into an off-screen buffer and then composites that buffer with the specified blend mode.
+
+```typescript
+layer(props: LayerProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `blendMode` | `BlendMode` | | CSS blend mode: `'normal'`, `'multiply'`, `'screen'`, `'overlay'`, `'darken'`, `'lighten'` |
+| `cache` | `boolean` | | Cache the layer contents and skip re-rendering when unchanged |
+
+---
+
+### 3.11 `portal`
+
+Renders its children in the **overlay layer**, above all normal scene content. Used for tooltips, dropdown menus, and any content that must appear on top of everything else regardless of its position in the tree.
+
+```typescript
+portal(props: PortalProps, children?: Block[]): Block
+```
+
+`PortalProps` only inherits from `BaseBlockProps` — there are no portal-specific properties.
+
+```typescript
+group({}, [
+  rectangle({ x: 100, y: 100, dx: 200, dy: 50, fill: '#2c3e50' }),
+  portal({}, [
+    // This text renders above ALL other blocks, including sibling rectangles
+    // drawn after this portal in the same group.
+    text({ x: 110, y: 115, text: 'Overlay', fill: '#fff', fontSize: 16 })
+  ])
+])
+```
+
+> **Hit testing**: portals are tested for pointer events *before* the main scene, in reverse declaration order (last portal declared = topmost).
+
+---
+
+## 4. Transform Hierarchy
+
+Transforms are **hierarchical**: a child block's transform is applied on top of all its ancestor transforms.
+
+### 4.1 Transform composition order
+
+For each block, the local matrix is composed as:
+
+```
+blockMatrix = Identity
+  .translate(x, y)          // 1. position
+  .rotate(rotation)          // 2. rotate
+  .scaleXY(scaleX, scaleY)  // 3. scale
+  .skewXY(skewX, skewY)     // 4. skew
+```
+
+The **world matrix** for a block is the cumulative product:
+
+```
+worldMatrix = rootMatrix × parentMatrix₁ × parentMatrix₂ × … × blockMatrix
+```
+
+### 4.2 Coordinate spaces
+
+See [COORDINATES.md](COORDINATES.md) for a detailed breakdown of coordinate spaces (window, canvas buffer, logical, scene, block-local), how they are computed, and when to use each in event handlers.
+
+### 4.3 Camera
+
+The camera is a regular `group` block returned by `renderer.camera(children)`. It applies a translate-then-scale transform so the scene can be panned and zoomed. See [COORDINATES.md § 4](COORDINATES.md) for details.
+
+---
+
+## 5. Event System
+
+### 5.1 Overview
+
+The `EventManager` intercepts `pointerdown`, `pointerup`, `pointermove`, `click`, and `pointerleave` events on the canvas and translates them into calls to block event handlers.
+
+All event handlers receive a `VitrinePointerEvent`, which extends the browser's `PointerEvent` with Vitrine-specific coordinate fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `xl` | `number` | Block-local X (all transforms inverted) |
+| `yl` | `number` | Block-local Y (all transforms inverted) |
+| `xs` | `number` | Scene X (camera inverse applied; this is a world-stable position that is not affected by individual block transforms) |
+| `ys` | `number` | Scene Y (camera inverse applied; this is a world-stable position that is not affected by individual block transforms) |
+
+Use `xl`/`yl` for intra-block queries (e.g. *where inside this button was clicked*). Use `xs`/`ys` for world-stable operations (e.g. *drag-to-move an object*).
+
+### 5.2 Event bubbling
+
+Vitrine implements **manual upward bubbling**: when a pointer event hits a block, the event system walks from the hit block up through its ancestors and dispatches the event to the **nearest block that has a handler for that event type**.
+
+This means:
+- You do **not** need to add handlers to every block — a parent can catch events from any descendant.
+- Only the nearest ancestor with a matching handler receives the event; the search stops there.
+- Bubbling applies independently for each event type. A `click` handler on a parent does not suppress a separate `onDrag` handler on a different ancestor.
+
+```typescript
+// The outer group has an onClick handler.
+// Clicking anywhere inside the inner rectangle triggers the group's onClick,
+// because the rectangle has no handler of its own.
+group({
+  x: 50, y: 50,
+  onClick: () => console.log('group clicked')
+}, [
+  rectangle({ dx: 100, dy: 100, fill: '#3498db' }),  // no onClick here
+  circle({ x: 110, radius: 20, fill: '#e74c3c' })    // no onClick here
+])
+```
+
+The bubbling algorithm for each pointer event type:
+
+1. Hit-test the scene at the pointer position → produces a `HitTestResult` containing the **hit block** and its ordered list of **ancestor blocks** (leaf-to-root).
+2. Check the hit block for a handler with the matching key (e.g. `onClick`).
+3. If not found, check ancestors from the innermost to the outermost.
+4. Dispatch to the first block found, then stop.
+
+### 5.3 Hover
+
+`onHover` fires when the pointer enters a block's hit area (when the hovered block changes). It is subject to the same bubbling rules: the nearest ancestor with `onHover` handles the event.
+
+When the pointer enters a block that (or whose ancestor) has `onClick`, `onDrag`, or `onHover`, the canvas cursor is automatically set to `pointer`. It resets to `default` when moving over non-interactive blocks.
+
+### 5.4 Drag
+
+Drag is initiated by `onDrag`. When `pointerdown` hits a block (or ancestor) with an `onDrag` handler, that block is marked as the *dragged block*. Subsequent `pointermove` events call the dragged block's `onDrag` directly, even if the pointer has moved outside the block's bounds. Drag ends on `pointerup` or `pointerleave`.
+
+During a drag, `event.xs` and `event.ys` always reflect the current pointer position in scene coordinates — ideal for computing drag deltas.
+
+```typescript
+let blockX = 100;
+let blockY = 100;
+let dragStartXs = 0;
+let dragStartYs = 0;
+let origX = 0;
+let origY = 0;
+
+rectangle({
+  x: blockX, y: blockY, dx: 80, dy: 40, fill: '#3498db',
+  onPointerDown: (e: VitrinePointerEvent) => {
+    dragStartXs = e.xs!;
+    dragStartYs = e.ys!;
+    origX = blockX;
+    origY = blockY;
+  },
+  onDrag: (e: VitrinePointerEvent) => {
+    blockX = origX + (e.xs! - dragStartXs);
+    blockY = origY + (e.ys! - dragStartYs);
+  }
+})
+```
+
+### 5.5 Portal hit testing
+
+Portal blocks are hit-tested **before** the main scene, in reverse declaration order (the last-declared portal has the highest z-order and is checked first). Once a portal captures an event, the main scene is not tested.
+
+---
+
+## 6. Performance
+
+### 6.1 Frustum culling
+
+When `enableCulling: true` (the default), the renderer skips blocks whose bounding box does not intersect the canvas viewport. Culled blocks are not drawn and their children are not visited.
+
+Set `disableCulling: true` on a block to force it to be rendered even when outside the viewport (useful for off-screen content that should still receive events).
+
+```typescript
+const renderer = new ImmediateRenderer({
+  canvas,
+  width: 800,
+  height: 600,
+  enableCulling: true   // default
+});
+
+// Performance stats
+const stats = renderer.getPerformanceStats();
+console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
+```
+
+### 6.2 Optimisation tips
+
+- Pre-allocate block arrays outside the render loop. Avoid creating new arrays on every frame.
+- Use `visible: false` to hide blocks without removing them from the tree — they are skipped cheaply.
+- Use `layer({ cache: true }, [...])` to cache subtrees that do not change every frame.
+
+---
+
+## 7. Tooltips
+
+Any block can declare a `tooltip` prop — a factory function returning either a plain string or a `Block` tree.
+
+```typescript
+rectangle({
+  x: 100, y: 100, dx: 80, dy: 40, fill: '#3498db',
+  tooltip: () => 'Click to confirm'
+})
+```
+
+When the pointer hovers over a block with a `tooltip`, the `ImmediateRenderer` renders the result at the pointer's scene position (on top of all content, using the portal system). The tooltip is cleared immediately when the pointer leaves.
+
+The `tooltip` prop is subject to the same bubbling rules as other handlers: if the hovered block has no `tooltip`, the nearest ancestor with a `tooltip` is used.
+
+---
+
+## 8. `VitrinePointerEvent` Quick Reference
+
+```typescript
+type VitrinePointerEvent = PointerEvent & {
+  xl?: number;   // block-local X (all transforms inverted)
+  yl?: number;   // block-local Y
+  xs?: number;   // scene X (camera inverse applied)
+  ys?: number;   // scene Y
+};
+```
+
+| Coordinate | Best for |
+|------------|----------|
+| `xl`, `yl` | Where inside the block was the pointer (e.g. relative click position within a button) |
+| `xs`, `ys` | World-stable drag/drop (position is unaffected by camera pan or zoom) |
+| `event.clientX/Y` | Positioning browser-level overlays (CSS tooltips, context menus) |
