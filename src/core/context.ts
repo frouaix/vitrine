@@ -206,40 +206,109 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.stroke();
   }
 
+  /** Word-wrap text into lines that fit within maxWidth pixels. */
+  private wrapText(text: string, dxMax: number): string[] {
+    const words = text.split(/\s+/);
+    if (words.length === 0) return [''];
+    const lines: string[] = [];
+    let currentLine = words[0];
+    for (let i = 1; i < words.length; i++) {
+      const testLine = currentLine + ' ' + words[i];
+      if (this.ctx.measureText(testLine).width > dxMax) {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    lines.push(currentLine);
+    return lines;
+  }
+
   measureText(text: string, props: any): { width: number; height: number; ascent: number; descent: number } {
-    const { font, fontSize } = props;
+    const { font, fontSize, dx: dxMax, lineHeight: lineHeightProp } = props;
     // Apply font settings
     if (font) this.ctx.font = font;
     else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     
     const metrics = this.ctx.measureText(text);
-    
-    // Use actualBoundingBox metrics if available (modern browsers)
-    // Otherwise fallback to approximation
     const ascent = metrics.actualBoundingBoxAscent ?? (fontSize ?? 16);
     const descent = metrics.actualBoundingBoxDescent ?? 0;
+
+    if (dxMax !== undefined) {
+      const lines = this.wrapText(text, dxMax);
+      const duLineHeight = lineHeightProp ?? (fontSize ?? 16) * 1.4;
+      const maxLineWidth = Math.min(dxMax, Math.max(...lines.map(l => this.ctx.measureText(l).width)));
+      const totalHeight = lines.length * duLineHeight;
+      return { width: maxLineWidth, height: totalHeight, ascent, descent };
+    }
+
     const width = metrics.width;
     const height = ascent + descent;
-    
     return { width, height, ascent, descent };
   }
 
   drawText(text: string, xl: number, yl: number, props: any): void {
-    const { font, fontSize, align, baseline, fill, stroke, strokeWidth } = props;
+    const { font, fontSize, align, baseline, fill, stroke, strokeWidth,
+            dx: dxMax, dy: dyMax, lineHeight: lineHeightProp } = props;
     if (font) this.ctx.font = font;
     if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     if (align) this.ctx.textAlign = align;
     if (baseline) this.ctx.textBaseline = baseline;
-    
-    if (fill) {
-      this.ctx.fillStyle = this.resolveFillStyle(fill);
-      this.ctx.fillText(text, xl, yl);
+
+    // Single-line fast path
+    if (dxMax === undefined) {
+      if (fill) {
+        this.ctx.fillStyle = this.resolveFillStyle(fill);
+        this.ctx.fillText(text, xl, yl);
+      }
+      if (stroke) {
+        this.applyLineStyle(props);
+        this.ctx.strokeStyle = this.resolveFillStyle(stroke);
+        this.ctx.lineWidth = strokeWidth ?? 1;
+        this.ctx.strokeText(text, xl, yl);
+      }
+      return;
     }
-    if (stroke) {
-      this.applyLineStyle(props);
-      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
-      this.ctx.lineWidth = strokeWidth ?? 1;
-      this.ctx.strokeText(text, xl, yl);
+
+    // Multi-line wrapping
+    const lines = this.wrapText(text, dxMax);
+    const duLineHeight = lineHeightProp ?? (fontSize ?? 16) * 1.4;
+
+    // Clip vertically when dy is set
+    const shouldClip = dyMax !== undefined;
+    if (shouldClip) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      // Clip region depends on alignment
+      let clipX = xl;
+      if (align === 'center') clipX = xl - dxMax / 2;
+      else if (align === 'right' || align === 'end') clipX = xl - dxMax;
+      // Clip region depends on baseline
+      let clipY = yl;
+      if (baseline === 'alphabetic' || !baseline) clipY = yl - (fontSize ?? 16);
+      else if (baseline === 'middle') clipY = yl - duLineHeight / 2;
+      else if (baseline === 'bottom') clipY = yl - dyMax;
+      this.ctx.rect(clipX, clipY, dxMax, dyMax);
+      this.ctx.clip();
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const lineY = yl + i * duLineHeight;
+      if (fill) {
+        this.ctx.fillStyle = this.resolveFillStyle(fill);
+        this.ctx.fillText(lines[i], xl, lineY);
+      }
+      if (stroke) {
+        this.applyLineStyle(props);
+        this.ctx.strokeStyle = this.resolveFillStyle(stroke);
+        this.ctx.lineWidth = strokeWidth ?? 1;
+        this.ctx.strokeText(lines[i], xl, lineY);
+      }
+    }
+
+    if (shouldClip) {
+      this.ctx.restore();
     }
   }
 

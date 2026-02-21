@@ -128,12 +128,24 @@ export class HitTester {
 
       case BlockType.Text: {
         // Calculate text bounds accounting for baseline and alignment
-        const { fontSize: duFont, text: stText, align, baseline } = props;
+        const { fontSize: duFont, text: stText, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
         const fontSize = duFont ?? 16;
-        const textWidth = stText.length * fontSize * 0.6; // rough estimate
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+
+        let textWidth: number;
+        let height: number;
+        if (dxMax !== undefined) {
+          // Approximate wrapped line count
+          const singleLineWidth = stText.length * fontSize * 0.6;
+          const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
+          textWidth = Math.min(singleLineWidth, dxMax);
+          height = lineCount * duLineHeight;
+        } else {
+          textWidth = stText.length * fontSize * 0.6; // rough estimate
+          height = fontSize;
+        }
+
         const ascent = fontSize; // approximate
-        const descent = 0;
-        const height = ascent + descent;
         
         // Calculate x offset based on alignment
         let xOffset = 0;
@@ -309,10 +321,15 @@ export class HitTester {
       }
 
       case BlockType.Text: {
-        const { fontSize: duFont, text: stText } = props;
+        const { fontSize: duFont, text: stText, dx: dxMax, lineHeight: lineHeightProp } = props;
         const fontSize = duFont ?? 16;
-        const textWidth = stText.length * fontSize * 0.6;
-        return { x: 0, y: 0, width: textWidth, height: fontSize };
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+        const singleLineWidth = stText.length * fontSize * 0.6;
+        if (dxMax !== undefined) {
+          const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
+          return { x: 0, y: 0, width: Math.min(singleLineWidth, dxMax), height: lineCount * duLineHeight };
+        }
+        return { x: 0, y: 0, width: singleLineWidth, height: fontSize };
       }
 
       default:
