@@ -40,6 +40,14 @@ export class Canvas2DContext implements RenderContext {
     this.transformStack = new TransformStack();
   }
 
+  /** Apply optional line-style props (lineCap, lineJoin, lineDash, lineDashOffset) to the context. */
+  private applyLineStyle(props: any): void {
+    if (props.lineCap) this.ctx.lineCap = props.lineCap;
+    if (props.lineJoin) this.ctx.lineJoin = props.lineJoin;
+    if (props.lineDash) this.ctx.setLineDash(props.lineDash);
+    if (props.lineDashOffset !== undefined) this.ctx.lineDashOffset = props.lineDashOffset;
+  }
+
   save(): void {
     this.ctx.save();
     this.transformStack.save();
@@ -79,6 +87,7 @@ export class Canvas2DContext implements RenderContext {
         this.ctx.fillRect(xl, yl, dxl, dyl);
       }
       if (stroke) {
+        this.applyLineStyle(props);
         this.ctx.strokeStyle = stroke;
         this.ctx.lineWidth = strokeWidth ?? 1;
         this.ctx.strokeRect(xl, yl, dxl, dyl);
@@ -105,6 +114,7 @@ export class Canvas2DContext implements RenderContext {
       this.ctx.fill();
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
@@ -112,14 +122,15 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawCircle(xl: number, yl: number, rl: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, 0, Math.PI * 2);
     if (fill) {
       this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
@@ -127,14 +138,15 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.ellipse(xl, yl, rxl, ryl, 0, 0, Math.PI * 2);
     if (fill) {
       this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
@@ -142,13 +154,14 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawPath(pathData: string, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     const path = new Path2D(pathData);
     if (fill) {
       this.ctx.fillStyle = fill;
-      this.ctx.fill(path);
+      this.ctx.fill(path, fillRule ?? 'nonzero');
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke(path);
@@ -160,6 +173,7 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.beginPath();
     this.ctx.moveTo(xl1, yl1);
     this.ctx.lineTo(xl2, yl2);
+    this.applyLineStyle(props);
     this.ctx.strokeStyle = stroke;
     this.ctx.lineWidth = strokeWidth ?? 1;
     this.ctx.stroke();
@@ -195,6 +209,7 @@ export class Canvas2DContext implements RenderContext {
       this.ctx.fillText(text, xl, yl);
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.strokeText(text, xl, yl);
@@ -206,14 +221,15 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, startAngle, endAngle);
     if (fill) {
       this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
+      this.applyLineStyle(props);
       this.ctx.strokeStyle = stroke;
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
