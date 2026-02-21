@@ -17,6 +17,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "prepare": "pnpm build",
+    "prepublishOnly": "pnpm lint",
     "lint": "tsc --noEmit",
     "build:examples": "vite build",
     "dev": "vite",
@@ -25,6 +27,14 @@
     "deploy": "pnpm build:examples && gh-pages -d dist-examples",
     "gallery": "vite"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frouaix/vitrine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frouaix/vitrine/issues"
+  },
+  "homepage": "https://frouaix.github.io/vitrine/",
   "keywords": [
     "canvas",
     "webgl",
