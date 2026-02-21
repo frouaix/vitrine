@@ -126,6 +126,7 @@ image({ x, y, src, dx, dy, ... })
 
 // Containers
 group({ x, y, rotation, scaleX, scaleY, opacity, ... }, children)
+link({ href, ... }, children)  // opens URL in new tab on click
 ```
 
 ### Transforms

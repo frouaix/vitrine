@@ -361,6 +361,40 @@ group({}, [
 
 > **Hit testing**: portals are tested for pointer events *before* the main scene, in reverse declaration order (last portal declared = topmost).
 
+### 3.12 `link`
+
+Convenience factory that wraps children in a clickable group. Clicking opens `href` in a new tab via `window.open()`. The visual content can be any blocks — text, images, shapes, or composites.
+
+```typescript
+link(props: LinkProps & GroupProps, children: Block[]): Block
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `href` | `string` | **Required.** URL to open on click. |
+
+All `BaseBlockProps` (transforms, opacity, events) are also available.
+
+```typescript
+// Simple text link
+link({ href: 'https://github.com' }, [
+  text({ text: 'Visit GitHub', fontSize: 14, fill: '#228be6' })
+])
+
+// Image link
+link({ href: 'https://example.com', x: 100, y: 50 }, [
+  image({ src: myImage, dx: 120, dy: 80 })
+])
+
+// Card-style link with shapes and text
+link({ href: 'https://example.com', x: 200, y: 100 }, [
+  rectangle({ dx: 200, dy: 60, fill: '#228be6', cornerRadius: 8 }),
+  text({ x: 100, y: 30, text: 'Click me', fill: '#fff', align: 'center', baseline: 'middle' })
+])
+```
+
+> **Note**: `link()` returns a `Group` block — no new block type is introduced. An additional `onClick` handler can be provided and will be called after the URL is opened.
+
 ---
 
 ## 4. Transform Hierarchy
