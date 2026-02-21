@@ -30,6 +30,40 @@ Portal blocks allow overlay content (tooltips, dropdown menus) to render above t
 
 ---
 
+## Installation
+
+### From npm
+
+```bash
+npm install vitrine
+# or
+pnpm add vitrine
+```
+
+### Local development (co-evolution workflow)
+
+When developing Vitrine alongside a consuming application, use `pnpm link` so that changes to Vitrine are immediately reflected without re-publishing:
+
+```bash
+# In the Vitrine repository — build and register the package globally
+pnpm build
+pnpm link --global
+
+# In the consuming application — link to the local Vitrine build
+pnpm link --global vitrine
+```
+
+After changing Vitrine source code, run `pnpm build` in the Vitrine repository to update `dist/` and the changes will be visible immediately in the consuming app.
+
+Alternatively, reference the local package directly by path:
+
+```bash
+# In the consuming application
+pnpm add file:../vitrine
+```
+
+---
+
 ## Quick Start
 
 ```typescript
