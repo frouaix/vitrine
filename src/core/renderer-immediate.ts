@@ -333,6 +333,15 @@ export class ImmediateRenderer {
       }
     }
 
+    // Apply CSS filter if present
+    const { filter } = props as any;
+    if (filter) {
+      const ctx = (this.context as any).ctx;
+      if (ctx) {
+        ctx.filter = filter;
+      }
+    }
+
     // Render based on block type
     switch (block.type) {
       case BlockType.Rectangle:
