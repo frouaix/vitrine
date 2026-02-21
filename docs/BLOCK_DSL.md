@@ -231,7 +231,7 @@ Pre-loading the image via `HTMLImageElement` is recommended for smooth animation
 An invisible container that establishes a new local coordinate space for its children. Use `group` to compose transforms (position, rotation, scale) that apply to a subtree.
 
 ```typescript
-group(props: GroupProps, children?: Block[]): Block
+group(props: GroupProps, children: Block[]): Block
 ```
 
 | Prop | Type | Required | Description |
@@ -252,7 +252,7 @@ group({ x: 200, y: 100, rotation: Math.PI / 6 }, [
 A compositing layer. Internally the renderer renders the layer's children into an off-screen buffer and then composites that buffer with the specified blend mode.
 
 ```typescript
-layer(props: LayerProps, children?: Block[]): Block
+layer(props: LayerProps, children: Block[]): Block
 ```
 
 | Prop | Type | Required | Description |
@@ -267,7 +267,7 @@ layer(props: LayerProps, children?: Block[]): Block
 Renders its children in the **overlay layer**, above all normal scene content. Used for tooltips, dropdown menus, and any content that must appear on top of everything else regardless of its position in the tree.
 
 ```typescript
-portal(props: PortalProps, children?: Block[]): Block
+portal(props: PortalProps, children: Block[]): Block
 ```
 
 `PortalProps` only inherits from `BaseBlockProps` — there are no portal-specific properties.
@@ -406,28 +406,119 @@ Portal blocks are hit-tested **before** the main scene, in reverse declaration o
 
 ---
 
-## 6. Performance
+## 6. `ImmediateRenderer`
 
-### 6.1 Frustum culling
+### 6.1 `RendererConfig`
 
-When `enableCulling: true` (the default), the renderer skips blocks whose bounding box does not intersect the canvas viewport. Culled blocks are not drawn and their children are not visited.
+All configuration options are optional.
 
-Set `disableCulling: true` on a block to force it to be rendered even when outside the viewport (useful for off-screen content that should still receive events).
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `canvas` | `HTMLCanvasElement` | new canvas element | Canvas to render into. If omitted, a new `<canvas>` is created and accessible via `getCanvas()`. |
+| `width` | `number` | `800` | Logical canvas width in CSS pixels |
+| `height` | `number` | `600` | Logical canvas height in CSS pixels |
+| `pixelRatio` | `number` | `window.devicePixelRatio` | Device pixel ratio override. The physical buffer is `width × pixelRatio` wide. |
+| `enableEvents` | `boolean` | `true` | Attaches pointer event listeners for click/hover/drag. Set to `false` for purely visual renderers. |
+| `enableCulling` | `boolean` | `true` | Enables frustum culling — skip blocks outside the viewport each frame. |
+| `debugHoverOutline` | `boolean` | `false` | Draws a magenta outline around the currently hovered block. Useful during development. |
+| `enableCameraControls` | `boolean` | `false` | Enables built-in mouse-wheel pan/zoom controls (see [§6.4](#64-built-in-camera-controls)). |
 
 ```typescript
 const renderer = new ImmediateRenderer({
-  canvas,
-  width: 800,
-  height: 600,
-  enableCulling: true   // default
+  canvas: document.getElementById('canvas') as HTMLCanvasElement,
+  width: 1200,
+  height: 800,
+  enableCulling: true,
+  enableCameraControls: true
 });
-
-// Performance stats
-const stats = renderer.getPerformanceStats();
-console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
 ```
 
-### 6.2 Optimisation tips
+### 6.2 Public methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `render(block: Block)` | `void` | Renders one frame. Typically called inside a `requestAnimationFrame` loop. |
+| `getCanvas()` | `HTMLCanvasElement` | Returns the canvas element (useful when no canvas was provided in config). |
+| `resize(width, height)` | `void` | Resize the renderer and update the canvas size. |
+| `destroy()` | `void` | Remove all event listeners and release resources. Call when unmounting. |
+| `camera(children: Block[])` | `Block` | Wraps children in a camera group (pan/zoom). Also syncs the camera transform to the event system for correct hit testing. See [§6.3](#63-camera). |
+| `getCameraTransform()` | `{ x, y, zoom }` | Get the current camera state. |
+| `setCameraTransform(x, y, zoom)` | `void` | Set the camera state programmatically. |
+| `getPerformanceStats()` | `PerformanceStats` | Returns `{ fps, blocksRendered, blocksCulled, renderTime }`. |
+| `setDebugHoverOutline(enabled)` | `void` | Toggle the debug hover outline at runtime. |
+| `getDebugHoverOutline()` | `boolean` | Returns the current debug outline state. |
+
+### 6.3 Camera
+
+`renderer.camera(children)` wraps a set of blocks in a camera group that applies the current pan and zoom state. Wrap your entire scene with it to enable panning and zooming.
+
+```typescript
+function render(): void {
+  renderer.render(
+    group({}, [
+      renderer.camera([
+        // All scene content goes here — positions are in world/scene coordinates
+        rectangle({ x: 0, y: 0, dx: 100, dy: 100, fill: '#3498db' })
+      ])
+    ])
+  );
+  requestAnimationFrame(render);
+}
+```
+
+The camera transform follows **Translate × Scale** ordering:
+
+```
+screen = world × zoom + translate
+world  = (screen − translate) / zoom
+```
+
+Use `setCameraTransform(x, y, zoom)` to jump to a position programmatically:
+
+```typescript
+renderer.setCameraTransform(0, 0, 1);   // reset
+renderer.setCameraTransform(-200, -150, 2);  // pan and zoom in
+```
+
+### 6.4 Built-in camera controls
+
+When `enableCameraControls: true` is set, the renderer attaches a wheel event listener that handles pan and zoom automatically:
+
+| Input | Action |
+|-------|--------|
+| Mouse wheel | Scroll vertically (pan) |
+| Shift + mouse wheel | Scroll horizontally (pan) |
+| Ctrl + mouse wheel | Zoom towards the cursor position |
+
+The zoom level is clamped to the range `[0.1, 10]`.
+
+When using `enableCameraControls`, you must still call `renderer.camera(children)` in your render function so that the camera group is injected into the scene each frame.
+
+### 6.5 Debug hover outline
+
+Setting `debugHoverOutline: true` (or calling `setDebugHoverOutline(true)`) draws a magenta outline around whichever block the pointer is currently hovering over. This is useful for diagnosing hit-testing issues and verifying that event handlers are attached to the expected blocks.
+
+```typescript
+const renderer = new ImmediateRenderer({
+  canvas, width: 800, height: 600,
+  debugHoverOutline: true
+});
+```
+
+### 6.6 Frustum culling
+
+When `enableCulling: true` (the default), the renderer skips blocks whose bounding box does not intersect the canvas viewport. Culled blocks are not drawn and their children are not visited.
+
+Set `disableCulling: true` on an individual block to force it to be rendered even when outside the viewport.
+
+### 6.7 Performance stats
+
+```typescript
+const stats = renderer.getPerformanceStats();
+console.log(stats.fps, stats.blocksRendered, stats.blocksCulled, stats.renderTime);
+```
+
+### 6.8 Optimization tips
 
 - Pre-allocate block arrays outside the render loop. Avoid creating new arrays on every frame.
 - Use `visible: false` to hide blocks without removing them from the tree — they are skipped cheaply.
@@ -468,3 +559,88 @@ type VitrinePointerEvent = PointerEvent & {
 | `xl`, `yl` | Where inside the block was the pointer (e.g. relative click position within a button) |
 | `xs`, `ys` | World-stable drag/drop (position is unaffected by camera pan or zoom) |
 | `event.clientX/Y` | Positioning browser-level overlays (CSS tooltips, context menus) |
+
+---
+
+## 9. `VitrineComponent`
+
+`VitrineComponent` wraps a single Vitrine render function in its own `<canvas>` element. It manages the canvas lifecycle, render loop, and device pixel ratio, making it easy to embed Vitrine inside any HTML page or JavaScript framework (React, Vue, etc.).
+
+### 9.1 Creating a component
+
+Use the static factory methods to choose the rendering mode:
+
+```typescript
+import { VitrineComponent, vstack, button, label, lightTheme } from 'vitrine';
+
+// GUI mode: render function returns a GUIControl tree
+const myComponent = VitrineComponent.gui(
+  () => vstack({ duSpacing: 8, duPadding: 12 }, [
+    label({ stText: 'Hello from a component!' }),
+    button({ stLabel: 'Click me' })
+  ]),
+  { width: 300, height: 120, theme: lightTheme }
+);
+
+// Block mode: render function returns a raw Block tree
+const animatedComponent = VitrineComponent.block(
+  () => {
+    const t = Date.now() / 1000;
+    return group({}, [
+      rectangle({ dx: 300, dy: 200, fill: '#1a1a2e' }),
+      circle({ x: 150 + Math.cos(t) * 60, y: 100 + Math.sin(t) * 40, radius: 30, fill: '#e94560' })
+    ]);
+  },
+  { width: 300, height: 200 }
+);
+```
+
+### 9.2 `VitrineComponentConfig`
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `width` | `number` | Canvas width in CSS pixels. If omitted in GUI mode, auto-sized from the root control. |
+| `height` | `number` | Canvas height in CSS pixels. If omitted in GUI mode, auto-sized from the root control. |
+| `theme` | `ThemeDefinition` | Theme for GUI controls (GUI mode only). Defaults to `lightTheme`. |
+| `pixelRatio` | `number` | Device pixel ratio override. |
+| `rendererConfig` | `Partial<RendererConfig>` | Additional options forwarded to `ImmediateRenderer`. |
+
+### 9.3 Lifecycle
+
+```typescript
+// Mount — creates a <canvas>, appends it to the container, starts the render loop
+myComponent.mount(document.getElementById('my-container')!);
+
+// Resize at any time
+myComponent.resize(400, 200);
+
+// Update the render function (takes effect on the next frame)
+myComponent.setRenderFunction(() => /* new tree */);
+
+// Update the theme (GUI mode only)
+myComponent.setTheme(darkTheme);
+
+// Unmount — stops the render loop, removes the canvas, releases event listeners
+myComponent.unmount();
+
+// Check if currently mounted
+if (myComponent.isMounted()) { /* ... */ }
+
+// Get the underlying canvas element
+const canvas = myComponent.getCanvas();
+```
+
+### 9.4 Auto-sizing
+
+In GUI mode, if `width` or `height` is omitted from the config, the component calls `rsControl()` on the root control to compute the canvas size from the control's natural dimensions:
+
+```typescript
+// No width/height needed — sized automatically from the vstack's natural dimensions
+const compact = VitrineComponent.gui(
+  () => vstack({ duSpacing: 8, duPadding: 12 }, [
+    label({ stText: 'Auto-sized' }),
+    button({ stLabel: 'OK', dx: 200, dy: 36 })
+  ])
+);
+compact.mount(document.getElementById('container')!);
+```
