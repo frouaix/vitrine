@@ -5,6 +5,52 @@
 export type Color = string; // CSS color format
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 
+// --- Gradient & Pattern descriptors ---
+
+export interface ColorStop {
+  offset: number; // 0–1
+  color: Color;
+}
+
+export interface LinearGradientDescriptor {
+  type: 'linear-gradient';
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+  stops: ColorStop[];
+}
+
+export interface RadialGradientDescriptor {
+  type: 'radial-gradient';
+  x0: number;
+  y0: number;
+  r0: number;
+  x1: number;
+  y1: number;
+  r1: number;
+  stops: ColorStop[];
+}
+
+export interface ConicGradientDescriptor {
+  type: 'conic-gradient';
+  startAngle: number;
+  x: number;
+  y: number;
+  stops: ColorStop[];
+}
+
+export type GradientDescriptor = LinearGradientDescriptor | RadialGradientDescriptor | ConicGradientDescriptor;
+
+export interface PatternDescriptor {
+  type: 'pattern';
+  image: HTMLImageElement | HTMLCanvasElement;
+  repetition?: 'repeat' | 'repeat-x' | 'repeat-y' | 'no-repeat';
+}
+
+/** Any value accepted by fill or stroke properties. */
+export type FillStyle = Color | GradientDescriptor | PatternDescriptor;
+
 /** Pointer event enriched with Vitrine coordinate data. */
 export type VitrinePointerEvent = PointerEvent & {
   /** Block-local X coordinate (after all parent+block transforms inverted) */
@@ -48,17 +94,26 @@ export interface BaseBlockProps extends Transform, EventHandlers {
   visible?: boolean;
   disableCulling?: boolean;
   shadow?: ShadowProps;
+  filter?: string;
   id?: string;
   tooltip?: () => string | Block;
 }
 
+export type LineCap = 'butt' | 'round' | 'square';
+export type LineJoin = 'bevel' | 'round' | 'miter';
+export type FillRule = 'nonzero' | 'evenodd';
+
 export interface StrokeProps {
-  stroke?: Color;
+  stroke?: FillStyle;
   strokeWidth?: number;
+  lineCap?: LineCap;
+  lineJoin?: LineJoin;
+  lineDash?: number[];
+  lineDashOffset?: number;
 }
 
 export interface FillProps {
-  fill?: Color;
+  fill?: FillStyle;
 }
 
 export interface Rs {
@@ -124,7 +179,7 @@ export interface LineProps extends BaseBlockProps, StrokeProps {
   y1: number;
   x2: number;
   y2: number;
-  stroke: Color;
+  stroke: FillStyle;
 }
 
 export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
@@ -138,16 +193,23 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
   pathData: string; // SVG path format
   closed?: boolean;
+  fillRule?: FillRule;
 }
 
 export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
   radius: number;
   startAngle: number;
   endAngle: number;
+  fillRule?: FillRule;
 }
 
 export interface ImageProps extends BaseBlockProps, Rs {
   src: string | HTMLImageElement;
+  /** Source rectangle for cropping (all four must be provided together). */
+  sx?: number;
+  sy?: number;
+  sw?: number;
+  sh?: number;
 }
 
 export interface GroupProps extends BaseBlockProps {

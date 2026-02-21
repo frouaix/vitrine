@@ -2,7 +2,7 @@
 
 // Rendering context abstraction
 import { Matrix2D, TransformStack } from '../transform.ts';
-import type { Block, BaseBlockProps, Rc } from './types.ts';
+import type { Block, BaseBlockProps, Rc, FillStyle } from './types.ts';
 
 export interface RenderContext {
   transformStack: TransformStack;
@@ -40,6 +40,41 @@ export class Canvas2DContext implements RenderContext {
     this.transformStack = new TransformStack();
   }
 
+  /** Apply optional line-style props (lineCap, lineJoin, lineDash, lineDashOffset) to the context. */
+  private applyLineStyle(props: any): void {
+    if (props.lineCap) this.ctx.lineCap = props.lineCap;
+    if (props.lineJoin) this.ctx.lineJoin = props.lineJoin;
+    if (props.lineDash) this.ctx.setLineDash(props.lineDash);
+    if (props.lineDashOffset !== undefined) this.ctx.lineDashOffset = props.lineDashOffset;
+  }
+
+  /** Resolve a FillStyle descriptor to a value accepted by fillStyle/strokeStyle. */
+  private resolveFillStyle(style: FillStyle): string | CanvasGradient | CanvasPattern {
+    if (typeof style === 'string') return style;
+
+    switch (style.type) {
+      case 'linear-gradient': {
+        const g = this.ctx.createLinearGradient(style.x0, style.y0, style.x1, style.y1);
+        for (const s of style.stops) g.addColorStop(s.offset, s.color);
+        return g;
+      }
+      case 'radial-gradient': {
+        const g = this.ctx.createRadialGradient(style.x0, style.y0, style.r0, style.x1, style.y1, style.r1);
+        for (const s of style.stops) g.addColorStop(s.offset, s.color);
+        return g;
+      }
+      case 'conic-gradient': {
+        const g = this.ctx.createConicGradient(style.startAngle, style.x, style.y);
+        for (const s of style.stops) g.addColorStop(s.offset, s.color);
+        return g;
+      }
+      case 'pattern': {
+        const p = this.ctx.createPattern(style.image, style.repetition ?? 'repeat');
+        return p ?? 'transparent';
+      }
+    }
+  }
+
   save(): void {
     this.ctx.save();
     this.transformStack.save();
@@ -75,11 +110,12 @@ export class Canvas2DContext implements RenderContext {
       this.roundRect(xl, yl, dxl, dyl, duCornerRadius, props);
     } else {
       if (fill) {
-        this.ctx.fillStyle = fill;
+        this.ctx.fillStyle = this.resolveFillStyle(fill);
         this.ctx.fillRect(xl, yl, dxl, dyl);
       }
       if (stroke) {
-        this.ctx.strokeStyle = stroke;
+        this.applyLineStyle(props);
+        this.ctx.strokeStyle = this.resolveFillStyle(stroke);
         this.ctx.lineWidth = strokeWidth ?? 1;
         this.ctx.strokeRect(xl, yl, dxl, dyl);
       }
@@ -101,55 +137,59 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.closePath();
     
     if (fill) {
-      this.ctx.fillStyle = fill;
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
       this.ctx.fill();
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawCircle(xl: number, yl: number, rl: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, 0, Math.PI * 2);
     if (fill) {
-      this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.ellipse(xl, yl, rxl, ryl, 0, 0, Math.PI * 2);
     if (fill) {
-      this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }
   }
 
   drawPath(pathData: string, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     const path = new Path2D(pathData);
     if (fill) {
-      this.ctx.fillStyle = fill;
-      this.ctx.fill(path);
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
+      this.ctx.fill(path, fillRule ?? 'nonzero');
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke(path);
     }
@@ -160,7 +200,8 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.beginPath();
     this.ctx.moveTo(xl1, yl1);
     this.ctx.lineTo(xl2, yl2);
-    this.ctx.strokeStyle = stroke;
+    this.applyLineStyle(props);
+    this.ctx.strokeStyle = this.resolveFillStyle(stroke);
     this.ctx.lineWidth = strokeWidth ?? 1;
     this.ctx.stroke();
   }
@@ -191,30 +232,37 @@ export class Canvas2DContext implements RenderContext {
     if (baseline) this.ctx.textBaseline = baseline;
     
     if (fill) {
-      this.ctx.fillStyle = fill;
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
       this.ctx.fillText(text, xl, yl);
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.strokeText(text, xl, yl);
     }
   }
 
   drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void {
-    this.ctx.drawImage(image, xl, yl, dxl, dyl);
+    const { sx, sy, sw, sh } = props;
+    if (sx !== undefined && sy !== undefined && sw !== undefined && sh !== undefined) {
+      this.ctx.drawImage(image, sx, sy, sw, sh, xl, yl, dxl, dyl);
+    } else {
+      this.ctx.drawImage(image, xl, yl, dxl, dyl);
+    }
   }
 
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {
-    const { fill, stroke, strokeWidth } = props;
+    const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, startAngle, endAngle);
     if (fill) {
-      this.ctx.fillStyle = fill;
-      this.ctx.fill();
+      this.ctx.fillStyle = this.resolveFillStyle(fill);
+      this.ctx.fill(fillRule ?? 'nonzero');
     }
     if (stroke) {
-      this.ctx.strokeStyle = stroke;
+      this.applyLineStyle(props);
+      this.ctx.strokeStyle = this.resolveFillStyle(stroke);
       this.ctx.lineWidth = strokeWidth ?? 1;
       this.ctx.stroke();
     }

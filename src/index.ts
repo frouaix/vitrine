@@ -27,6 +27,9 @@ export type { HitTestResult } from './hit-test.ts';
 // Block factory functions
 export * from './core/blocks.ts';
 
+// Gradient & pattern factories
+export * from './core/fill-styles.ts';
+
 // GUI components
 export {
   // Types
