@@ -44,6 +44,7 @@ import { demo as guiFormDemo } from './demos/gui-form.ts';
 import { demo as guiDashboardDemo } from './demos/gui-dashboard.ts';
 import { demo as guiGalleryDemo } from './demos/gui-gallery.ts';
 import { demo as lineStylesDemo } from './demos/line-styles.ts';
+import { demo as gradientsDemo } from './demos/gradients.ts';
 
 // Demo registry
 const demos: GalleryDemo[] = [
@@ -57,6 +58,7 @@ const demos: GalleryDemo[] = [
   { ...particlesDemo, category: 'creative' },
   { ...patternsDemo, category: 'creative' },
   { ...lineStylesDemo, category: 'creative' },
+  { ...gradientsDemo, category: 'creative' },
   { ...clockDemo, category: 'creative' },
   { ...colorPickerDemo, category: 'ui' },
   { ...guiFormDemo, category: 'ui' },

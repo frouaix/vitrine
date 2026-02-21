@@ -229,8 +229,8 @@ export class WebGLRenderer extends Renderer {
     return texture;
   }
 
-  private parseColor(color: string | undefined, opacity: number): RGBA {
-    if (!color) return [0, 0, 0, 0];
+  private parseColor(color: any, opacity: number): RGBA {
+    if (!color || typeof color !== 'string') return [0, 0, 0, 0];
 
     const key = `${color}|${opacity}`;
     const cached = this.colorCache.get(key);
@@ -468,11 +468,11 @@ export class WebGLRenderer extends Renderer {
       const pathProps = props as PathProps;
       const path = new Path2D(pathProps.pathData);
       if (pathProps.fill) {
-        this.fallbackCtx.fillStyle = pathProps.fill;
+        this.fallbackCtx.fillStyle = typeof pathProps.fill === 'string' ? pathProps.fill : 'transparent';
         this.fallbackCtx.fill(path);
       }
       if (pathProps.stroke) {
-        this.fallbackCtx.strokeStyle = pathProps.stroke;
+        this.fallbackCtx.strokeStyle = typeof pathProps.stroke === 'string' ? pathProps.stroke : 'transparent';
         this.fallbackCtx.lineWidth = pathProps.strokeWidth ?? 1;
         this.fallbackCtx.stroke(path);
       }
@@ -633,11 +633,11 @@ export class WebGLRenderer extends Renderer {
     const anchorY = -yMin + pad;
 
     if (fill) {
-      ctx.fillStyle = fill;
+      ctx.fillStyle = typeof fill === 'string' ? fill : 'transparent';
       ctx.fillText(stText, anchorX, anchorY);
     }
     if (stroke) {
-      ctx.strokeStyle = stroke;
+      ctx.strokeStyle = typeof stroke === 'string' ? stroke : 'transparent';
       ctx.lineWidth = strokeWidth;
       ctx.strokeText(stText, anchorX, anchorY);
     }
