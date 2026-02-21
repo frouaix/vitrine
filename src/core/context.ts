@@ -244,7 +244,12 @@ export class Canvas2DContext implements RenderContext {
   }
 
   drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void {
-    this.ctx.drawImage(image, xl, yl, dxl, dyl);
+    const { sx, sy, sw, sh } = props;
+    if (sx !== undefined && sy !== undefined && sw !== undefined && sh !== undefined) {
+      this.ctx.drawImage(image, sx, sy, sw, sh, xl, yl, dxl, dyl);
+    } else {
+      this.ctx.drawImage(image, xl, yl, dxl, dyl);
+    }
   }
 
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {

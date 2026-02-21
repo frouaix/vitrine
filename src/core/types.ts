@@ -94,6 +94,7 @@ export interface BaseBlockProps extends Transform, EventHandlers {
   visible?: boolean;
   disableCulling?: boolean;
   shadow?: ShadowProps;
+  filter?: string;
   id?: string;
   tooltip?: () => string | Block;
 }
@@ -204,6 +205,11 @@ export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
 
 export interface ImageProps extends BaseBlockProps, Rs {
   src: string | HTMLImageElement;
+  /** Source rectangle for cropping (all four must be provided together). */
+  sx?: number;
+  sy?: number;
+  sw?: number;
+  sh?: number;
 }
 
 export interface GroupProps extends BaseBlockProps {
