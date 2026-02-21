@@ -46,6 +46,7 @@ All block types extend `BaseBlockProps`, which provides the following optional f
 | `visible` | `boolean` | When `false`, the block and its children are skipped entirely |
 | `disableCulling` | `boolean` | When `true`, the block is never culled by the frustum optimizer |
 | `shadow` | `ShadowProps` | Drop shadow (`{ offsetX, offsetY, blur, color }`) |
+| `filter` | `string` | CSS filter string applied to the block and its children (e.g. `'blur(4px)'`, `'grayscale(1)'`, `'brightness(1.5) contrast(2)'`) — see [§10.5](#105-css-filter) |
 | `id` | `string` | Optional identifier (not used by the renderer, but useful for debugging) |
 | `tooltip` | `() => string \| Block` | Tooltip factory — see [§7 Tooltips](#7-tooltips) |
 | `onClick` | `(event: VitrinePointerEvent) => void` | Click handler |
@@ -59,6 +60,42 @@ All block types extend `BaseBlockProps`, which provides the following optional f
 
 ## 3. Block Types
 
+### 3.0 Fill and stroke properties
+
+All block types that support colour accept `FillStyle` for both `fill` and `stroke`. A `FillStyle` is one of:
+
+| Value | Description |
+|-------|-------------|
+| `string` | CSS colour string: `'#3498db'`, `'rgba(255,0,0,0.5)'`, `'hsl(200, 80%, 60%)'`, etc. |
+| `LinearGradientDescriptor` | Linear gradient — created with `linearGradient()` |
+| `RadialGradientDescriptor` | Radial gradient — created with `radialGradient()` |
+| `ConicGradientDescriptor` | Conic gradient — created with `conicGradient()` |
+| `PatternDescriptor` | Tiled image/canvas pattern — created with `pattern()` |
+
+See [§10 Gradients & Patterns](#10-gradients--patterns) for the factory functions.
+
+All blocks with a `stroke` prop also inherit the following line-style properties from `StrokeProps`:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `strokeWidth` | `number` | Stroke width in logical units (default `1`) |
+| `lineCap` | `'butt' \| 'round' \| 'square'` | Line end cap style (default `'butt'`) |
+| `lineJoin` | `'bevel' \| 'round' \| 'miter'` | Line corner join style (default `'miter'`) |
+| `lineDash` | `number[]` | Dash pattern — alternating dash and gap lengths, e.g. `[10, 5]` |
+| `lineDashOffset` | `number` | Phase offset for the dash pattern (animate this to march ants) |
+
+```typescript
+// Dashed animated border
+rectangle({
+  x: 10, y: 10, dx: 200, dy: 80,
+  stroke: '#3498db', strokeWidth: 2,
+  lineDash: [12, 6], lineDashOffset: dashPhase,  // dashPhase incremented each frame
+  lineJoin: 'round', cornerRadius: 8
+})
+```
+
+---
+
 ### 3.1 `rectangle`
 
 A filled or stroked axis-aligned rectangle.
@@ -71,9 +108,13 @@ rectangle(props: RectangleProps, children?: Block[]): Block
 |------|------|----------|-------------|
 | `dx` | `number` | ✅ | Width |
 | `dy` | `number` | ✅ | Height |
-| `fill` | `Color` | | Fill colour (CSS colour string) |
-| `stroke` | `Color` | | Stroke colour |
+| `fill` | `FillStyle` | | Fill (colour, gradient, or pattern) |
+| `stroke` | `FillStyle` | | Stroke (colour, gradient, or pattern) |
 | `strokeWidth` | `number` | | Stroke width in logical units |
+| `lineCap` | `LineCap` | | Line end cap (`'butt'`, `'round'`, `'square'`) |
+| `lineJoin` | `LineJoin` | | Line join (`'miter'`, `'round'`, `'bevel'`) |
+| `lineDash` | `number[]` | | Dash pattern, e.g. `[8, 4]` |
+| `lineDashOffset` | `number` | | Dash phase offset |
 | `cornerRadius` | `number` | | Rounded corner radius |
 
 ```typescript
@@ -93,9 +134,13 @@ circle(props: CircleProps, children?: Block[]): Block
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
 | `radius` | `number` | ✅ | Radius in logical units |
-| `fill` | `Color` | | Fill colour |
-| `stroke` | `Color` | | Stroke colour |
+| `fill` | `FillStyle` | | Fill (colour, gradient, or pattern) |
+| `stroke` | `FillStyle` | | Stroke |
 | `strokeWidth` | `number` | | Stroke width |
+| `lineCap` | `LineCap` | | Line end cap |
+| `lineJoin` | `LineJoin` | | Line join |
+| `lineDash` | `number[]` | | Dash pattern |
+| `lineDashOffset` | `number` | | Dash phase offset |
 
 ```typescript
 circle({ x: 200, y: 150, radius: 40, fill: '#e74c3c' })
@@ -115,9 +160,13 @@ ellipse(props: EllipseProps, children?: Block[]): Block
 |------|------|----------|-------------|
 | `radiusX` | `number` | ✅ | Horizontal radius |
 | `radiusY` | `number` | ✅ | Vertical radius |
-| `fill` | `Color` | | Fill colour |
-| `stroke` | `Color` | | Stroke colour |
+| `fill` | `FillStyle` | | Fill (colour, gradient, or pattern) |
+| `stroke` | `FillStyle` | | Stroke |
 | `strokeWidth` | `number` | | Stroke width |
+| `lineCap` | `LineCap` | | Line end cap |
+| `lineJoin` | `LineJoin` | | Line join |
+| `lineDash` | `number[]` | | Dash pattern |
+| `lineDashOffset` | `number` | | Dash phase offset |
 
 ---
 
@@ -135,8 +184,11 @@ line(props: LineProps, children?: Block[]): Block
 | `y1` | `number` | ✅ | Start Y |
 | `x2` | `number` | ✅ | End X |
 | `y2` | `number` | ✅ | End Y |
-| `stroke` | `Color` | ✅ | Stroke colour |
+| `stroke` | `FillStyle` | ✅ | Stroke (colour, gradient, or pattern) |
 | `strokeWidth` | `number` | | Stroke width |
+| `lineCap` | `LineCap` | | Line end cap (`'butt'`, `'round'`, `'square'`) |
+| `lineDash` | `number[]` | | Dash pattern |
+| `lineDashOffset` | `number` | | Dash phase offset |
 
 > **Note**: `x1/y1` and `x2/y2` are in the block's local coordinate space. The `x/y` transform props on the block itself shift the entire line.
 
@@ -155,9 +207,13 @@ arc(props: ArcProps, children?: Block[]): Block
 | `radius` | `number` | ✅ | Radius |
 | `startAngle` | `number` | ✅ | Start angle in radians |
 | `endAngle` | `number` | ✅ | End angle in radians |
-| `fill` | `Color` | | Fill colour (fills the arc segment to the centre) |
-| `stroke` | `Color` | | Stroke colour |
+| `fill` | `FillStyle` | | Fill (fills the arc segment to the centre) |
+| `stroke` | `FillStyle` | | Stroke |
 | `strokeWidth` | `number` | | Stroke width |
+| `lineCap` | `LineCap` | | Line end cap |
+| `lineDash` | `number[]` | | Dash pattern |
+| `lineDashOffset` | `number` | | Dash phase offset |
+| `fillRule` | `'nonzero' \| 'evenodd'` | | Fill rule for the closed arc shape (default `'nonzero'`) |
 
 ---
 
@@ -173,9 +229,14 @@ path(props: PathProps, children?: Block[]): Block
 |------|------|----------|-------------|
 | `pathData` | `string` | ✅ | SVG path commands (`M`, `L`, `C`, `Z`, …) |
 | `closed` | `boolean` | | Auto-close the path |
-| `fill` | `Color` | | Fill colour |
-| `stroke` | `Color` | | Stroke colour |
+| `fill` | `FillStyle` | | Fill (colour, gradient, or pattern) |
+| `stroke` | `FillStyle` | | Stroke |
 | `strokeWidth` | `number` | | Stroke width |
+| `lineCap` | `LineCap` | | Line end cap |
+| `lineJoin` | `LineJoin` | | Line join |
+| `lineDash` | `number[]` | | Dash pattern |
+| `lineDashOffset` | `number` | | Dash phase offset |
+| `fillRule` | `'nonzero' \| 'evenodd'` | | Fill rule (default `'nonzero'`). Use `'evenodd'` to punch holes in overlapping sub-paths |
 
 ```typescript
 path({ x: 0, y: 0, pathData: 'M 0 0 L 100 0 L 50 80 Z', fill: '#9b59b6' })
@@ -196,8 +257,8 @@ text(props: TextProps, children?: Block[]): Block
 | `text` | `string` | ✅ | The text to render |
 | `fontSize` | `number` | | Font size in logical units |
 | `font` | `string` | | Full CSS font string (overrides `fontSize`) |
-| `fill` | `Color` | | Text colour |
-| `stroke` | `Color` | | Text stroke colour |
+| `fill` | `FillStyle` | | Text fill (colour, gradient, or pattern) |
+| `stroke` | `FillStyle` | | Text stroke |
 | `strokeWidth` | `number` | | Text stroke width |
 | `align` | `'left' \| 'center' \| 'right' \| 'start' \| 'end'` | | Horizontal alignment |
 | `baseline` | `'top' \| 'middle' \| 'bottom' \| 'alphabetic' \| 'hanging'` | | Vertical baseline |
@@ -221,6 +282,21 @@ image(props: ImageProps, children?: Block[]): Block
 | `src` | `string \| HTMLImageElement` | ✅ | URL or pre-loaded `HTMLImageElement` |
 | `dx` | `number` | ✅ | Width |
 | `dy` | `number` | ✅ | Height |
+| `sx` | `number` | | Source crop X (must be provided together with `sy`, `sw`, `sh`) |
+| `sy` | `number` | | Source crop Y |
+| `sw` | `number` | | Source crop width |
+| `sh` | `number` | | Source crop height |
+
+When `sx`/`sy`/`sw`/`sh` are all provided the renderer calls the nine-argument form of `drawImage`, cropping the source before scaling to the destination rectangle. This enables sprite-sheet rendering.
+
+```typescript
+// Draw tile at column 2, row 1 of a 50×50 sprite sheet
+image({
+  x: 100, y: 100, dx: 64, dy: 64,
+  src: spriteSheet,
+  sx: 2 * 50, sy: 1 * 50, sw: 50, sh: 50
+})
+```
 
 Pre-loading the image via `HTMLImageElement` is recommended for smooth animation (avoids a frame of blank while the image loads).
 
@@ -644,3 +720,178 @@ const compact = VitrineComponent.gui(
 );
 compact.mount(document.getElementById('container')!);
 ```
+
+---
+
+## 10. Gradients & Patterns
+
+All `fill` and `stroke` props accept a `FillStyle` value, which can be a plain CSS colour string **or** one of the descriptors below.
+
+Factory functions are exported from `'vitrine'`:
+
+```typescript
+import { linearGradient, radialGradient, conicGradient, pattern, stop } from 'vitrine';
+```
+
+### 10.1 Linear gradient
+
+```typescript
+linearGradient(x0, y0, x1, y1, stops): LinearGradientDescriptor
+```
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `x0`, `y0` | `number` | Gradient start point in block-local coordinates |
+| `x1`, `y1` | `number` | Gradient end point in block-local coordinates |
+| `stops` | `ColorStop[]` | Array of colour stops (see [`stop()`](#the-stop-helper)) |
+
+```typescript
+// Left-to-right blue → red
+rectangle({
+  x: 20, y: 20, dx: 200, dy: 80,
+  fill: linearGradient(0, 0, 200, 0, [
+    stop(0,   '#4dabf7'),
+    stop(1,   '#ff6b6b')
+  ]),
+  cornerRadius: 8
+})
+
+// Gradient stroke on a circle
+circle({
+  x: 300, y: 100, radius: 50,
+  stroke: linearGradient(-50, 0, 50, 0, [
+    stop(0, '#51cf66'),
+    stop(1, '#845ef7')
+  ]),
+  strokeWidth: 4
+})
+```
+
+### 10.2 Radial gradient
+
+```typescript
+radialGradient(x0, y0, r0, x1, y1, r1, stops): RadialGradientDescriptor
+```
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `x0`, `y0` | `number` | Centre of the inner (start) circle |
+| `r0` | `number` | Radius of the inner circle (use `0` for a point source) |
+| `x1`, `y1` | `number` | Centre of the outer (end) circle |
+| `r1` | `number` | Radius of the outer circle |
+| `stops` | `ColorStop[]` | Colour stops |
+
+```typescript
+// Sphere shading effect
+circle({
+  x: 100, y: 100, radius: 60,
+  fill: radialGradient(
+    -15, -20, 5,   // small inner circle (highlight)
+    0, 0, 60,      // full-radius outer circle
+    [
+      stop(0,   '#ffffff'),
+      stop(0.6, '#4dabf7'),
+      stop(1,   '#1864ab')
+    ]
+  )
+})
+```
+
+### 10.3 Conic gradient
+
+```typescript
+conicGradient(startAngle, x, y, stops): ConicGradientDescriptor
+```
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `startAngle` | `number` | Start angle in radians |
+| `x`, `y` | `number` | Centre of the gradient (block-local) |
+| `stops` | `ColorStop[]` | Colour stops where offset `0` = `startAngle`, offset `1` = `startAngle + 2π` |
+
+```typescript
+// Colour wheel
+circle({
+  x: 200, y: 200, radius: 80,
+  fill: conicGradient(0, 0, 0, [
+    stop(0,    '#ff6b6b'),
+    stop(0.17, '#ffd43b'),
+    stop(0.33, '#51cf66'),
+    stop(0.5,  '#4dabf7'),
+    stop(0.67, '#845ef7'),
+    stop(1,    '#ff6b6b')
+  ])
+})
+
+// Animated sweep for a loading spinner:
+circle({
+  x: cx, y: cy, radius: 40,
+  fill: conicGradient(t * 2, 0, 0, [   // t incremented each frame
+    stop(0,   '#4dabf7'),
+    stop(0.5, '#ff6b6b'),
+    stop(1,   '#4dabf7')
+  ])
+})
+```
+
+### 10.4 Pattern
+
+```typescript
+pattern(image, repetition?): PatternDescriptor
+```
+
+| Argument | Type | Description |
+|----------|------|-------------|
+| `image` | `HTMLImageElement \| HTMLCanvasElement` | Source image or canvas |
+| `repetition` | `'repeat' \| 'repeat-x' \| 'repeat-y' \| 'no-repeat'` | Tile mode (default `'repeat'`) |
+
+```typescript
+const tileImg = new Image();
+tileImg.src = '/tile.png';
+
+rectangle({
+  x: 0, y: 0, dx: 400, dy: 300,
+  fill: pattern(tileImg, 'repeat')
+})
+```
+
+### The `stop()` helper
+
+```typescript
+stop(offset: number, color: Color): ColorStop
+```
+
+`offset` is a value from `0` to `1` representing the position along the gradient axis. Multiple stops at the same offset create a hard colour transition.
+
+```typescript
+// Rainbow with a hard stop at 50%
+linearGradient(0, 0, 100, 0, [
+  stop(0,    '#ff6b6b'),
+  stop(0.5,  '#ff6b6b'),   // same offset = hard stop
+  stop(0.5,  '#4dabf7'),
+  stop(1,    '#4dabf7')
+])
+```
+
+### 10.5 CSS filter
+
+The `filter` prop on `BaseBlockProps` accepts any CSS filter string and is applied to the entire block (including children):
+
+```typescript
+// Blur
+rectangle({ x: 10, y: 10, dx: 100, dy: 40, fill: '#4dabf7', filter: 'blur(4px)' })
+
+// Grayscale image
+image({ dx: 200, dy: 120, src: photo, filter: 'grayscale(1)' })
+
+// Multiple filters (space-separated)
+circle({ x: 100, y: 100, radius: 40, fill: '#ff6b6b',
+         filter: 'brightness(1.4) contrast(1.2)' })
+
+// Animated hue rotation
+circle({ x: cx, y: cy, radius: 30, fill: '#ff6b6b',
+         filter: `hue-rotate(${Math.floor(t * 60) % 360}deg)` })
+```
+
+Supported CSS filter functions include: `blur`, `brightness`, `contrast`, `grayscale`, `hue-rotate`, `invert`, `opacity`, `saturate`, `sepia`, `drop-shadow`.
+
