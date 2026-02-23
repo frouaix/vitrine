@@ -39,6 +39,8 @@ Factory functions for creating block descriptors:
 - `image()` - Creates image blocks
 - `group()` - Creates container groups with transforms
 - `layer()` - Creates layers with blend modes
+- `portal()` - Renders children in the overlay layer, above all normal scene content
+- `link()` - Creates a clickable group that opens a URL
 
 These functions provide the declarative API for describing visual hierarchies.
 
