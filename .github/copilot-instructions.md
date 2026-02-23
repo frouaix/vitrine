@@ -83,6 +83,8 @@ Events flow through the transform hierarchy:
 3. Events bubble from leaf blocks to root
 4. Event handlers: `onClick`, `onPointerDown`, `onPointerUp`, `onPointerMove`, `onHover`, `onDrag`
 
+**Sibling trap**: bubbling only travels up the ancestor chain, never sideways. When building a compound object (e.g. a background rectangle + a text label), placing the event handler on a block that is a *sibling* of the block the pointer actually hits means the handler is never reached. Always place event handlers on the **nearest common ancestor** (typically a `group`) or make the decorative blocks **children** of the interactive block. See [docs/BLOCK_DSL.md §5.6](../docs/BLOCK_DSL.md) for detailed examples.
+
 ## Code Conventions
 
 ### General Coding Style

@@ -514,6 +514,46 @@ rectangle({
 
 Portal blocks are hit-tested **before** the main scene, in reverse declaration order (the last-declared portal has the highest z-order and is checked first). Once a portal captures an event, the main scene is not tested.
 
+### 5.6 Compound objects and the sibling trap
+
+A common mistake when building compound objects (e.g. a custom button made of a background rectangle and a label) is placing the visual parts as **siblings** and attaching the event handler to only one of them:
+
+```typescript
+// ❌ WRONG — sibling trap
+// Clicking the text label hits the text block first.
+// Bubbling walks text → group (skipping the rectangle, which is a sibling, not an ancestor).
+// The rectangle's onClick is never reached.
+group({ x: 100, y: 100 }, [
+  rectangle({ dx: 120, dy: 40, fill: '#3498db', onClick: handleClick }),
+  text({ x: 20, y: 24, text: 'Click me', fill: '#fff' })
+])
+```
+
+Because bubbling only travels **up the ancestor chain**, events that hit a sibling block never reach handlers on another sibling. The two correct refactors are:
+
+**Option A — put the handler on the wrapping group** (preferred when two or more shapes share the same hit area):
+
+```typescript
+// ✅ CORRECT — handler on the parent group
+// Clicking anywhere inside the group (rectangle or text) bubbles to the group's onClick.
+group({ x: 100, y: 100, onClick: handleClick }, [
+  rectangle({ dx: 120, dy: 40, fill: '#3498db' }),
+  text({ x: 20, y: 24, text: 'Click me', fill: '#fff' })
+])
+```
+
+**Option B — nest the content inside the interactive block** (preferred when one block is the logical container):
+
+```typescript
+// ✅ CORRECT — text is a child of the clickable rectangle
+// Clicking the text bubbles up: text → rectangle (handler found, stops here).
+rectangle({ x: 100, y: 100, dx: 120, dy: 40, fill: '#3498db', onClick: handleClick }, [
+  text({ x: 20, y: 24, text: 'Click me', fill: '#fff' })
+])
+```
+
+**Rule of thumb**: for any compound block where multiple visual elements should respond to the same event, either (a) place the handler on their nearest common ancestor, or (b) make the interactive-area block the structural parent of the decorative content blocks.
+
 ---
 
 ## 6. `ImmediateRenderer`
