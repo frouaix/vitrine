@@ -142,12 +142,12 @@ render();
 ## Integration Points
 
 The core module integrates with:
-- **Transform system** (`../transform.ts`) - Matrix math and transform stacks
-- **Event system** (`../events.ts`) - User interaction handling
-- **Performance** (`../performance.ts`) - Culling and optimization
-- **Hit testing** (`../hit-test.ts`) - Pointer event detection
+- **Transform system** (`packages/core/src/transform.ts`) - Matrix math and transform stacks
+- **Event system** (`packages/core/src/events.ts`) - User interaction handling
+- **Performance** (`packages/core/src/performance.ts`) - Culling and optimization
+- **Hit testing** (`packages/core/src/hit-test.ts`) - Pointer event detection
 
-These supporting modules remain in the parent `src/` directory to separate concerns.
+These supporting modules live in `packages/core/src/` alongside the `core/` subdirectory.
 
 ## Naming Notes
 

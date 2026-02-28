@@ -15,13 +15,13 @@ pnpm install
 # Development server (opens gallery at localhost:8080)
 pnpm dev
 
-# Build TypeScript library (outputs to dist/)
+# Build all packages (core → gui → demo, in topological order)
 pnpm build
 
-# Build examples for production (outputs to dist-examples/)
+# Build demo for production
 pnpm build:examples
 
-# Deploy examples to GitHub Pages
+# Deploy demo gallery to GitHub Pages
 pnpm deploy
 
 # Clean build artifacts
@@ -30,9 +30,21 @@ pnpm clean
 
 **Note**: This project has no test suite configured. Focus on ensuring examples run correctly via `pnpm dev`.
 
-Use `pnpm build` and `pnpm lint` to validate changes. (`lint` runs TypeScript checks via `tsc --noEmit`.)
+Use `pnpm build` and `pnpm lint` to validate changes. (`lint` runs `pnpm -r build && pnpm -r lint` because cross-package type resolution requires `packages/core/dist/` to exist first.)
 
 ## Architecture
+
+### Monorepo Structure
+
+The repository is a pnpm workspace monorepo with three packages:
+
+| Package | Directory | npm name | Description |
+|---------|-----------|----------|-------------|
+| Core | `packages/core/` | `vitrine` | Block tree, rendering, events, hit-testing, performance |
+| GUI | `packages/gui/` | `vitrine-gui` | GUI controls, theming, layout, `VitrineComponent` |
+| Demo | `packages/demo/` | *(private)* | Demo website, consumes both packages |
+
+Build order is topologically correct: `vitrine` → `vitrine-gui` → demo.
 
 ### Core Rendering Model
 
@@ -43,15 +55,18 @@ Use `pnpm build` and `pnpm lint` to validate changes. (`lint` runs TypeScript ch
 
 ### Key Source Files
 
-- **`src/core/types.ts`**: Type definitions for all block types and props
-- **`src/core/blocks.ts`**: Factory functions for creating blocks (rectangle, circle, group, etc.)
-- **`src/core/renderer-immediate.ts`**: Main `ImmediateRenderer` class with render loop
-- **`src/core/context.ts`**: Canvas 2D context wrapper (`Canvas2DContext`)
-- **`src/events.ts`**: Event handling system (`EventManager`)
-- **`src/performance.ts`**: Frustum culling and performance monitoring
-- **`src/transform.ts`**: 2D matrix transform utilities
-- **`src/hit-test.ts`**: Transform-aware hit detection for events
-- **`src/GUI/`**: Higher-level UI components (controls, themes)
+**`packages/core/src/`** — published as `vitrine`:
+- **`core/types.ts`**: Type definitions for all block types and props
+- **`core/blocks.ts`**: Factory functions for creating blocks (rectangle, circle, group, etc.)
+- **`core/renderer-immediate.ts`**: Main `ImmediateRenderer` class with render loop
+- **`core/context.ts`**: Canvas 2D context wrapper (`Canvas2DContext`)
+- **`events.ts`**: Event handling system (`EventManager`)
+- **`performance.ts`**: Frustum culling and performance monitoring
+- **`transform.ts`**: 2D matrix transform utilities
+- **`hit-test.ts`**: Transform-aware hit detection for events
+
+**`packages/gui/src/`** — published as `vitrine-gui`:
+- **`GUI/`**: Higher-level UI components (controls, themes, layout)
 
 ### Block Factory Pattern
 
@@ -105,10 +120,11 @@ Events flow through the transform hierarchy:
 
 ### File Organization
 
-- Core rendering logic lives in `src/core/`
-- Higher-level GUI components in `src/GUI/`
-- Examples are standalone HTML files in `examples/` that import from `vitrine`
-- Vite alias resolves `'vitrine'` imports to `./src/index.ts` in dev mode
+- Core rendering logic lives in `packages/core/src/core/`
+- Core support modules (events, transforms, hit-test, performance) in `packages/core/src/`
+- Higher-level GUI components in `packages/gui/src/GUI/`
+- Demo HTML files and TypeScript demos in `packages/demo/`
+- In `packages/demo`, Vite aliases resolve `'vitrine'` → `packages/core/src/index.ts` and `'vitrine-gui'` → `packages/gui/src/index.ts` for hot-reload during development
 
 ### TypeScript Patterns
 
@@ -125,29 +141,29 @@ Events flow through the transform hierarchy:
 
 ### Examples Pattern
 
-Examples follow this structure:
-1. Import from `'vitrine'` (resolves to `./src/index.ts`)
+Demo files follow this structure:
+1. Import core blocks from `'vitrine'`; import GUI controls from `'vitrine-gui'`
 2. Create `ImmediateRenderer` instance
 3. Define a `render()` function that builds a block tree and calls `renderer.render(scene)`
 4. Call `requestAnimationFrame(render)` for animation loop
-5. See `examples/gallery.js` for the comprehensive demo showcase
+5. See `packages/demo/gallery.ts` for the comprehensive demo showcase
 
 ## Common Tasks
 
 ### Adding a new block type
 
-1. Define props interface in `src/core/types.ts` extending `BaseBlockProps`
+1. Define props interface in `packages/core/src/core/types.ts` extending `BaseBlockProps`
 2. Add enum value to `BlockType`
-3. Create factory function in `src/core/blocks.ts`
-4. Add rendering logic in `src/core/renderer-immediate.ts` (in the main render switch)
-5. Export from `src/index.ts`
+3. Create factory function in `packages/core/src/core/blocks.ts`
+4. Add rendering logic in `packages/core/src/core/renderer-immediate.ts` (in the main render switch)
+5. Export from `packages/core/src/index.ts`
 
-### Adding a new example
+### Adding a new example / demo
 
-1. Create `.html` file in `examples/` directory
-2. Import from `'vitrine'` (Vite alias handles this)
-3. Add entry to `gallery.js` if it should appear in the demo gallery
-4. To add to Vite build, update `vite.config.ts` rollupOptions.input
+1. Create `.html` file in `packages/demo/` directory
+2. Import from `'vitrine'` or `'vitrine-gui'` (Vite aliases handle resolution to source)
+3. Add entry to `packages/demo/gallery.ts` if it should appear in the demo gallery
+4. To add to Vite build, update `packages/demo/vite.config.ts` rollupOptions.input
 
 ### Debugging rendering issues
 

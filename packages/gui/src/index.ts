@@ -33,6 +33,7 @@ export {
   type GUIControl,
   type GUIControlOfType,
   // Controls
+  control,
   textbox,
   checkbox,
   radiobutton,
@@ -50,6 +51,7 @@ export {
   calendarMonthView,
   colorpicker,
   // Calendar functions
+  rsControl,
   rsCalendarDayView,
   rsCalendarMonthView,
   generateSampleEvents,

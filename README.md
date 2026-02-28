@@ -20,6 +20,17 @@ Explore 12+ interactive examples including data visualization, productivity apps
 ✅ **Full TypeScript** — Type-safe API with complete type definitions  
 ✅ **Zero Dependencies** — No runtime dependencies; only TypeScript, Vite, and gh-pages as dev tooling
 
+## Packages
+
+Vitrine is organized as a monorepo with two publishable packages:
+
+| Package | npm name | Description |
+|---------|----------|-------------|
+| `packages/core` | `vitrine` | Block tree, rendering, events, hit-testing, frustum culling — zero GUI dependencies |
+| `packages/gui` | `vitrine-gui` | High-level GUI controls, theming, layout, and `VitrineComponent` |
+
+Use `vitrine` alone if you only need the core rendering primitives. Add `vitrine-gui` when you want ready-made interactive controls (buttons, sliders, calendars, …).
+
 ## Architecture
 
 Vitrine uses an immediate-mode rendering model: every frame, your code builds a tree of lightweight block descriptors using factory functions (`rectangle()`, `circle()`, `group()`, …). The renderer walks that tree, applies hierarchical transforms, and draws to a Canvas 2D context. Because there is no retained scene graph, there is no lifecycle to manage — what you describe is exactly what gets rendered.
@@ -32,12 +43,28 @@ Portal blocks allow overlay content (tooltips, dropdown menus) to render above t
 
 ## Installation
 
-### From npm
+### Core package
 
 ```bash
 npm install vitrine
 # or
 pnpm add vitrine
+```
+
+### GUI controls (optional)
+
+```bash
+npm install vitrine vitrine-gui
+# or
+pnpm add vitrine vitrine-gui
+```
+
+```typescript
+// Core rendering — shapes, transforms, events
+import { ImmediateRenderer, rectangle, circle, group } from 'vitrine';
+
+// GUI controls — buttons, sliders, calendars, themes
+import { button, slider, transformGUIControl, getTheme } from 'vitrine-gui';
 ```
 
 ### Local development (co-evolution workflow)

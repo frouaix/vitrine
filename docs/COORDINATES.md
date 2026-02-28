@@ -35,10 +35,10 @@ block's event handler:
 
 | Conversion | File | Method |
 |------------|------|--------|
-| window → canvas | `src/events.ts` | `getCanvasCoordinates()` |
-| canvas → logical | `src/events.ts` | `convertCanvasToLogicalCoordinates()` |
-| canvas → scene | `src/events.ts` | `convertCanvasToSceneCoordinates()` |
-| logical → local | `src/hit-test.ts` | `HitTester.hitTest()` (via `Matrix2D.invert()`) |
+| window → canvas | `packages/core/src/events.ts` | `getCanvasCoordinates()` |
+| canvas → logical | `packages/core/src/events.ts` | `convertCanvasToLogicalCoordinates()` |
+| canvas → scene | `packages/core/src/events.ts` | `convertCanvasToSceneCoordinates()` |
+| logical → local | `packages/core/src/hit-test.ts` | `HitTester.hitTest()` (via `Matrix2D.invert()`) |
 
 ---
 
@@ -83,8 +83,8 @@ blockMatrix = Identity
     .skewXY(skewX, skewY)     // 4. skew
 ```
 
-> This is also the order used by `TransformStack.apply()` in `src/transform.ts`
-> and `HitTester.getBlockTransform()` in `src/hit-test.ts`.
+> This is also the order used by `TransformStack.apply()` in `packages/core/src/transform.ts`
+> and `HitTester.getBlockTransform()` in `packages/core/src/hit-test.ts`.
 
 Parent transforms are multiplied first, then the child's block transform.
 The cumulative world matrix for a block is:
@@ -137,7 +137,7 @@ rectangle).
 
 ### 3.3 The Matrix2D class
 
-The `Matrix2D` class in `src/transform.ts` stores a 2×3 affine matrix:
+The `Matrix2D` class in `packages/core/src/transform.ts` stores a 2×3 affine matrix:
 
 ```
 | a  c  e |       a,d = scale/rotate

@@ -721,7 +721,7 @@ type VitrinePointerEvent = PointerEvent & {
 Use the static factory methods to choose the rendering mode:
 
 ```typescript
-import { VitrineComponent, vstack, button, label, lightTheme } from 'vitrine';
+import { VitrineComponent, vstack, button, label, lightTheme } from 'vitrine-gui';
 
 // GUI mode: render function returns a GUIControl tree
 const myComponent = VitrineComponent.gui(

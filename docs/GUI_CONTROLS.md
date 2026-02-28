@@ -1,6 +1,6 @@
 # GUI Controls Reference
 
-This document describes the higher-level GUI DSL that ships in `src/GUI/`. The GUI DSL provides ready-made interactive controls (buttons, sliders, text boxes, …) and layout primitives built on top of the [core block language](BLOCK_DSL.md).
+This document describes the higher-level GUI DSL that ships in the `vitrine-gui` package. The GUI DSL provides ready-made interactive controls (buttons, sliders, text boxes, …) and layout primitives built on top of the [core block language](BLOCK_DSL.md).
 
 ---
 
@@ -9,11 +9,11 @@ This document describes the higher-level GUI DSL that ships in `src/GUI/`. The G
 The GUI layer sits on top of Vitrine's core blocks. You describe a control tree using GUI factory functions, then call `transformGUIControl()` to convert it into a core `Block` tree that the `ImmediateRenderer` can draw.
 
 ```typescript
+import { ImmediateRenderer } from 'vitrine';
 import {
-  ImmediateRenderer,
   vstack, button, slider, checkbox, label,
   transformGUIControl, getTheme
-} from 'vitrine';
+} from 'vitrine-gui';
 
 const renderer = new ImmediateRenderer({ canvas, width: 800, height: 600 });
 const theme = getTheme('light');
@@ -69,7 +69,7 @@ Themes control the visual style of every control. Three themes are built in:
 | `'colorful'` | Warm yellow / pink palette |
 
 ```typescript
-import { getTheme } from 'vitrine';
+import { getTheme } from 'vitrine-gui';
 
 const theme = getTheme('dark');  // or 'light', 'colorful'
 ```
@@ -127,7 +127,7 @@ The built-in themes ship `'primary-button'` and `'danger-button'` named styles.
 The low-level `control()` factory can create any control type:
 
 ```typescript
-import { control, GUIControlType } from 'vitrine';
+import { control, GUIControlType } from 'vitrine-gui';
 
 const btn = control(GUIControlType.Button, { stLabel: 'OK' });
 ```
@@ -557,7 +557,7 @@ interface CalendarEvent {
 GUI controls are pure data descriptors. To render them, convert the root control to a `Block` tree with `transformGUIControl()`, then pass the result to `renderer.render()`.
 
 ```typescript
-import { transformGUIControl, getTheme } from 'vitrine';
+import { transformGUIControl, getTheme } from 'vitrine-gui';
 
 const theme = getTheme('light');
 
@@ -573,7 +573,7 @@ function render(): void {
 Use `rsControl(control)` to measure the pixel dimensions of a control *before* rendering it — useful for manually positioning controls relative to each other:
 
 ```typescript
-import { rsControl } from 'vitrine';
+import { rsControl } from 'vitrine-gui';
 
 const btn = button({ stLabel: 'OK' });
 const { width, height } = rsControl(btn);
@@ -588,11 +588,11 @@ const lbl = label({ stText: 'Done', y: height + 4 });
 The typical rendering loop for a GUI-heavy application:
 
 ```typescript
+import { ImmediateRenderer } from 'vitrine';
 import {
-  ImmediateRenderer,
   vstack, button, checkbox, slider, label,
   transformGUIControl, getTheme
-} from 'vitrine';
+} from 'vitrine-gui';
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const renderer = new ImmediateRenderer({ canvas, width: 800, height: 600 });
