@@ -20,7 +20,6 @@ export default defineConfig({
         events: resolve(__dirname, 'events.html'),
         performance: resolve(__dirname, 'performance.html'),
         primitives: resolve(__dirname, 'primitives.html'),
-        testGuiInteractions: resolve(__dirname, 'test-gui-interactions.html'),
         componentDemo: resolve(__dirname, 'component-demo.html')
       }
     }
