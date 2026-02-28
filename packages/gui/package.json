@@ -37,11 +37,12 @@
   ],
   "author": "François Rouaix",
   "license": "MIT",
-  "dependencies": {
+  "peerDependencies": {
     "vitrine": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitrine": "workspace:*"
   }
 }
