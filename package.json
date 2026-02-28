@@ -1,31 +1,17 @@
 {
-  "name": "vitrine",
+  "name": "vitrine-monorepo",
   "version": "0.1.0",
-  "description": "TypeScript library for canvas and WebGL rendering",
+  "description": "Vitrine monorepo — core rendering library, GUI components, and demo website",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "build": "tsc",
-    "prepare": "pnpm build",
-    "prepublishOnly": "pnpm lint",
-    "lint": "tsc --noEmit",
-    "build:examples": "vite build",
-    "dev": "vite",
-    "preview": "vite preview",
-    "clean": "rm -rf dist dist-examples",
-    "deploy": "pnpm build:examples && gh-pages -d dist-examples",
-    "gallery": "vite"
+    "build": "pnpm -r build",
+    "lint": "pnpm -r build && pnpm -r lint",
+    "dev": "pnpm --filter vitrine-demo dev",
+    "build:demo": "pnpm --filter vitrine-demo build",
+    "preview": "pnpm --filter vitrine-demo preview",
+    "clean": "pnpm -r clean",
+    "deploy": "pnpm build:demo && gh-pages -d packages/demo/dist"
   },
   "repository": {
     "type": "git",
@@ -35,20 +21,10 @@
     "url": "https://github.com/frouaix/vitrine/issues"
   },
   "homepage": "https://frouaix.github.io/vitrine/",
-  "keywords": [
-    "canvas",
-    "webgl",
-    "rendering",
-    "typescript",
-    "graphics"
-  ],
   "author": "François Rouaix",
   "license": "MIT",
   "packageManager": "pnpm@10.28.2",
   "devDependencies": {
-    "@types/node": "^22.10.5",
-    "gh-pages": "^6.3.0",
-    "typescript": "^5.7.3",
-    "vite": "^7.3.1"
+    "gh-pages": "^6.3.0"
   }
 }
