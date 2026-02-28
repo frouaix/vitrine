@@ -9,6 +9,7 @@
     "lint": "pnpm -r build && pnpm -r lint",
     "dev": "pnpm --filter vitrine-demo dev",
     "build:demo": "pnpm --filter vitrine-demo build",
+    "build:examples": "pnpm --filter vitrine-demo build",
     "preview": "pnpm --filter vitrine-demo preview",
     "clean": "pnpm -r clean",
     "deploy": "pnpm build:demo && gh-pages -d packages/demo/dist"
