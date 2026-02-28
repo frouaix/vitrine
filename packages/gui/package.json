@@ -1,0 +1,48 @@
+{
+  "name": "vitrine-gui",
+  "version": "0.1.0",
+  "description": "GUI components for Vitrine — high-level UI controls, theming, and layout",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frouaix/vitrine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frouaix/vitrine/issues"
+  },
+  "homepage": "https://frouaix.github.io/vitrine/",
+  "keywords": [
+    "canvas",
+    "rendering",
+    "typescript",
+    "gui",
+    "ui-components"
+  ],
+  "author": "François Rouaix",
+  "license": "MIT",
+  "peerDependencies": {
+    "vitrine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3",
+    "vitrine": "workspace:*"
+  }
+}
