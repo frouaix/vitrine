@@ -233,6 +233,34 @@ export function replaceTextRange(
     return value;
   }
 
-  const valueDeleted: AttributedTextValue = deleteTextRange(value, iStart, iEnd);
-  return insertText(valueDeleted, iStart, strReplace, idStyleInsert);
+  const iUtf16Start: number = convertIUnitToIUtf16(value, iStart);
+  const iUtf16End: number = convertIUnitToIUtf16(value, iEnd);
+
+  const strTextNext: string =
+    value.strText.slice(0, iUtf16Start) + strReplace + value.strText.slice(iUtf16End);
+
+  const iInsertedUnitCount: number = getInsertedUnitCount(strReplace, value);
+  const rgIdStyleRefNext: number[] = [
+    ...value.rgIdStyleRef.slice(0, iStart),
+    ...new Array<number>(iInsertedUnitCount).fill(idStyleInsert),
+    ...value.rgIdStyleRef.slice(iEnd)
+  ];
+
+  const rgStorageModeNext: AttributedTextValue["rgStorageMode"] = promoteStorageModeAfterEdit(strTextNext);
+  const rgIdStyleRefPromoted: number[] = rebuildStyleRefForMode(
+    rgIdStyleRefNext,
+    value.rgStorageMode,
+    rgStorageModeNext,
+    strTextNext,
+    strTextNext
+  );
+
+  return {
+    ...value,
+    iVersion: value.iVersion + 1,
+    rgStorageMode: rgStorageModeNext,
+    strText: strTextNext,
+    rgIdStyleRef: rgIdStyleRefPromoted,
+    rgSegGraphemeToUtf16: buildRgSegGraphemeToUtf16ByMode(strTextNext, rgStorageModeNext)
+  };
 }
