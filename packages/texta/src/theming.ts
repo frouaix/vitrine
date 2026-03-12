@@ -17,6 +17,32 @@ export interface ThemingTransformConfig {
   mpState_StylePatch?: Record<string, StyleEntry>;
 }
 
+export interface ThemingTransformCacheOptions {
+  idTheme: string;
+  rgModeTheme?: string;
+  iDpiBucket?: number;
+}
+
+export interface ThemingCacheEntry {
+  valueRender: AttributedTextValueRender;
+  mpIdStyleSemantic_IdStyleRender: Record<number, number>;
+}
+
+export interface ThemingCache {
+  mpCacheKey_Entry: Record<string, ThemingCacheEntry>;
+}
+
+export interface ThemingTransformWithCacheResult {
+  valueRender: AttributedTextValueRender;
+  mpIdStyleSemantic_IdStyleRender: Record<number, number>;
+  bUsedCache: boolean;
+}
+
+interface ThemingTransformInternalResult {
+  valueRender: AttributedTextValueRender;
+  mpIdStyleSemantic_IdStyleRender: Record<number, number>;
+}
+
 function mergeStyle(a: StyleEntry, b: StyleEntry): StyleEntry {
   const mpCustomA: Record<string, unknown> = a.mpProp_Custom ?? {};
   const mpCustomB: Record<string, unknown> = b.mpProp_Custom ?? {};
@@ -66,6 +92,65 @@ export function transformSemanticToRender(
   valueSemantic: AttributedTextValueSemantic,
   cfgTheme: ThemingTransformConfig
 ): AttributedTextValueRender {
+  const result = transformSemanticToRenderInternal(valueSemantic, cfgTheme);
+  return result.valueRender;
+}
+
+export function createThemingCache(): ThemingCache {
+  return {
+    mpCacheKey_Entry: {}
+  };
+}
+
+function buildThemingCacheKey(
+  valueSemantic: AttributedTextValueSemantic,
+  cfgTheme: ThemingTransformConfig,
+  options: ThemingTransformCacheOptions
+): string {
+  return JSON.stringify({
+    iVersionSemantic: valueSemantic.iVersion,
+    idTheme: options.idTheme,
+    rgModeTheme: options.rgModeTheme ?? "default",
+    iDpiBucket: options.iDpiBucket ?? 1,
+    cfgTheme
+  });
+}
+
+export function transformSemanticToRenderWithCache(
+  valueSemantic: AttributedTextValueSemantic,
+  cfgTheme: ThemingTransformConfig,
+  cache: ThemingCache,
+  options: ThemingTransformCacheOptions
+): ThemingTransformWithCacheResult {
+  const sCacheKey: string = buildThemingCacheKey(valueSemantic, cfgTheme, options);
+  const cached: ThemingCacheEntry | undefined = cache.mpCacheKey_Entry[sCacheKey];
+
+  if (cached !== undefined) {
+    return {
+      valueRender: cached.valueRender,
+      mpIdStyleSemantic_IdStyleRender: cached.mpIdStyleSemantic_IdStyleRender,
+      bUsedCache: true
+    };
+  }
+
+  const result = transformSemanticToRenderInternal(valueSemantic, cfgTheme);
+
+  cache.mpCacheKey_Entry[sCacheKey] = {
+    valueRender: result.valueRender,
+    mpIdStyleSemantic_IdStyleRender: result.mpIdStyleSemantic_IdStyleRender
+  };
+
+  return {
+    valueRender: result.valueRender,
+    mpIdStyleSemantic_IdStyleRender: result.mpIdStyleSemantic_IdStyleRender,
+    bUsedCache: false
+  };
+}
+
+function transformSemanticToRenderInternal(
+  valueSemantic: AttributedTextValueSemantic,
+  cfgTheme: ThemingTransformConfig
+): ThemingTransformInternalResult {
   const state = createStyleDictionaryStateFromEntries(
     valueSemantic.mpId_StyleEntry,
     valueSemantic.idStyleDefault
@@ -100,7 +185,7 @@ export function transformSemanticToRender(
     return mpIdSemantic_IdRender[idSemantic] ?? idStyleDefaultRender;
   });
 
-  return {
+  const valueRender: AttributedTextValueRender = {
     iVersion: valueSemantic.iVersion,
     rgUnits: valueSemantic.rgUnits,
     rgStorageMode: valueSemantic.rgStorageMode,
@@ -109,5 +194,10 @@ export function transformSemanticToRender(
     rgIdStyleRef: rgIdStyleRefRender,
     mpId_StyleEntry: state.mpId_StyleEntry as Record<number, RenderStyleEntry>,
     idStyleDefault: idStyleDefaultRender
+  };
+
+  return {
+    valueRender,
+    mpIdStyleSemantic_IdStyleRender: mpIdSemantic_IdRender
   };
 }

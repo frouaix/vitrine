@@ -58,5 +58,11 @@ export { deleteTextRange, insertText, replaceTextRange } from "./text-ops.ts";
 
 export {
 	transformSemanticToRender,
-	type ThemingTransformConfig
+	createThemingCache,
+	transformSemanticToRenderWithCache,
+	type ThemingTransformConfig,
+	type ThemingTransformCacheOptions,
+	type ThemingCache,
+	type ThemingCacheEntry,
+	type ThemingTransformWithCacheResult
 } from "./theming.ts";
