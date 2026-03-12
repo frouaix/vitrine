@@ -48,3 +48,5 @@ export {
 	type RgStyleApplyMode,
 	type StyleRun
 } from "./style-ops.ts";
+
+export { deleteTextRange, insertText, replaceTextRange } from "./text-ops.ts";
