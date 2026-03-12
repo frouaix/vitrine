@@ -7,6 +7,7 @@ export interface StyleDictionaryState {
   mpId_StyleEntry: Record<number, StyleEntry>;
   mpId_sCanonical: Record<number, string>;
   mpHash_rgIdStyleCandidate: Record<string, number[]>;
+  mpId_nRefCount: Record<number, number>;
 }
 
 function normalizePrimitive(vValue: unknown): unknown {
@@ -139,6 +140,9 @@ export function createStyleDictionaryState(styleDefault: StyleEntry = {}): Style
     },
     mpHash_rgIdStyleCandidate: {
       [sHash]: [0]
+    },
+    mpId_nRefCount: {
+      0: 1
     }
   };
 }
@@ -171,6 +175,7 @@ export function internStyleEntry(
 
   state.mpId_StyleEntry[idStyleNew] = cloneStyleEntry(styleEntry);
   state.mpId_sCanonical[idStyleNew] = sCanonical;
+  state.mpId_nRefCount[idStyleNew] = 0;
 
   if (state.mpHash_rgIdStyleCandidate[sHash] === undefined) {
     state.mpHash_rgIdStyleCandidate[sHash] = [];
@@ -179,4 +184,88 @@ export function internStyleEntry(
   state.mpHash_rgIdStyleCandidate[sHash].push(idStyleNew);
 
   return idStyleNew;
+}
+
+function assertKnownStyleId(state: StyleDictionaryState, idStyle: number): void {
+  if (state.mpId_StyleEntry[idStyle] === undefined) {
+    throw new RangeError(`Unknown style id: ${idStyle}`);
+  }
+}
+
+export function getStyleRefCount(state: StyleDictionaryState, idStyle: number): number {
+  assertKnownStyleId(state, idStyle);
+  return state.mpId_nRefCount[idStyle] ?? 0;
+}
+
+export function retainStyleId(state: StyleDictionaryState, idStyle: number): number {
+  const nCurrent: number = getStyleRefCount(state, idStyle);
+  const nNext: number = nCurrent + 1;
+  state.mpId_nRefCount[idStyle] = nNext;
+  return nNext;
+}
+
+export function releaseStyleId(state: StyleDictionaryState, idStyle: number): number {
+  const nCurrent: number = getStyleRefCount(state, idStyle);
+
+  if (nCurrent === 0) {
+    throw new RangeError(`Cannot release style id ${idStyle} below zero references`);
+  }
+
+  const nNext: number = nCurrent - 1;
+  state.mpId_nRefCount[idStyle] = nNext;
+  return nNext;
+}
+
+function removeStyleFromHashCandidates(
+  state: StyleDictionaryState,
+  idStyle: number,
+  sCanonical: string
+): void {
+  const sHash: string = hashFnv1a32(sCanonical);
+  const rgIdCandidate: number[] | undefined = state.mpHash_rgIdStyleCandidate[sHash];
+
+  if (rgIdCandidate === undefined) {
+    return;
+  }
+
+  state.mpHash_rgIdStyleCandidate[sHash] = rgIdCandidate.filter(
+    (idStyleCandidate: number) => idStyleCandidate !== idStyle
+  );
+
+  if (state.mpHash_rgIdStyleCandidate[sHash].length === 0) {
+    delete state.mpHash_rgIdStyleCandidate[sHash];
+  }
+}
+
+export function cleanupUnreferencedStyles(
+  state: StyleDictionaryState,
+  rgIdStyleKeep: number[] = []
+): number[] {
+  const stKeep: Set<number> = new Set<number>([0, ...rgIdStyleKeep]);
+  const rgRemoved: number[] = [];
+
+  for (const sIdStyle of Object.keys(state.mpId_StyleEntry)) {
+    const idStyle: number = Number(sIdStyle);
+
+    if (stKeep.has(idStyle)) {
+      continue;
+    }
+
+    const nRefCount: number = state.mpId_nRefCount[idStyle] ?? 0;
+    if (nRefCount > 0) {
+      continue;
+    }
+
+    const sCanonical: string | undefined = state.mpId_sCanonical[idStyle];
+    if (sCanonical !== undefined) {
+      removeStyleFromHashCandidates(state, idStyle, sCanonical);
+    }
+
+    delete state.mpId_StyleEntry[idStyle];
+    delete state.mpId_sCanonical[idStyle];
+    delete state.mpId_nRefCount[idStyle];
+    rgRemoved.push(idStyle);
+  }
+
+  return rgRemoved;
 }

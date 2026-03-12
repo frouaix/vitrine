@@ -109,7 +109,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-022` | Add multilingual segmentation regression tests | 2 | `P0` | `M` | `TX-021` | `[x]` |
 | `TX-030` | Implement style normalization and stable hashing | 3 | `P0` | `M` | `TX-010` | `[x]` |
 | `TX-031` | Implement dictionary interning + collision resolution | 3 | `P0` | `M` | `TX-030` | `[x]` |
-| `TX-032` | Add ref-count tracking and safe cleanup hooks | 3 | `P1` | `M` | `TX-031` | `[ ]` |
+| `TX-032` | Add ref-count tracking and safe cleanup hooks | 3 | `P1` | `M` | `TX-031` | `[x]` |
 | `TX-040` | Implement `applyStyle` (`merge` and `replace`) | 4 | `P0` | `M` | `TX-031`, `TX-021` | `[ ]` |
 | `TX-041` | Implement run coalescing and touched-range optimization | 4 | `P0` | `M` | `TX-040` | `[ ]` |
 | `TX-042` | Add range-operation edge-case test suite | 4 | `P0` | `M` | `TX-040` | `[ ]` |

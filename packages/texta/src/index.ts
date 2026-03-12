@@ -27,10 +27,14 @@ export {
 } from "./segmentation.ts";
 
 export {
+	cleanupUnreferencedStyles,
 	computeStyleHash,
 	createStyleDictionaryState,
+	getStyleRefCount,
 	getStyleEntryById,
 	internStyleEntry,
+	releaseStyleId,
+	retainStyleId,
 	normalizeStyleEntry,
 	stringifyNormalizedStyleEntry,
 	type StyleDictionaryState,
