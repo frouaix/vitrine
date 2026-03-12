@@ -14,3 +14,5 @@ export {
 } from "./errors.ts";
 
 export { validateAttributedTextValue } from "./invariants.ts";
+
+export { detectRgStorageMode, getRgGraphemeSegment } from "./segmentation.ts";
