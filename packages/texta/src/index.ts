@@ -15,4 +15,13 @@ export {
 
 export { validateAttributedTextValue } from "./invariants.ts";
 
-export { detectRgStorageMode, getRgGraphemeSegment } from "./segmentation.ts";
+export {
+	convertICodePointToIUtf16,
+	convertIGraphemeToIUtf16,
+	convertIUtf16ToICodePoint,
+	convertIUtf16ToIGrapheme,
+	detectRgStorageMode,
+	getRgCodePointBoundaryUtf16,
+	getRgGraphemeBoundaryUtf16,
+	getRgGraphemeSegment
+} from "./segmentation.ts";
