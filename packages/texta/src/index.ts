@@ -25,3 +25,10 @@ export {
 	getRgGraphemeBoundaryUtf16,
 	getRgGraphemeSegment
 } from "./segmentation.ts";
+
+export {
+	computeStyleHash,
+	normalizeStyleEntry,
+	stringifyNormalizedStyleEntry,
+	type NormalizedStyleEntry
+} from "./dictionary.ts";

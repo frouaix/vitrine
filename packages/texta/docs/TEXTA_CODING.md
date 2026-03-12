@@ -107,7 +107,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-020` | Implement storage-mode detection (`fastCodeUnit`, `fastCodePoint`, `segmentedGrapheme`) | 2 | `P0` | `M` | `TX-011` | `[x]` |
 | `TX-021` | Implement grapheme/code-point/UTF-16 conversion helpers | 2 | `P0` | `L` | `TX-020` | `[x]` |
 | `TX-022` | Add multilingual segmentation regression tests | 2 | `P0` | `M` | `TX-021` | `[x]` |
-| `TX-030` | Implement style normalization and stable hashing | 3 | `P0` | `M` | `TX-010` | `[ ]` |
+| `TX-030` | Implement style normalization and stable hashing | 3 | `P0` | `M` | `TX-010` | `[x]` |
 | `TX-031` | Implement dictionary interning + collision resolution | 3 | `P0` | `M` | `TX-030` | `[ ]` |
 | `TX-032` | Add ref-count tracking and safe cleanup hooks | 3 | `P1` | `M` | `TX-031` | `[ ]` |
 | `TX-040` | Implement `applyStyle` (`merge` and `replace`) | 4 | `P0` | `M` | `TX-031`, `TX-021` | `[ ]` |
