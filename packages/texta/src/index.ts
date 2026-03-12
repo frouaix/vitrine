@@ -30,6 +30,7 @@ export {
 	cleanupUnreferencedStyles,
 	computeStyleHash,
 	createStyleDictionaryState,
+	createStyleDictionaryStateFromEntries,
 	getStyleRefCount,
 	getStyleEntryById,
 	internStyleEntry,
@@ -40,3 +41,5 @@ export {
 	type StyleDictionaryState,
 	type NormalizedStyleEntry
 } from "./dictionary.ts";
+
+export { applyStyle, type RgStyleApplyMode } from "./style-ops.ts";

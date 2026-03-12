@@ -147,6 +147,48 @@ export function createStyleDictionaryState(styleDefault: StyleEntry = {}): Style
   };
 }
 
+export function createStyleDictionaryStateFromEntries(
+  mpId_StyleEntry: Record<number, StyleEntry>,
+  idStyleDefault: number
+): StyleDictionaryState {
+  const rgIdStyle: number[] = Object.keys(mpId_StyleEntry)
+    .map((sIdStyle: string) => Number(sIdStyle))
+    .sort((a: number, b: number) => a - b);
+
+  const mpId_StyleEntryOut: Record<number, StyleEntry> = {};
+  const mpId_sCanonical: Record<number, string> = {};
+  const mpHash_rgIdStyleCandidate: Record<string, number[]> = {};
+  const mpId_nRefCount: Record<number, number> = {};
+
+  let iIdStyleMax: number = -1;
+
+  for (const idStyle of rgIdStyle) {
+    const styleInput: StyleEntry = mpId_StyleEntry[idStyle] ?? {};
+    const styleStored: StyleEntry = cloneStyleEntry(styleInput);
+    const sCanonical: string = getCanonicalStyleEntry(styleStored);
+    const sHash: string = hashFnv1a32(sCanonical);
+
+    mpId_StyleEntryOut[idStyle] = styleStored;
+    mpId_sCanonical[idStyle] = sCanonical;
+    mpId_nRefCount[idStyle] = idStyle === idStyleDefault ? 1 : 0;
+
+    if (mpHash_rgIdStyleCandidate[sHash] === undefined) {
+      mpHash_rgIdStyleCandidate[sHash] = [];
+    }
+
+    mpHash_rgIdStyleCandidate[sHash].push(idStyle);
+    iIdStyleMax = Math.max(iIdStyleMax, idStyle);
+  }
+
+  return {
+    iIdStyleNext: iIdStyleMax + 1,
+    mpId_StyleEntry: mpId_StyleEntryOut,
+    mpId_sCanonical,
+    mpHash_rgIdStyleCandidate,
+    mpId_nRefCount
+  };
+}
+
 export function getStyleEntryById(
   state: StyleDictionaryState,
   idStyle: number
