@@ -55,3 +55,8 @@ export {
 } from "./style-ops.ts";
 
 export { deleteTextRange, insertText, replaceTextRange } from "./text-ops.ts";
+
+export {
+	transformSemanticToRender,
+	type ThemingTransformConfig
+} from "./theming.ts";
