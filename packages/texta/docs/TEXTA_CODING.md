@@ -111,7 +111,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-031` | Implement dictionary interning + collision resolution | 3 | `P0` | `M` | `TX-030` | `[x]` |
 | `TX-032` | Add ref-count tracking and safe cleanup hooks | 3 | `P1` | `M` | `TX-031` | `[x]` |
 | `TX-040` | Implement `applyStyle` (`merge` and `replace`) | 4 | `P0` | `M` | `TX-031`, `TX-021` | `[x]` |
-| `TX-041` | Implement run coalescing and touched-range optimization | 4 | `P0` | `M` | `TX-040` | `[ ]` |
+| `TX-041` | Implement run coalescing and touched-range optimization | 4 | `P0` | `M` | `TX-040` | `[x]` |
 | `TX-042` | Add range-operation edge-case test suite | 4 | `P0` | `M` | `TX-040` | `[ ]` |
 | `TX-050` | Implement insert/delete/replace text operations | 5 | `P0` | `L` | `TX-021`, `TX-011` | `[ ]` |
 | `TX-051` | Implement mode promotion logic on edits | 5 | `P0` | `M` | `TX-050` | `[ ]` |

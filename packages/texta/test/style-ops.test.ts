@@ -70,6 +70,14 @@ describe("applyStyle", () => {
     expect(next.rgIdStyleRef[2]).toBe(next.rgIdStyleRef[3]);
   });
 
+  it("keeps untouched indices unchanged", () => {
+    const value = createValue();
+    const next = applyStyle(value, 1, 4, { underline: true }, "merge");
+
+    expect(next.rgIdStyleRef[0]).toBe(value.rgIdStyleRef[0]);
+    expect(next.rgIdStyleRef[4]).toBe(value.rgIdStyleRef[4]);
+  });
+
   it("rejects out-of-range indices", () => {
     const value = createValue();
 

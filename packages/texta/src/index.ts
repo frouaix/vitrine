@@ -42,4 +42,9 @@ export {
 	type NormalizedStyleEntry
 } from "./dictionary.ts";
 
-export { applyStyle, type RgStyleApplyMode } from "./style-ops.ts";
+export {
+	applyStyle,
+	getRgStyleRun,
+	type RgStyleApplyMode,
+	type StyleRun
+} from "./style-ops.ts";
