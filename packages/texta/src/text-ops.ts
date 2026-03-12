@@ -1,6 +1,7 @@
 import {
   convertICodePointToIUtf16,
   convertIGraphemeToIUtf16,
+  detectRgStorageMode,
   getRgCodePointBoundaryUtf16,
   getRgGraphemeBoundaryUtf16
 } from "./segmentation.ts";
@@ -31,6 +32,22 @@ function convertIUnitToIUtf16(value: AttributedTextValue, iUnit: number): number
   return convertIGraphemeToIUtf16(value.strText, iUnit);
 }
 
+function convertIUnitToIUtf16ByMode(
+  strText: string,
+  rgStorageMode: AttributedTextValue["rgStorageMode"],
+  iUnit: number
+): number {
+  if (rgStorageMode === "fastCodeUnit") {
+    return iUnit;
+  }
+
+  if (rgStorageMode === "fastCodePoint") {
+    return convertICodePointToIUtf16(strText, iUnit);
+  }
+
+  return convertIGraphemeToIUtf16(strText, iUnit);
+}
+
 function getInsertedUnitCount(strInsert: string, value: AttributedTextValue): number {
   if (value.rgStorageMode === "fastCodeUnit") {
     return strInsert.length;
@@ -50,6 +67,72 @@ function buildRgSegGraphemeToUtf16(strText: string, value: AttributedTextValue):
 
   const rgBoundaryUtf16: number[] = getRgGraphemeBoundaryUtf16(strText);
   return rgBoundaryUtf16.slice(1);
+}
+
+function buildRgSegGraphemeToUtf16ByMode(
+  strText: string,
+  rgStorageMode: AttributedTextValue["rgStorageMode"]
+): number[] {
+  if (rgStorageMode !== "segmentedGrapheme") {
+    return [];
+  }
+
+  const rgBoundaryUtf16: number[] = getRgGraphemeBoundaryUtf16(strText);
+  return rgBoundaryUtf16.slice(1);
+}
+
+function getUnitCountForModeAndText(
+  strText: string,
+  rgStorageMode: AttributedTextValue["rgStorageMode"]
+): number {
+  if (rgStorageMode === "fastCodeUnit") {
+    return strText.length;
+  }
+
+  if (rgStorageMode === "fastCodePoint") {
+    return getRgCodePointBoundaryUtf16(strText).length - 1;
+  }
+
+  return getRgGraphemeBoundaryUtf16(strText).length - 1;
+}
+
+function promoteStorageModeAfterEdit(strText: string): AttributedTextValue["rgStorageMode"] {
+  return detectRgStorageMode(strText);
+}
+
+function rebuildStyleRefForMode(
+  rgIdStyleRef: number[],
+  rgStorageModeFrom: AttributedTextValue["rgStorageMode"],
+  rgStorageModeTo: AttributedTextValue["rgStorageMode"],
+  strTextFrom: string,
+  strTextTo: string
+): number[] {
+  if (rgStorageModeFrom === rgStorageModeTo) {
+    return rgIdStyleRef;
+  }
+
+  const iUnitCountTo: number = getUnitCountForModeAndText(strTextTo, rgStorageModeTo);
+  if (iUnitCountTo === rgIdStyleRef.length) {
+    return rgIdStyleRef;
+  }
+
+  const rgIdStyleRefTo: number[] = [];
+
+  for (let iUnitTo: number = 0; iUnitTo < iUnitCountTo; iUnitTo += 1) {
+    const iUtf16: number = convertIUnitToIUtf16ByMode(strTextTo, rgStorageModeTo, iUnitTo);
+    let iUnitFrom: number = 0;
+
+    while (
+      iUnitFrom + 1 < rgIdStyleRef.length &&
+      convertIUnitToIUtf16ByMode(strTextFrom, rgStorageModeFrom, iUnitFrom + 1) <= iUtf16
+    ) {
+      iUnitFrom += 1;
+    }
+
+    rgIdStyleRefTo.push(rgIdStyleRef[Math.min(iUnitFrom, rgIdStyleRef.length - 1)] ?? 0);
+  }
+
+  return rgIdStyleRefTo;
 }
 
 export function insertText(
@@ -76,12 +159,22 @@ export function insertText(
     ...value.rgIdStyleRef.slice(iAt)
   ];
 
+  const rgStorageModeNext: AttributedTextValue["rgStorageMode"] = promoteStorageModeAfterEdit(strTextNext);
+  const rgIdStyleRefPromoted: number[] = rebuildStyleRefForMode(
+    rgIdStyleRefNext,
+    value.rgStorageMode,
+    rgStorageModeNext,
+    strTextNext,
+    strTextNext
+  );
+
   return {
     ...value,
     iVersion: value.iVersion + 1,
+    rgStorageMode: rgStorageModeNext,
     strText: strTextNext,
-    rgIdStyleRef: rgIdStyleRefNext,
-    rgSegGraphemeToUtf16: buildRgSegGraphemeToUtf16(strTextNext, value)
+    rgIdStyleRef: rgIdStyleRefPromoted,
+    rgSegGraphemeToUtf16: buildRgSegGraphemeToUtf16ByMode(strTextNext, rgStorageModeNext)
   };
 }
 
@@ -107,12 +200,22 @@ export function deleteTextRange(
     ...value.rgIdStyleRef.slice(iEnd)
   ];
 
+  const rgStorageModeNext: AttributedTextValue["rgStorageMode"] = promoteStorageModeAfterEdit(strTextNext);
+  const rgIdStyleRefPromoted: number[] = rebuildStyleRefForMode(
+    rgIdStyleRefNext,
+    value.rgStorageMode,
+    rgStorageModeNext,
+    strTextNext,
+    strTextNext
+  );
+
   return {
     ...value,
     iVersion: value.iVersion + 1,
+    rgStorageMode: rgStorageModeNext,
     strText: strTextNext,
-    rgIdStyleRef: rgIdStyleRefNext,
-    rgSegGraphemeToUtf16: buildRgSegGraphemeToUtf16(strTextNext, value)
+    rgIdStyleRef: rgIdStyleRefPromoted,
+    rgSegGraphemeToUtf16: buildRgSegGraphemeToUtf16ByMode(strTextNext, rgStorageModeNext)
   };
 }
 

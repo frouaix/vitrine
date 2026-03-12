@@ -114,7 +114,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-041` | Implement run coalescing and touched-range optimization | 4 | `P0` | `M` | `TX-040` | `[x]` |
 | `TX-042` | Add range-operation edge-case test suite | 4 | `P0` | `M` | `TX-040` | `[x]` |
 | `TX-050` | Implement insert/delete/replace text operations | 5 | `P0` | `L` | `TX-021`, `TX-011` | `[x]` |
-| `TX-051` | Implement mode promotion logic on edits | 5 | `P0` | `M` | `TX-050` | `[ ]` |
+| `TX-051` | Implement mode promotion logic on edits | 5 | `P0` | `M` | `TX-050` | `[x]` |
 | `TX-052` | Add mixed-edit sequence regression tests | 5 | `P0` | `M` | `TX-051`, `TX-040` | `[ ]` |
 | `TX-060` | Define semantic/render style conventions and types | 6 | `P0` | `S` | `TX-010` | `[ ]` |
 | `TX-061` | Implement semantic -> render theming transform pipeline | 6 | `P0` | `M` | `TX-060`, `TX-031` | `[ ]` |
