@@ -28,7 +28,11 @@ export {
 
 export {
 	computeStyleHash,
+	createStyleDictionaryState,
+	getStyleEntryById,
+	internStyleEntry,
 	normalizeStyleEntry,
 	stringifyNormalizedStyleEntry,
+	type StyleDictionaryState,
 	type NormalizedStyleEntry
 } from "./dictionary.ts";
