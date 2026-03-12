@@ -116,7 +116,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-050` | Implement insert/delete/replace text operations | 5 | `P0` | `L` | `TX-021`, `TX-011` | `[x]` |
 | `TX-051` | Implement mode promotion logic on edits | 5 | `P0` | `M` | `TX-050` | `[x]` |
 | `TX-052` | Add mixed-edit sequence regression tests | 5 | `P0` | `M` | `TX-051`, `TX-040` | `[x]` |
-| `TX-060` | Define semantic/render style conventions and types | 6 | `P0` | `S` | `TX-010` | `[ ]` |
+| `TX-060` | Define semantic/render style conventions and types | 6 | `P0` | `S` | `TX-010` | `[x]` |
 | `TX-061` | Implement semantic -> render theming transform pipeline | 6 | `P0` | `M` | `TX-060`, `TX-031` | `[ ]` |
 | `TX-062` | Implement theming cache and remap reuse | 6 | `P1` | `M` | `TX-061` | `[ ]` |
 | `TX-070` | Implement render bridge API (runs/spans/decorations) | 7 | `P0` | `M` | `TX-041`, `TX-021` | `[ ]` |

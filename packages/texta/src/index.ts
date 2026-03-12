@@ -2,8 +2,13 @@ export const sTextaPackageName: string = "texta";
 
 export type {
 	AttributedTextValue,
+	AttributedTextValueRender,
+	AttributedTextValueSemantic,
+	RenderStyleEntry,
 	RgStorageMode,
 	RgUnits,
+	SemanticStyleEntry,
+	SemanticStyleMeta,
 	StyleEntry
 } from "./types.ts";
 

@@ -20,6 +20,19 @@ export interface StyleEntry {
   mpProp_Custom?: Record<string, unknown>;
 }
 
+export interface SemanticStyleMeta {
+  token?: string;
+  state?: string;
+  variant?: string;
+  [sKey: string]: unknown;
+}
+
+export interface SemanticStyleEntry extends StyleEntry {
+  mpSemantic?: SemanticStyleMeta;
+}
+
+export interface RenderStyleEntry extends StyleEntry {}
+
 export interface AttributedTextValue {
   iVersion: number;
   rgUnits: RgUnits;
@@ -29,4 +42,14 @@ export interface AttributedTextValue {
   rgIdStyleRef: number[];
   mpId_StyleEntry: Record<number, StyleEntry>;
   idStyleDefault: number;
+}
+
+export interface AttributedTextValueSemantic
+  extends Omit<AttributedTextValue, "mpId_StyleEntry"> {
+  mpId_StyleEntry: Record<number, SemanticStyleEntry>;
+}
+
+export interface AttributedTextValueRender
+  extends Omit<AttributedTextValue, "mpId_StyleEntry"> {
+  mpId_StyleEntry: Record<number, RenderStyleEntry>;
 }
