@@ -5,8 +5,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "noEmit": false,
-    "types": ["node", "vitest/globals"]
+    "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }
