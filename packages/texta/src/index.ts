@@ -66,3 +66,13 @@ export {
 	type ThemingCacheEntry,
 	type ThemingTransformWithCacheResult
 } from "./theming.ts";
+
+export {
+	getRenderBridgeSpan,
+	getRgRenderBridgeRun,
+	getRgRenderDecorationRange,
+	type RenderBridgeSpan,
+	type RenderBridgeRun,
+	type RenderDecorationKind,
+	type RenderBridgeDecorationRange
+} from "./render-bridges.ts";
