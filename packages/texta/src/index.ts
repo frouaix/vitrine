@@ -79,3 +79,12 @@ export {
 	type RenderDecorationKind,
 	type RenderBridgeDecorationRange
 } from "./render-bridges.ts";
+
+export {
+	getTextaBaselineBenchmarkScenario,
+	runBenchmarkScenario,
+	runTextaBaselineBenchmark,
+	type BenchmarkRunOptions,
+	type BenchmarkScenarioResult,
+	type TextaBenchmarkScenario
+} from "./benchmark.ts";
