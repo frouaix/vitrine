@@ -120,7 +120,7 @@ Priority order: `P0` (must), `P1` (next), `P2` (later in phase)
 | `TX-061` | Implement semantic -> render theming transform pipeline | 6 | `P0` | `M` | `TX-060`, `TX-031` | `[x]` |
 | `TX-062` | Implement theming cache and remap reuse | 6 | `P1` | `M` | `TX-061` | `[x]` |
 | `TX-070` | Implement render bridge API (runs/spans/decorations) | 7 | `P0` | `M` | `TX-041`, `TX-021` | `[x]` |
-| `TX-071` | Add storage-mode fast conversion helpers | 7 | `P1` | `M` | `TX-070` | `[ ]` |
+| `TX-071` | Add storage-mode fast conversion helpers | 7 | `P1` | `M` | `TX-070` | `[x]` |
 | `TX-072` | Add bridge contract tests for renderer consumption | 7 | `P0` | `M` | `TX-070` | `[ ]` |
 | `TX-080` | Add invariant fuzz tests and malformed-input tests | 8 | `P0` | `M` | `TX-052`, `TX-042` | `[ ]` |
 | `TX-081` | Add benchmark harness and baseline scenarios | 8 | `P0` | `M` | `TX-070`, `TX-051` | `[ ]` |
