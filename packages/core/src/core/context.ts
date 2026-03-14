@@ -252,7 +252,7 @@ export class Canvas2DContext implements RenderContext {
     const { font, fontSize, align, baseline, fill, stroke, strokeWidth,
             dx: dxMax, dy: dyMax, lineHeight: lineHeightProp } = props;
     if (font) this.ctx.font = font;
-    if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
+    else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     if (align) this.ctx.textAlign = align;
     if (baseline) this.ctx.textBaseline = baseline;
 

@@ -54,6 +54,10 @@ export function text(props: BlockPropsByType[BlockType.Text], children?: Block[]
   return block(BlockType.Text, props, children);
 }
 
+export function texta(props: BlockPropsByType[BlockType.Texta], children?: Block[]): BlockOfType<BlockType.Texta> {
+  return block(BlockType.Texta, props, children);
+}
+
 export function path(props: BlockPropsByType[BlockType.Path], children?: Block[]): BlockOfType<BlockType.Path> {
   return block(BlockType.Path, props, children);
 }

@@ -20,12 +20,14 @@ export default defineConfig({
         events: resolve(__dirname, 'events.html'),
         performance: resolve(__dirname, 'performance.html'),
         primitives: resolve(__dirname, 'primitives.html'),
-        componentDemo: resolve(__dirname, 'component-demo.html')
+        componentDemo: resolve(__dirname, 'component-demo.html'),
+        texta: resolve(__dirname, 'texta.html')
       }
     }
   },
   resolve: {
     alias: {
+      'texta/browser': resolve(__dirname, '../texta/src/browser.ts'),
       'vitrine': resolve(__dirname, '../core/src/index.ts'),
       'vitrine-gui': resolve(__dirname, '../gui/src/index.ts')
     }

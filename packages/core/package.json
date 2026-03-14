@@ -15,6 +15,9 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "texta": "workspace:*"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "tsc --noEmit",

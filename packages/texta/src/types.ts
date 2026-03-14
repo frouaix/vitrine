@@ -13,6 +13,7 @@ export interface StyleEntry {
   lineHeight?: number;
   letterSpacing?: number;
   fill?: string;
+  background?: string;
   stroke?: string;
   opacity?: number;
   underline?: boolean;

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Texta Attributed Text Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px 20px 50px;
+      font-family: sans-serif;
+      background: #f3f4f7;
+    }
+    canvas {
+      border: 1px solid #c9ced6;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .info {
+      max-width: 1100px;
+      margin: 0 auto 18px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border: 1px solid #d9dee6;
+      border-radius: 10px;
+      color: #334155;
+      line-height: 1.45;
+    }
+    .page-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid #c9ced6;
+      background: #f3f4f7;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Vitrine Texta Block</h1>
+  <div class="info">
+    <strong>This page demonstrates the new <code>texta()</code> block:</strong>
+    per-run style changes (font, weight, size, color, opacity, line-height), multiline attributed text, alignment and baseline anchoring, and mixed-script content.
+  </div>
+  <canvas id="canvas"></canvas>
+
+  <script type="module">
+    import {
+      ImmediateRenderer,
+      group,
+      line,
+      rectangle,
+      text,
+      texta as textaBlock
+    } from 'vitrine';
+    import {
+      applyStyle,
+      detectRgStorageMode,
+      getRgCodePointBoundaryUtf16,
+      getRgGraphemeBoundaryUtf16
+    } from 'texta/browser';
+
+    function getUnitCount(strText, rgStorageMode) {
+      if (rgStorageMode === 'fastCodeUnit') return strText.length;
+      if (rgStorageMode === 'fastCodePoint') return getRgCodePointBoundaryUtf16(strText).length - 1;
+      return getRgGraphemeBoundaryUtf16(strText).length - 1;
+    }
+
+    function getRgSegGraphemeToUtf16(strText, rgStorageMode) {
+      if (rgStorageMode !== 'segmentedGrapheme') return [];
+      return getRgGraphemeBoundaryUtf16(strText).slice(1);
+    }
+
+    function createAttributedText(strText, styleDefault) {
+      const rgStorageMode = detectRgStorageMode(strText);
+      const iUnits = getUnitCount(strText, rgStorageMode);
+      return {
+        iVersion: 1,
+        rgUnits: 'grapheme',
+        rgStorageMode,
+        strText,
+        rgSegGraphemeToUtf16: getRgSegGraphemeToUtf16(strText, rgStorageMode),
+        rgIdStyleRef: new Array(iUnits).fill(1),
+        mpId_StyleEntry: { 1: styleDefault },
+        idStyleDefault: 1
+      };
+    }
+
+    function styleAsciiRanges(value, ranges) {
+      let next = value;
+      for (const range of ranges) {
+        next = applyStyle(next, range.start, range.end, range.style, 'merge');
+      }
+      return next;
+    }
+
+    const valueHeadlineBase = createAttributedText(
+      'Texta brings attributed text rendering to Vitrine',
+      { fontFamily: 'ui-sans-serif', fontSize: 24, fill: '#111827' }
+    );
+
+    const valueHeadline = styleAsciiRanges(valueHeadlineBase, [
+      { start: 0, end: 5, style: { fontWeight: '700', fill: '#1d4ed8' } },
+      { start: 13, end: 23, style: { fontStyle: 'italic', fill: '#7c3aed' } },
+      { start: 37, end: 44, style: { fontWeight: '700', fill: '#0f766e' } }
+    ]);
+
+    const valueMultilineBase = createAttributedText(
+      'Run 1: default style\nRun 2: bold emphasis\nRun 3: larger + custom line-height',
+      { fontFamily: 'Georgia', fontSize: 20, fill: '#1f2937', lineHeight: 30 }
+    );
+
+    const valueMultiline = styleAsciiRanges(valueMultilineBase, [
+      { start: 20, end: 33, style: { fontWeight: '700', fill: '#b91c1c' } },
+      { start: 41, end: 48, style: { fontSize: 28, fill: '#9333ea', lineHeight: 38 } },
+      { start: 51, end: 74, style: { fill: '#0f766e', opacity: 0.85 } }
+    ]);
+
+    const valueMixedScriptBase = createAttributedText(
+      'ASCII + accents: cafe, naïve\nEmoji: 👨\u200d👩\u200d👧\u200d👦 🚀✨\nCJK: 文字レンダリング\nIndic: क्षत्रिय',
+      { fontFamily: 'ui-sans-serif', fontSize: 21, fill: '#0f172a', lineHeight: 32 }
+    );
+
+    // Foreground colour variants
+    const valueMixedScript = styleAsciiRanges(valueMixedScriptBase, [
+      { start: 0, end: 5,   style: { fill: '#1d4ed8', fontWeight: '700' } },
+      { start: 18, end: 22, style: { fill: '#b45309' } },
+      { start: 24, end: 29, style: { fill: '#7c3aed', fontStyle: 'italic' } }
+    ]);
+
+    // Background + foreground colour variants
+    const valueMixedScriptBg = styleAsciiRanges(valueMixedScriptBase, [
+      { start: 0, end: 5,   style: { fill: '#ffffff', background: '#1d4ed8', fontWeight: '700' } },
+      { start: 17, end: 28, style: { fill: '#7c3aed', background: '#ede9fe' } },
+      { start: 29, end: 46, style: { fill: '#065f46', background: '#d1fae5' } },
+      { start: 47, end: 50, style: { fill: '#92400e', background: '#fef3c7' } }
+    ]);
+
+    const valueLiveBase = createAttributedText(
+      'Live style pulse using texta() block',
+      { fontFamily: 'ui-sans-serif', fontSize: 22, fill: '#111827' }
+    );
+
+    const canvas = document.getElementById('canvas');
+    const renderer = new ImmediateRenderer({
+      canvas,
+      width: 1100,
+      height: 860
+    });
+
+    let frame = 0;
+
+    function getLiveValue() {
+      const pulse = (Math.sin(frame * 0.08) + 1) * 0.5;
+      const emphasisStyle = {
+        fill: '#dc2626',
+        fontWeight: '700',
+        opacity: 0.35 + pulse * 0.65
+      };
+      return styleAsciiRanges(valueLiveBase, [
+        { start: 5, end: 10, style: emphasisStyle },
+        { start: 17, end: 24, style: { fill: '#2563eb', fontStyle: 'italic' } }
+      ]);
+    }
+
+    function sectionCard(x, y, w, h, title, block) {
+      return group({ x, y }, [
+        rectangle({
+          dx: w,
+          dy: h,
+          fill: '#ffffff',
+          stroke: '#d1d5db',
+          strokeWidth: 1,
+          cornerRadius: 10,
+          shadow: { offsetX: 0, offsetY: 2, blur: 8, color: 'rgba(15, 23, 42, 0.08)' }
+        }),
+        text({ x: 16, y: 24, text: title, fontSize: 16, fill: '#334155', font: '600 16px ui-sans-serif', baseline: 'middle' }),
+        group({ x: 18, y: 52 }, [block])
+      ]);
+    }
+
+    function render() {
+      frame += 1;
+
+      const liveValue = getLiveValue();
+
+      const alignmentGuide = group({ x: 790, y: 460 }, [
+        line({ x1: 0, y1: -92, x2: 0, y2: 92, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
+        line({ x1: -120, y1: 0, x2: 120, y2: 0, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
+        text({ x: 0, y: -106, text: 'Anchor', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'middle' }),
+        textaBlock({
+          texta: createAttributedText('left / alphabetic', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#1f2937' }),
+          align: 'left',
+          baseline: 'alphabetic'
+        }),
+        textaBlock({
+          y: 26,
+          texta: createAttributedText('center / middle', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#0f766e' }),
+          align: 'center',
+          baseline: 'middle'
+        }),
+        textaBlock({
+          y: 52,
+          texta: createAttributedText('right / top', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#7c2d12' }),
+          align: 'right',
+          baseline: 'top'
+        })
+      ]);
+
+      const scene = group({}, [
+        rectangle({ dx: 1100, dy: 860, fill: '#edf2f7' }),
+
+        sectionCard(24, 24, 740, 170, '1) Per-run fonts, weight, and colors', textaBlock({ texta: valueHeadline, baseline: 'top' })),
+
+        sectionCard(24, 212, 740, 235, '2) Multiline attributed text', textaBlock({ texta: valueMultiline, baseline: 'top' })),
+
+        sectionCard(24, 468, 740, 375, '3) Mixed script — foreground & background colours',
+          group({}, [
+            text({ x: 0, y: 0, text: 'Foreground only:', fontSize: 12, fill: '#64748b', baseline: 'top', font: '500 12px ui-sans-serif' }),
+            textaBlock({ y: 16, texta: valueMixedScript, baseline: 'top' }),
+            text({ x: 0, y: 158, text: 'Background + foreground:', fontSize: 12, fill: '#64748b', baseline: 'top', font: '500 12px ui-sans-serif' }),
+            textaBlock({ y: 174, texta: valueMixedScriptBg, baseline: 'top' })
+          ])
+        ),
+
+        sectionCard(784, 24, 292, 196, '4) Animated style updates', textaBlock({ texta: liveValue, baseline: 'top' })),
+
+        sectionCard(784, 240, 292, 493, '5) Alignment and baseline', alignmentGuide)
+      ]);
+
+      renderer.render(scene);
+      requestAnimationFrame(render);
+    }
+
+    render();
+  </script>
+
+  <nav class="page-nav">
+    <a href="events.html">← Events</a>
+    <a href="performance.html">Performance →</a>
+  </nav>
+</body>
+</html>

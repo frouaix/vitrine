@@ -1,6 +1,7 @@
 // Copyright (c) 2026 François Rouaix
 
 // Core type definitions for the block system
+import type { AttributedTextValue } from 'texta/browser';
 
 export type Color = string; // CSS color format
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
@@ -128,6 +129,7 @@ export enum BlockType {
   Path = 'path',
   Line = 'line',
   Text = 'text',
+  Texta = 'texta',
   Image = 'image',
   Arc = 'arc',
   Group = 'group',
@@ -142,6 +144,7 @@ export type BlockPropsByType = {
   [BlockType.Path]: PathProps;
   [BlockType.Line]: LineProps;
   [BlockType.Text]: TextProps;
+  [BlockType.Texta]: TextaProps;
   [BlockType.Image]: ImageProps;
   [BlockType.Arc]: ArcProps;
   [BlockType.Group]: GroupProps;
@@ -193,6 +196,24 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   /** When set (with dx), clip text vertically at this height. */
   dy?: number;
   /** Line spacing in pixels. Defaults to fontSize * 1.4. */
+  lineHeight?: number;
+}
+
+export interface TextaProps extends BaseBlockProps {
+  texta: AttributedTextValue;
+  align?: 'left' | 'center' | 'right' | 'start' | 'end';
+  baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
+  /** Optional default fill used when a style run does not define one. */
+  fill?: FillStyle;
+  /** Optional default stroke used when a style run does not define one. */
+  stroke?: FillStyle;
+  /** Optional default stroke width used when a style run does not define one. */
+  strokeWidth?: number;
+  /** Optional default font used when a style run does not define one. */
+  font?: string;
+  /** Optional default font size used when a style run does not define one. */
+  fontSize?: number;
+  /** Optional default line spacing in pixels. Defaults to fontSize * 1.4. */
   lineHeight?: number;
 }
 

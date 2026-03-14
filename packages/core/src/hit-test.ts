@@ -171,6 +171,38 @@ export class HitTester {
         return this.hitTestRectangle(testX, testY, textWidth, height);
       }
 
+      case BlockType.Texta: {
+        const { fontSize: duFont, texta: attributedText, align, baseline, lineHeight: lineHeightProp } = props;
+        const stText = attributedText.strText;
+        const fontSize = duFont ?? 16;
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+
+        const lines = stText.split('\n');
+        const textWidth = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
+        const height = Math.max(lines.length, 1) * duLineHeight;
+        const ascent = fontSize;
+
+        let xOffset = 0;
+        if (align === 'center') {
+          xOffset = -textWidth / 2;
+        } else if (align === 'right' || align === 'end') {
+          xOffset = -textWidth;
+        }
+
+        let yOffset = -ascent;
+        if (baseline === 'top' || baseline === 'hanging') {
+          yOffset = 0;
+        } else if (baseline === 'middle') {
+          yOffset = -height / 2;
+        } else if (baseline === 'bottom') {
+          yOffset = -height;
+        }
+
+        const testX = xl - xOffset;
+        const testY = yl - yOffset;
+        return this.hitTestRectangle(testX, testY, textWidth, height);
+      }
+
       case BlockType.Arc: {
         const { radius, startAngle, endAngle } = props;
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
@@ -330,6 +362,17 @@ export class HitTester {
           return { x: 0, y: 0, width: Math.min(singleLineWidth, dxMax), height: lineCount * duLineHeight };
         }
         return { x: 0, y: 0, width: singleLineWidth, height: fontSize };
+      }
+
+      case BlockType.Texta: {
+        const { fontSize: duFont, texta: attributedText, lineHeight: lineHeightProp } = props;
+        const stText = attributedText.strText;
+        const fontSize = duFont ?? 16;
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+        const lines = stText.split('\n');
+        const width = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
+        const height = Math.max(lines.length, 1) * duLineHeight;
+        return { x: 0, y: 0, width, height };
       }
 
       default:
