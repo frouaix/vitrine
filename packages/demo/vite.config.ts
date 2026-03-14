@@ -21,13 +21,15 @@ export default defineConfig({
         performance: resolve(__dirname, 'performance.html'),
         primitives: resolve(__dirname, 'primitives.html'),
         componentDemo: resolve(__dirname, 'component-demo.html'),
-        texta: resolve(__dirname, 'texta.html')
+        texta: resolve(__dirname, 'texta.html'),
+        markdown: resolve(__dirname, 'markdown.html')
       }
     }
   },
   resolve: {
     alias: {
       'texta/browser': resolve(__dirname, '../texta/src/browser.ts'),
+      'texta/markdown': resolve(__dirname, '../texta/src/markdown.ts'),
       'vitrine': resolve(__dirname, '../core/src/index.ts'),
       'vitrine-gui': resolve(__dirname, '../gui/src/index.ts')
     }

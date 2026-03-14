@@ -763,9 +763,13 @@ export class ImmediateRenderer {
         const { style } = seg.segment;
         const font = getFont(style);
         const fontSize = getFontSize(style);
-        const fill = style.fill ?? (typeof fillDefault === 'string' ? fillDefault : undefined);
+        const fill = style.fill
+          ?? (typeof fillDefault === 'string' ? fillDefault : undefined)
+          ?? styleDefault.fill;
         const background = style.background;
-        const stroke = style.stroke ?? (typeof strokeDefault === 'string' ? strokeDefault : undefined);
+        const stroke = style.stroke
+          ?? (typeof strokeDefault === 'string' ? strokeDefault : undefined)
+          ?? styleDefault.stroke;
         const opacity = style.opacity ?? 1;
 
         if (!fill && !stroke && !background) {

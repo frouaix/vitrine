@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine – Markdown Renderer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: ui-sans-serif, sans-serif;
+      background: #f3f4f7;
+      color: #1e293b;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #d1d5db;
+      flex-shrink: 0;
+    }
+
+    #toolbar .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      margin-right: 4px;
+    }
+
+    #toolbar button {
+      padding: 4px 12px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      color: #334155;
+      transition: background 0.1s;
+    }
+    #toolbar button:hover { background: #e2e8f0; }
+
+    #perf {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* ── Main split pane ── */
+    #main {
+      display: flex;
+      height: calc(100vh - 45px);
+    }
+
+    #editor-pane {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #d1d5db;
+      background: #ffffff;
+    }
+
+    #editor-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #md-input {
+      flex: 1;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 16px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #ffffff;
+    }
+
+    #preview-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    #preview-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #canvas-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #preview-canvas {
+      display: block;
+    }
+
+    /* ── Page nav ── */
+    .page-nav {
+      display: none; /* hidden when embedded; shown via the nav below */
+    }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-top: 1px solid #c9ced6;
+      background: #f3f4f7;
+      font-size: 14px;
+    }
+
+    .bottom-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toolbar">
+    <span class="label">Samples:</span>
+    <button id="btn-basics">1 – Basics</button>
+    <button id="btn-code">2 – Code &amp; quoting</button>
+    <button id="btn-lists">3 – Lists</button>
+    <span id="perf">—</span>
+  </div>
+
+  <div id="main">
+    <div id="editor-pane">
+      <div class="pane-title">Markdown source</div>
+      <textarea id="md-input" title="Markdown source" placeholder="Enter markdown here…" spellcheck="false"></textarea>
+    </div>
+    <div id="preview-pane">
+      <div class="pane-title">Vitrine texta() preview</div>
+      <div id="canvas-wrap">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="texta.html">← Texta</a>
+    <a href="performance.html">Performance →</a>
+  </nav>
+
+  <script type="module">
+    import { ImmediateRenderer, texta as textaBlock } from 'vitrine';
+    import { parseMarkdownToRender } from 'texta/markdown';
+
+    // ── Sample payloads ──────────────────────────────────────────────────────
+
+    const SAMPLE_BASICS = `# Heading 1
+
+## Heading 2
+
+### Heading 3
+
+Plain paragraph text. The renderer handles **bold**, *italic*, and ***bold italic*** inline spans, preserving run boundaries across style transitions.
+
+Another paragraph demonstrating that blank lines produce visual spacing.`;
+
+    const SAMPLE_CODE = `## Code & quoting
+
+Use \`inline code\` for short snippets within a sentence.
+
+> Blockquotes are rendered with muted italic style, suitable for pull-quotes or epigraphs.
+
+A strikethrough like ~~deprecated API~~ flags removed content.
+
+---
+
+\`\`\`
+function greet(name) {
+  return "Hello, " + name;
+}
+\`\`\`
+
+Code blocks preserve monospace formatting and a light background.`;
+
+    const SAMPLE_LISTS = `## Shopping list
+
+- Apples
+- **Oranges** (bold item)
+- *Milk* (italic item)
+
+## Steps
+
+1. Clone the repository
+2. Run \`pnpm install\`
+3. Start with \`pnpm dev\`
+
+### Mixed styles in list
+
+- ~~Remove this item~~
+- Keep ***this important item***
+- Plain item with \`code\``;
+
+    // ── Renderer setup ───────────────────────────────────────────────────────
+
+    const canvas = document.getElementById('preview-canvas');
+    const wrap = document.getElementById('canvas-wrap');
+    const textarea = document.getElementById('md-input');
+    const perfEl = document.getElementById('perf');
+
+    let dxCanvas = wrap.clientWidth || 600;
+    let dyCanvas = wrap.clientHeight || 600;
+
+    const renderer = new ImmediateRenderer({
+      canvas,
+      width: dxCanvas,
+      height: dyCanvas,
+      enableCameraControls: true
+    });
+
+    const PADDING = 24;
+
+    // ── Render loop ──────────────────────────────────────────────────────────
+
+    let mdValueCurrent = null;
+
+    function renderCurrentPreview() {
+      if (mdValueCurrent === null) {
+        return;
+      }
+      const scene = renderer.camera([
+        textaBlock({
+          x: PADDING,
+          y: PADDING,
+          texta: mdValueCurrent,
+          baseline: 'top',
+          dx: dxCanvas - PADDING * 2
+        })
+      ]);
+      renderer.render(scene);
+      const stats = renderer.getPerformanceStats();
+      perfEl.textContent = `${stats.fps.toFixed(0)} fps · ${stats.blocksRendered} blocks`;
+    }
+
+    function recomputeAndRender() {
+      mdValueCurrent = parseMarkdownToRender(textarea.value);
+      renderCurrentPreview();
+    }
+
+    textarea.addEventListener('input', recomputeAndRender);
+    textarea.addEventListener('change', recomputeAndRender);
+    canvas.addEventListener('wheel', () => {
+      // Camera state is updated by the renderer's wheel handler; rerender to
+      // immediately show pan/zoom changes in this immediate-mode demo.
+      renderCurrentPreview();
+    });
+
+    // ── Resize handling ──────────────────────────────────────────────────────
+
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        dxCanvas = Math.floor(entry.contentRect.width);
+        dyCanvas = Math.floor(entry.contentRect.height);
+        if (dxCanvas > 0 && dyCanvas > 0) {
+          renderer.resize(dxCanvas, dyCanvas);
+          renderCurrentPreview();
+        }
+      }
+    });
+    ro.observe(wrap);
+
+    // ── Sample buttons ───────────────────────────────────────────────────────
+
+    function loadSample(text) {
+      textarea.value = text;
+      recomputeAndRender();
+    }
+
+    document.getElementById('btn-basics').addEventListener('click', () => loadSample(SAMPLE_BASICS));
+    document.getElementById('btn-code').addEventListener('click', () => loadSample(SAMPLE_CODE));
+    document.getElementById('btn-lists').addEventListener('click', () => loadSample(SAMPLE_LISTS));
+
+    // ── Initial load ─────────────────────────────────────────────────────────
+
+    loadSample(SAMPLE_BASICS);
+  </script>
+</body>
+</html>
