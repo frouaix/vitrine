@@ -88,3 +88,12 @@ export {
 	type BenchmarkScenarioResult,
 	type TextaBenchmarkScenario
 } from "./benchmark.ts";
+
+export {
+	rgTextaDefaultBenchmarkThreshold,
+	evaluateBenchmarkThreshold,
+	formatBenchmarkThresholdReportMarkdown,
+	type BenchmarkScenarioThreshold,
+	type BenchmarkScenarioThresholdResult,
+	type BenchmarkThresholdEvaluation
+} from "./benchmark-thresholds.ts";

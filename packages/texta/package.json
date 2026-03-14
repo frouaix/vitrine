@@ -19,6 +19,7 @@
     "build": "tsc",
     "lint": "tsc --noEmit",
     "test": "vitest run",
+    "bench:ci": "pnpm build && node ./scripts/run-benchmark-ci.mjs",
     "clean": "rm -rf dist"
   },
   "license": "MIT",

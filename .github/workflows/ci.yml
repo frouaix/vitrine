@@ -28,6 +28,9 @@ jobs:
       - name: Run texta tests
         run: pnpm --filter texta test
 
+      - name: Run texta benchmark thresholds
+        run: pnpm --filter texta bench:ci
+
   test:
     uses: ./.github/workflows/reusable-test.yml
 
