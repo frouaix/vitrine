@@ -215,6 +215,8 @@ export interface TextaProps extends BaseBlockProps {
   fontSize?: number;
   /** Optional default line spacing in pixels. Defaults to fontSize * 1.4. */
   lineHeight?: number;
+  /** Optional max width in pixels for word-wrap. If omitted, no wrapping occurs. */
+  dx?: number;
 }
 
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {

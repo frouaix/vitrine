@@ -591,7 +591,8 @@ export class ImmediateRenderer {
       strokeWidth: duStrokeWidthDefault,
       font: fontDefault,
       fontSize: duFontSizeDefault,
-      lineHeight: duLineHeightDefault
+      lineHeight: duLineHeightDefault,
+      dx: duDx
     } = props;
 
     const runs = getRgRenderBridgeRun(attributedText);
@@ -664,7 +665,41 @@ export class ImmediateRenderer {
       }
     }
 
-    const lineMetrics: SegmentMetrics[][] = lineSegments.map((segments) => {
+    // Word-wrap logical lines if dx is set.
+    let finalLineSegments: Segment[][] = lineSegments;
+    if (duDx !== undefined) {
+      finalLineSegments = [];
+      for (const segs of lineSegments) {
+        // Tokenize each segment into space-delimited atoms (word + trailing space)
+        const atoms: Segment[] = [];
+        for (const seg of segs) {
+          const parts = seg.text.split(' ');
+          for (let pi = 0; pi < parts.length; pi++) {
+            const t = pi < parts.length - 1 ? parts[pi] + ' ' : parts[pi];
+            if (t.length > 0) atoms.push({ text: t, style: seg.style });
+          }
+        }
+        // Greedy pack atoms into visual lines
+        const vLines: Segment[][] = [[]];
+        let xCur = 0;
+        for (const atom of atoms) {
+          const font = getFont(atom.style);
+          const fs = getFontSize(atom.style);
+          const w = this.context.measureText
+            ? this.context.measureText(atom.text, font ? { font } : { fontSize: fs }).width
+            : atom.text.length * fs * 0.6;
+          if (xCur + w > duDx && vLines[vLines.length - 1].length > 0) {
+            vLines.push([]);
+            xCur = 0;
+          }
+          vLines[vLines.length - 1].push(atom);
+          xCur += w;
+        }
+        for (const vl of vLines) finalLineSegments.push(vl);
+      }
+    }
+
+    const lineMetrics: SegmentMetrics[][] = finalLineSegments.map((segments) => {
       return segments.map((segment) => {
         const fontSize = getFontSize(segment.style);
         const font = getFont(segment.style);

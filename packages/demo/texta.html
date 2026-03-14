@@ -202,7 +202,7 @@
 
       const liveValue = getLiveValue();
 
-      const alignmentGuide = group({ x: 790, y: 460 }, [
+      const alignmentGuide = group({ x: 128, y: 210 }, [
         line({ x1: 0, y1: -92, x2: 0, y2: 92, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
         line({ x1: -120, y1: 0, x2: 120, y2: 0, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
         text({ x: 0, y: -106, text: 'Anchor', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'middle' }),
@@ -241,7 +241,7 @@
           ])
         ),
 
-        sectionCard(784, 24, 292, 196, '4) Animated style updates', textaBlock({ texta: liveValue, baseline: 'top' })),
+        sectionCard(784, 24, 292, 196, '4) Animated style updates', textaBlock({ texta: liveValue, baseline: 'top', dx: 256 })),
 
         sectionCard(784, 240, 292, 493, '5) Alignment and baseline', alignmentGuide)
       ]);
