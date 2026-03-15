@@ -1,4 +1,4 @@
-# Vitrine
+# <img src="branding/logo-32.png" alt="Vitrine logo" width="32" height="32"> Vitrine
 
 [![CI](https://github.com/frouaix/vitrine/actions/workflows/ci.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/ci.yml)
 [![Deploy to GitHub Pages](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml/badge.svg)](https://github.com/frouaix/vitrine/actions/workflows/deploy.yml)
