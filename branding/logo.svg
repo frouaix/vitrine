@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Subtle glow for the frame -->
+    <filter id="frame-glow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#FBBF24" flood-opacity="0.35"/>
+      <feComposite in2="blur" operator="in" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Inner shadow for depth -->
+    <linearGradient id="glass-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#FBBF24" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.08"/>
+    </linearGradient>
+    <!-- Gradient for the frame border -->
+    <linearGradient id="frame-gradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- === Background render-tree layer === -->
+  <!-- Clean tree of block-nodes connected by edges, top-down layout -->
+  <g opacity="0.45" fill="none" stroke="#FBBF24">
+    <!-- Tree edges (drawn first, behind nodes) -->
+    <g stroke-width="1.5">
+      <!-- Root → level 1 -->
+      <line x1="240" y1="115" x2="168" y2="148"/>
+      <line x1="256" y1="115" x2="268" y2="148"/>
+      <line x1="268" y1="115" x2="356" y2="148"/>
+      <!-- Level 1 → level 2 -->
+      <line x1="152" y1="170" x2="130" y2="230"/>
+      <line x1="176" y1="170" x2="198" y2="230"/>
+      <line x1="268" y1="170" x2="254" y2="230"/>
+      <line x1="356" y1="170" x2="316" y2="230"/>
+      <line x1="368" y1="170" x2="380" y2="230"/>
+      <!-- Level 2 → level 3 -->
+      <line x1="130" y1="252" x2="122" y2="318"/>
+      <line x1="140" y1="252" x2="170" y2="318"/>
+      <line x1="254" y1="252" x2="254" y2="318"/>
+      <line x1="380" y1="252" x2="358" y2="318"/>
+      <line x1="388" y1="252" x2="400" y2="318"/>
+      <!-- Level 3 → level 4 -->
+      <line x1="122" y1="340" x2="136" y2="382"/>
+      <line x1="254" y1="340" x2="232" y2="382"/>
+      <line x1="254" y1="340" x2="278" y2="382"/>
+    </g>
+    <!-- Tree nodes (outlined rounded rects, varied sizes) -->
+    <!-- Root -->
+    <rect x="222" y="96" width="64" height="20" rx="6" ry="6" stroke-width="2"/>
+    <!-- Level 1 (3 nodes) -->
+    <rect x="138" y="148" width="56" height="22" rx="5" ry="5" stroke-width="1.5"/>
+    <rect x="248" y="148" width="40" height="22" rx="5" ry="5" stroke-width="1.5"/>
+    <rect x="334" y="148" width="50" height="22" rx="5" ry="5" stroke-width="1.5"/>
+    <!-- Level 2 (5 nodes, asymmetric) -->
+    <rect x="114" y="232" width="38" height="20" rx="4" ry="4" stroke-width="1.2"/>
+    <rect x="182" y="232" width="30" height="20" rx="4" ry="4" stroke-width="1.2"/>
+    <rect x="236" y="232" width="36" height="20" rx="4" ry="4" stroke-width="1.2"/>
+    <rect x="300" y="232" width="44" height="20" rx="4" ry="4" stroke-width="1.2"/>
+    <rect x="368" y="232" width="32" height="20" rx="4" ry="4" stroke-width="1.2"/>
+    <!-- Level 3 (5 nodes) -->
+    <rect x="108" y="320" width="28" height="18" rx="4" ry="4" stroke-width="1"/>
+    <rect x="156" y="320" width="34" height="18" rx="4" ry="4" stroke-width="1"/>
+    <rect x="238" y="320" width="32" height="18" rx="4" ry="4" stroke-width="1"/>
+    <rect x="344" y="320" width="30" height="18" rx="4" ry="4" stroke-width="1"/>
+    <rect x="388" y="320" width="22" height="18" rx="4" ry="4" stroke-width="1"/>
+    <!-- Level 4 (leaf nodes, smallest) -->
+    <rect x="124" y="384" width="24" height="14" rx="3" ry="3" stroke-width="0.8"/>
+    <rect x="220" y="384" width="26" height="14" rx="3" ry="3" stroke-width="0.8"/>
+    <rect x="264" y="384" width="30" height="14" rx="3" ry="3" stroke-width="0.8"/>
+  </g>
+
+  <!-- Display case frame (outer) -->
+  <rect x="96" y="80" width="320" height="352" rx="24" ry="24"
+        fill="none" stroke="url(#frame-gradient)" stroke-width="12"
+        filter="url(#frame-glow)"/>
+
+  <!-- Glass pane (inner fill) -->
+  <rect x="108" y="92" width="296" height="328" rx="16" ry="16"
+        fill="url(#glass-sheen)"/>
+
+  <!-- 2×2 symmetric grid of displayed objects -->
+  <!-- Columns at x=186, x=326; Rows centered at y=176, y=348 -->
+
+  <!-- Top-left: Circle -->
+  <circle cx="186" cy="176" r="48" fill="#FBBF24" opacity="0.9"/>
+
+  <!-- Top-right: Rounded square -->
+  <rect x="278" y="128" width="96" height="96" rx="14" ry="14"
+        fill="#F59E0B" opacity="0.85"/>
+
+  <!-- Bottom-left: Letter T (path with rounded caps, ~96px tall) -->
+  <g transform="translate(186, 348)" opacity="0.85">
+    <line x1="-40" y1="-44" x2="40" y2="-44"
+          stroke="#FBBF24" stroke-width="14" stroke-linecap="round"/>
+    <line x1="0" y1="-44" x2="0" y2="44"
+          stroke="#FBBF24" stroke-width="14" stroke-linecap="round"/>
+  </g>
+
+  <!-- Bottom-right: Triangle (with rounded joins) -->
+  <polygon points="326,300 278,396 374,396"
+           fill="#D97706" opacity="0.85"
+           stroke="#D97706" stroke-width="6" stroke-linejoin="round"/>
+
+</svg>
