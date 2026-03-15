@@ -19,6 +19,10 @@ export interface HitTestResult {
   ys: number;
 }
 
+export interface HitTestLayoutCache {
+  boundsByBlock: WeakMap<Block, Rc>;
+}
+
 export class HitTester {
   // Test if a point hits a block, considering its transform
   static hitTest(
@@ -26,7 +30,8 @@ export class HitTester {
     worldX: number,
     worldY: number,
     worldTransform: Matrix2D = Matrix2D.identity(),
-    ancestors: Block[] = []
+    ancestors: Block[] = [],
+    layoutCache?: HitTestLayoutCache
   ): HitTestResult | null {
     const { props, children } = block;
     const { visible } = props;
@@ -59,14 +64,15 @@ export class HitTester {
           worldX,
           worldY,
           currentTransform,
-          childAncestors
+          childAncestors,
+          layoutCache
         );
         if (childHit) return childHit;
       }
     }
 
     // Test this block
-    if (this.hitTestShape(block, local.x, local.y)) {
+    if (this.hitTestShape(block, local.x, local.y, layoutCache)) {
       return {
         block,
         ancestors,
@@ -100,7 +106,7 @@ export class HitTester {
     return transform;
   }
 
-  private static hitTestShape(block: Block, x: number, y: number): boolean {
+  private static hitTestShape(block: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
     const xl = x;
     const yl = y;
     const { props } = block as { props: any };
@@ -127,6 +133,16 @@ export class HitTester {
       }
 
       case BlockType.Text: {
+        const cachedBounds = layoutCache?.boundsByBlock.get(block);
+        if (cachedBounds) {
+          return this.hitTestRectangle(
+            xl - cachedBounds.x,
+            yl - cachedBounds.y,
+            cachedBounds.width,
+            cachedBounds.height
+          );
+        }
+
         // Calculate text bounds accounting for baseline and alignment
         const { fontSize: duFont, text: stText, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
         const fontSize = duFont ?? 16;
@@ -171,6 +187,48 @@ export class HitTester {
         return this.hitTestRectangle(testX, testY, textWidth, height);
       }
 
+      case BlockType.Texta: {
+        const cachedBounds = layoutCache?.boundsByBlock.get(block);
+        if (cachedBounds) {
+          return this.hitTestRectangle(
+            xl - cachedBounds.x,
+            yl - cachedBounds.y,
+            cachedBounds.width,
+            cachedBounds.height
+          );
+        }
+
+        const { fontSize: duFont, texta: attributedText, align, baseline, lineHeight: lineHeightProp } = props;
+        const stText = attributedText.strText;
+        const fontSize = duFont ?? 16;
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+
+        const lines = stText.split('\n');
+        const textWidth = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
+        const height = Math.max(lines.length, 1) * duLineHeight;
+        const ascent = fontSize;
+
+        let xOffset = 0;
+        if (align === 'center') {
+          xOffset = -textWidth / 2;
+        } else if (align === 'right' || align === 'end') {
+          xOffset = -textWidth;
+        }
+
+        let yOffset = -ascent;
+        if (baseline === 'top' || baseline === 'hanging') {
+          yOffset = 0;
+        } else if (baseline === 'middle') {
+          yOffset = -height / 2;
+        } else if (baseline === 'bottom') {
+          yOffset = -height;
+        }
+
+        const testX = xl - xOffset;
+        const testY = yl - yOffset;
+        return this.hitTestRectangle(testX, testY, textWidth, height);
+      }
+
       case BlockType.Arc: {
         const { radius, startAngle, endAngle } = props;
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
@@ -179,6 +237,19 @@ export class HitTester {
       case BlockType.Group:
       case BlockType.Layer:
       case BlockType.Portal:
+      case BlockType.ContentSized:
+        {
+          const cachedBounds = layoutCache?.boundsByBlock.get(block);
+          if (cachedBounds) {
+            return this.hitTestRectangle(
+              xl - cachedBounds.x,
+              yl - cachedBounds.y,
+              cachedBounds.width,
+              cachedBounds.height
+            );
+          }
+        }
+        // Content-sized wrappers and containers otherwise rely on children.
         // Groups, layers, and portals don't have intrinsic shape, rely on children
         return false;
 
@@ -330,6 +401,17 @@ export class HitTester {
           return { x: 0, y: 0, width: Math.min(singleLineWidth, dxMax), height: lineCount * duLineHeight };
         }
         return { x: 0, y: 0, width: singleLineWidth, height: fontSize };
+      }
+
+      case BlockType.Texta: {
+        const { fontSize: duFont, texta: attributedText, lineHeight: lineHeightProp } = props;
+        const stText = attributedText.strText;
+        const fontSize = duFont ?? 16;
+        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+        const lines = stText.split('\n');
+        const width = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
+        const height = Math.max(lines.length, 1) * duLineHeight;
+        return { x: 0, y: 0, width, height };
       }
 
       default:

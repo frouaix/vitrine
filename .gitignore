@@ -5,6 +5,8 @@ package-lock.json
 # Build output
 dist/
 dist-examples/
+packages/texta/src/*.js
+packages/texta/src/*.d.ts
 
 # Environment variables
 .env

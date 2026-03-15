@@ -1,6 +1,7 @@
 // Copyright (c) 2026 François Rouaix
 
 // Core type definitions for the block system
+import type { AttributedTextValue } from 'texta/browser';
 
 export type Color = string; // CSS color format
 export type BlendMode = 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
@@ -128,11 +129,13 @@ export enum BlockType {
   Path = 'path',
   Line = 'line',
   Text = 'text',
+  Texta = 'texta',
   Image = 'image',
   Arc = 'arc',
   Group = 'group',
   Layer = 'layer',
-  Portal = 'portal'
+  Portal = 'portal',
+  ContentSized = 'content-sized'
 }
 
 export type BlockPropsByType = {
@@ -142,11 +145,13 @@ export type BlockPropsByType = {
   [BlockType.Path]: PathProps;
   [BlockType.Line]: LineProps;
   [BlockType.Text]: TextProps;
+  [BlockType.Texta]: TextaProps;
   [BlockType.Image]: ImageProps;
   [BlockType.Arc]: ArcProps;
   [BlockType.Group]: GroupProps;
   [BlockType.Layer]: LayerProps;
   [BlockType.Portal]: PortalProps;
+  [BlockType.ContentSized]: ContentSizedProps;
 };
 
 export type BlockForType<T extends BlockType = BlockType> = {
@@ -196,6 +201,26 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   lineHeight?: number;
 }
 
+export interface TextaProps extends BaseBlockProps {
+  texta: AttributedTextValue;
+  align?: 'left' | 'center' | 'right' | 'start' | 'end';
+  baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
+  /** Optional default fill CSS color string used when a style run does not define one. */
+  fill?: Color;
+  /** Optional default stroke CSS color string used when a style run does not define one. */
+  stroke?: Color;
+  /** Optional default stroke width used when a style run does not define one. */
+  strokeWidth?: number;
+  /** Optional default font used when a style run does not define one. */
+  font?: string;
+  /** Optional default font size used when a style run does not define one. */
+  fontSize?: number;
+  /** Optional default line spacing in pixels. Defaults to fontSize * 1.4. */
+  lineHeight?: number;
+  /** Optional max width in pixels for word-wrap. If omitted, no wrapping occurs. */
+  dx?: number;
+}
+
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
   pathData: string; // SVG path format
   closed?: boolean;
@@ -230,6 +255,17 @@ export interface LayerProps extends BaseBlockProps {
 export interface PortalProps extends BaseBlockProps {
   // Portal renders its children in the overlay layer
   // Future: could add targetLayer property for multiple overlay layers
+}
+
+export interface ContentSizedProps extends BaseBlockProps, StrokeProps, FillProps {
+  /** Uniform padding around measured child bounds. */
+  padding?: number;
+  /** Horizontal padding override around measured child bounds. */
+  paddingX?: number;
+  /** Vertical padding override around measured child bounds. */
+  paddingY?: number;
+  /** Optional corner radius for the auto-sized frame. */
+  cornerRadius?: number;
 }
 
 export interface LinkProps extends BaseBlockProps {

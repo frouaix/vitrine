@@ -11,6 +11,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "texta": "workspace:*",
     "vitrine": "workspace:*",
     "vitrine-gui": "workspace:*"
   },

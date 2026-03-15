@@ -269,6 +269,48 @@ text({ x: 10, y: 30, text: 'Score: 42', fontSize: 20, fill: '#fff', baseline: 't
 
 ---
 
+### 3.7.1 `texta`
+
+Attributed text rendered from a `texta` payload (from the `texta` package). This block is useful when you need mixed styles within one text node.
+
+```typescript
+texta(props: TextaProps, children?: Block[]): Block
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `texta` | `AttributedTextValue` | ✅ | Attributed text value containing runs and per-style metadata |
+| `align` | `'left' \| 'center' \| 'right' \| 'start' \| 'end'` | | Horizontal alignment anchor |
+| `baseline` | `'top' \| 'middle' \| 'bottom' \| 'alphabetic' \| 'hanging'` | | Vertical baseline anchor |
+| `fill` | `FillStyle` | | Default fill fallback when a run style has no `fill` |
+| `stroke` | `FillStyle` | | Default stroke fallback when a run style has no `stroke` |
+| `strokeWidth` | `number` | | Default stroke width fallback |
+| `font` | `string` | | Default full CSS font fallback |
+| `fontSize` | `number` | | Default font size fallback |
+| `lineHeight` | `number` | | Default line-height fallback |
+
+```typescript
+import { texta } from 'vitrine';
+import { applyStyle } from 'texta/browser';
+
+let value = {
+  iVersion: 1,
+  rgUnits: 'grapheme',
+  rgStorageMode: 'fastCodeUnit',
+  strText: 'Hello attributed world',
+  rgSegGraphemeToUtf16: [],
+  rgIdStyleRef: new Array('Hello attributed world'.length).fill(1),
+  mpId_StyleEntry: { 1: { fontFamily: 'ui-sans-serif', fontSize: 20, fill: '#111827' } },
+  idStyleDefault: 1
+};
+
+value = applyStyle(value, 6, 16, { fill: '#2563eb', fontWeight: '700' }, 'merge');
+
+texta({ x: 20, y: 40, texta: value, baseline: 'top' });
+```
+
+---
+
 ### 3.8 `image`
 
 A raster image drawn to the canvas.

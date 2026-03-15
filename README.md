@@ -13,7 +13,7 @@ Explore 12+ interactive examples including data visualization, productivity apps
 
 ✅ **Immediate Mode Rendering** — No retained scene graph; the visual hierarchy is re-described each frame  
 ✅ **Declarative DSL** — Pure function-based API for describing visual hierarchies  
-✅ **Rich Primitives** — Rectangle, Circle, Ellipse, Line, Arc, Path, Text, Image  
+✅ **Rich Primitives** — Rectangle, Circle, Ellipse, Line, Arc, Path, Text, Texta, Image  
 ✅ **Interactive Events** — Click, hover, drag, tooltips with transform-aware hit testing  
 ✅ **High Performance** — Frustum culling, optimized for 10k+ blocks at 60 FPS  
 ✅ **Hierarchical Transforms** — Nested coordinate spaces with full 2D affine matrices  
@@ -149,6 +149,7 @@ path({ x, y, pathData, fill, stroke, ... })
 
 // Content
 text({ x, y, text, fontSize, font, fill, align, ... })
+texta({ x, y, texta, align, baseline, fill, ... })
 image({ x, y, src, dx, dy, ... })
 
 // Containers
@@ -196,6 +197,7 @@ Try the live demos on GitHub Pages:
 - **[Basic](https://frouaix.github.io/vitrine/basic.html)** — Shapes and hierarchy
 - **[Events](https://frouaix.github.io/vitrine/events.html)** — Click, hover, drag
 - **[Primitives](https://frouaix.github.io/vitrine/primitives.html)** — All primitive types
+- **[Texta](https://frouaix.github.io/vitrine/texta.html)** — Attributed text rendering examples
 - **[Performance](https://frouaix.github.io/vitrine/performance.html)** — 10k+ blocks stress test
 
 Or run locally with `pnpm dev` (opens the gallery at localhost:8080).

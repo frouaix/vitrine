@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine – Markdown Renderer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: ui-sans-serif, sans-serif;
+      background: #f3f4f7;
+      color: #1e293b;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #d1d5db;
+      flex-shrink: 0;
+    }
+
+    #toolbar .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      margin-right: 4px;
+    }
+
+    #toolbar button {
+      padding: 4px 12px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      color: #334155;
+      transition: background 0.1s;
+    }
+    #toolbar button:hover { background: #e2e8f0; }
+
+    #perf {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #bench {
+      font-size: 12px;
+      color: #334155;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      max-width: 48vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Main split pane ── */
+    #main {
+      display: flex;
+      height: calc(100vh - 45px);
+    }
+
+    #editor-pane {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #d1d5db;
+      background: #ffffff;
+    }
+
+    #editor-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #md-input {
+      flex: 1;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 16px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #ffffff;
+    }
+
+    #preview-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    #preview-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #canvas-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #preview-canvas {
+      display: block;
+    }
+
+    /* ── Page nav ── */
+    .page-nav {
+      display: none; /* hidden when embedded; shown via the nav below */
+    }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-top: 1px solid #c9ced6;
+      background: #f3f4f7;
+      font-size: 14px;
+    }
+
+    .bottom-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toolbar">
+    <span class="label">Samples:</span>
+    <button id="btn-basics">1 – Basics</button>
+    <button id="btn-code">2 – Code &amp; quoting</button>
+    <button id="btn-lists">3 – Lists</button>
+    <button id="btn-tables">4 – Tables</button>
+    <button id="btn-texta-doc">5 – TEXTA_MARKDOWN.md</button>
+    <button id="btn-benchmark">Benchmark 5s</button>
+    <span id="bench">—</span>
+    <span id="perf">—</span>
+  </div>
+
+  <div id="main">
+    <div id="editor-pane">
+      <div class="pane-title">Markdown source</div>
+      <textarea id="md-input" title="Markdown source" placeholder="Enter markdown here…" spellcheck="false"></textarea>
+    </div>
+    <div id="preview-pane">
+      <div class="pane-title">Vitrine texta() preview</div>
+      <div id="canvas-wrap">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="texta.html">← Texta</a>
+    <a href="tables.html">Tables →</a>
+  </nav>
+
+  <script type="module">
+    import { ImmediateRenderer, group, rectangle, text, texta as textaBlock } from 'vitrine';
+    import { parseMarkdown, markdownThemeDefault } from 'texta/markdown';
+    import { transformSemanticToRender } from '../texta/src/theming.ts';
+    import { getRgRenderBridgeRun } from 'texta/browser';
+    import { ReferenceTableLayoutEngine } from 'vitrine-tables';
+    import {
+      buildVitrineBlocksFromTableLayout,
+      createVitrineTableCellMeasurer,
+      createVitrineTableRenderDelegate
+    } from 'vitrine-tables-adapter';
+    import textaMarkdownDoc from '../texta/docs/TEXTA_MARKDOWN.md?raw';
+
+    // ── Sample payloads ──────────────────────────────────────────────────────
+
+    const SAMPLE_BASICS = `# Heading 1
+
+## Heading 2
+
+### Heading 3
+
+Plain paragraph text. The renderer handles **bold**, *italic*, and ***bold italic*** inline spans, preserving run boundaries across style transitions.
+
+Another paragraph demonstrating that blank lines produce visual spacing.`;
+
+    const SAMPLE_CODE = `## Code & quoting
+
+Use \`inline code\` for short snippets within a sentence.
+
+> Blockquotes are rendered with muted italic style, suitable for pull-quotes or epigraphs.
+
+A strikethrough like ~~deprecated API~~ flags removed content.
+
+---
+
+\`\`\`
+function greet(name) {
+  return "Hello, " + name;
+}
+\`\`\`
+
+Code blocks preserve monospace formatting and a light background.`;
+
+    const SAMPLE_LISTS = `## Shopping list
+
+- Apples
+- **Oranges** (bold item)
+- *Milk* (italic item)
+
+## Steps
+
+1. Clone the repository
+2. Run \`pnpm install\`
+3. Start with \`pnpm dev\`
+
+### Mixed styles in list
+
+- ~~Remove this item~~
+- Keep ***this important item***
+- Plain item with \`code\``;
+
+  const SAMPLE_TABLES = `## Team dashboard
+
+The table below is rendered through vitrine-tables + adapter.
+
+| Name | Role | Status |
+| :--- | :--- | ---: |
+| Ariane Kline | Staff Engineer | Active |
+| Jon Lee | Product Manager | On Leave |
+| Ravi Patel | Designer | Active |
+
+### Roadmap
+
+| Track | Owner | Summary |
+| --- | --- | --- |
+| Core Runtime | Francois | Stabilize renderer extension hooks and baseline diagnostics. |
+| Tables | Team | Introduce table engine + adapter and validate markdown integration. |`;
+
+  const SAMPLE_TEXTA_DOC = textaMarkdownDoc;
+
+    // ── Renderer setup ───────────────────────────────────────────────────────
+
+    const canvas = document.getElementById('preview-canvas');
+    const wrap = document.getElementById('canvas-wrap');
+    const textarea = document.getElementById('md-input');
+    const perfEl = document.getElementById('perf');
+    const benchEl = document.getElementById('bench');
+    const benchmarkButton = document.getElementById('btn-benchmark');
+
+    let dxCanvas = wrap.clientWidth || 600;
+    let dyCanvas = wrap.clientHeight || 600;
+
+    const renderer = new ImmediateRenderer({
+      canvas,
+      width: dxCanvas,
+      height: dyCanvas,
+      enableCameraControls: true
+    });
+
+    const tableEngine = new ReferenceTableLayoutEngine();
+    const tableMeasurer = createVitrineTableCellMeasurer();
+    const tableDelegate = createVitrineTableRenderDelegate({
+      insetX: 8,
+      insetY: 4,
+      clipCellContent: true,
+      frameStroke: '#c3cedd',
+      frameStrokeWidth: 1
+    });
+
+    const tableInsets = { x: 8, y: 4 };
+
+    function getMeasureContext() {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return null;
+      }
+      return ctx;
+    }
+
+    function measureTextWidth(ctx, stText, font) {
+      const prevFont = ctx.font;
+      if (font) {
+        ctx.font = font;
+      }
+      const width = ctx.measureText(stText).width;
+      ctx.font = prevFont;
+      return width;
+    }
+
+    function measureTextaHeight(value, dx, lineHeightDefault) {
+      const ctx = getMeasureContext();
+      if (!ctx) {
+        return lineHeightDefault;
+      }
+
+      const runs = getRgRenderBridgeRun(value);
+      if (runs.length === 0) {
+        return lineHeightDefault;
+      }
+
+      const mpStyleById = value.mpId_StyleEntry ?? {};
+      const styleDefault = mpStyleById[value.idStyleDefault] ?? {};
+
+      const getFontSize = (style) => style.fontSize ?? styleDefault.fontSize ?? 16;
+      const getLineHeight = (style) => {
+        const fontSize = getFontSize(style);
+        return style.lineHeight ?? lineHeightDefault ?? styleDefault.lineHeight ?? fontSize * 1.4;
+      };
+
+      const getFont = (style) => {
+        const fontFamily = style.fontFamily ?? styleDefault.fontFamily ?? 'ui-sans-serif, sans-serif';
+        const fontStyle = style.fontStyle ?? styleDefault.fontStyle ?? 'normal';
+        const fontWeight = style.fontWeight ?? styleDefault.fontWeight ?? 'normal';
+        const fontSize = getFontSize(style);
+        return `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+      };
+
+      const lineSegments = [[]];
+      for (const run of runs) {
+        const style = mpStyleById[run.idStyle] ?? styleDefault;
+        const parts = run.strSlice.split('\n');
+        for (let i = 0; i < parts.length; i += 1) {
+          if (parts[i].length > 0) {
+            lineSegments[lineSegments.length - 1].push({ text: parts[i], style });
+          }
+          if (i < parts.length - 1) {
+            lineSegments.push([]);
+          }
+        }
+      }
+
+      const finalLineSegments = [];
+      for (const segs of lineSegments) {
+        const atoms = [];
+        for (const seg of segs) {
+          const parts = seg.text.split(' ');
+          for (let i = 0; i < parts.length; i += 1) {
+            const token = i < parts.length - 1 ? `${parts[i]} ` : parts[i];
+            if (token.length > 0) {
+              atoms.push({ text: token, style: seg.style });
+            }
+          }
+        }
+
+        const visualLines = [[]];
+        let xCur = 0;
+        for (const atom of atoms) {
+          const font = getFont(atom.style);
+          const width = measureTextWidth(ctx, atom.text, font);
+          if (xCur + width > dx && visualLines[visualLines.length - 1].length > 0) {
+            visualLines.push([]);
+            xCur = 0;
+          }
+          visualLines[visualLines.length - 1].push(atom);
+          xCur += width;
+        }
+
+        if (visualLines.length === 0) {
+          finalLineSegments.push([]);
+        } else {
+          for (const line of visualLines) {
+            finalLineSegments.push(line);
+          }
+        }
+      }
+
+      const lineHeights = finalLineSegments.map((line) => {
+        if (line.length === 0) {
+          return lineHeightDefault;
+        }
+        return Math.max(...line.map((seg) => getLineHeight(seg.style)));
+      });
+
+      return lineHeights.reduce((sum, h) => sum + h, 0);
+    }
+
+    const PADDING = 24;
+
+    // ── Render loop ──────────────────────────────────────────────────────────
+
+    let contentBlocksCurrent = [];
+
+    function measureTextaIntrinsic(value, lineHeightDefault) {
+      const ctx = getMeasureContext();
+      if (!ctx) {
+        return {
+          minWidth: 24,
+          maxWidth: 40,
+          minHeight: lineHeightDefault
+        };
+      }
+
+      const runs = getRgRenderBridgeRun(value);
+      if (runs.length === 0) {
+        return {
+          minWidth: 24,
+          maxWidth: 40,
+          minHeight: lineHeightDefault
+        };
+      }
+
+      const mpStyleById = value.mpId_StyleEntry ?? {};
+      const styleDefault = mpStyleById[value.idStyleDefault] ?? {};
+
+      const getFontSize = (style) => style.fontSize ?? styleDefault.fontSize ?? 16;
+      const getLineHeight = (style) => {
+        const fontSize = getFontSize(style);
+        return style.lineHeight ?? lineHeightDefault ?? styleDefault.lineHeight ?? fontSize * 1.4;
+      };
+      const getFont = (style) => {
+        const fontFamily = style.fontFamily ?? styleDefault.fontFamily ?? 'ui-sans-serif, sans-serif';
+        const fontStyle = style.fontStyle ?? styleDefault.fontStyle ?? 'normal';
+        const fontWeight = style.fontWeight ?? styleDefault.fontWeight ?? 'normal';
+        const fontSize = getFontSize(style);
+        return `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+      };
+
+      const lineSegments = [[]];
+      for (const run of runs) {
+        const style = mpStyleById[run.idStyle] ?? styleDefault;
+        const parts = run.strSlice.split('\n');
+        for (let i = 0; i < parts.length; i += 1) {
+          if (parts[i].length > 0) {
+            lineSegments[lineSegments.length - 1].push({ text: parts[i], style });
+          }
+          if (i < parts.length - 1) {
+            lineSegments.push([]);
+          }
+        }
+      }
+
+      let minWidth = 0;
+      let maxWidth = 0;
+      let minHeight = 0;
+
+      for (const line of lineSegments) {
+        if (line.length === 0) {
+          minHeight += lineHeightDefault;
+          continue;
+        }
+
+        let lineWidth = 0;
+        let lineHeight = lineHeightDefault;
+        for (const seg of line) {
+          const font = getFont(seg.style);
+          lineWidth += measureTextWidth(ctx, seg.text, font);
+          lineHeight = Math.max(lineHeight, getLineHeight(seg.style));
+
+          const words = seg.text.split(' ').filter((w) => w.length > 0);
+          if (words.length === 0) {
+            minWidth = Math.max(minWidth, measureTextWidth(ctx, seg.text, font));
+          } else {
+            for (const word of words) {
+              minWidth = Math.max(minWidth, measureTextWidth(ctx, word, font));
+            }
+          }
+        }
+
+        maxWidth = Math.max(maxWidth, lineWidth);
+        minHeight += lineHeight;
+      }
+
+      return {
+        minWidth: Math.max(24, minWidth),
+        maxWidth: Math.max(40, maxWidth),
+        minHeight: Math.max(lineHeightDefault, minHeight)
+      };
+    }
+
+    function parseMarkdownToRenderNoCache(markdown, stageTiming = null) {
+      const tParseStart = performance.now();
+      const semantic = parseMarkdown(markdown);
+      const tParseEnd = performance.now();
+      const valueRender = transformSemanticToRender(semantic, markdownThemeDefault);
+      const tTransformEnd = performance.now();
+
+      if (stageTiming) {
+        stageTiming.parseMs += tParseEnd - tParseStart;
+        stageTiming.transformMs += tTransformEnd - tParseEnd;
+      }
+
+      return valueRender;
+    }
+
+    function makeTableCellContent(stText, isHeader = false, stageTiming = null) {
+      const source = isHeader ? `**${stText}**` : stText;
+      const value = parseMarkdownToRenderNoCache(source, stageTiming);
+      const lineHeight = isHeader ? 21 : 20;
+      const intrinsic = measureTextaIntrinsic(value, lineHeight);
+      return {
+        intrinsicSize: {
+          minWidth: intrinsic.minWidth + tableInsets.x * 2,
+          maxWidth: intrinsic.maxWidth + tableInsets.x * 2,
+          minHeight: intrinsic.minHeight + tableInsets.y * 2
+        },
+        measureHeight: (contentWidth) => measureTextaHeight(value, contentWidth, lineHeight),
+        renderBlocks: ({ contentWidth, contentHeight }) => [
+          textaBlock({
+            texta: value,
+            baseline: 'top',
+            lineHeight,
+            dx: contentWidth,
+            // clip in Y is handled by the delegate's clip wrapper
+            y: 0,
+            x: 0
+          })
+        ]
+      };
+    }
+
+    function parseTableCells(line) {
+      const trimmed = line.trim();
+      if (!trimmed.includes('|')) return null;
+      const raw = trimmed.replace(/^\|/, '').replace(/\|$/, '');
+      const cells = raw.split('|').map((cell) => cell.trim());
+      return cells.length > 0 ? cells : null;
+    }
+
+    function isTableAlignmentRow(line) {
+      const cells = parseTableCells(line);
+      if (!cells || cells.length === 0) return false;
+      return cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+    }
+
+    function isTableStart(lines, startIndex) {
+      if (startIndex + 1 >= lines.length) return false;
+      const headerCells = parseTableCells(lines[startIndex]);
+      return !!headerCells && isTableAlignmentRow(lines[startIndex + 1]);
+    }
+
+    function parseTableBlock(lines, startIndex, stageTiming = null) {
+      if (!isTableStart(lines, startIndex)) {
+        return null;
+      }
+
+      const headerCells = parseTableCells(lines[startIndex]);
+
+      let i = startIndex + 2;
+      const bodyRows = [];
+      while (i < lines.length) {
+        if (lines[i].trim() === '') break;
+        const rowCells = parseTableCells(lines[i]);
+        if (!rowCells || isTableAlignmentRow(lines[i])) break;
+        bodyRows.push(rowCells);
+        i += 1;
+      }
+
+      const colCount = Math.max(
+        headerCells.length,
+        ...bodyRows.map((row) => row.length),
+        1
+      );
+
+      const normalizeRow = (row) => {
+        const out = row.slice(0, colCount);
+        while (out.length < colCount) out.push('');
+        return out;
+      };
+
+      const normalizedHeader = normalizeRow(headerCells);
+      const normalizedBody = bodyRows.map(normalizeRow);
+
+      const headerCellEntries = normalizedHeader.map((value, c) => ({
+        id: `h-0-${c}`,
+        row: 0,
+        col: c,
+        content: makeTableCellContent(value, true, stageTiming)
+      }));
+
+      const bodyCellEntries = normalizedBody.flatMap((row, r) => row.map((value, c) => ({
+        id: `b-${r}-${c}`,
+        row: r,
+        col: c,
+        content: makeTableCellContent(value, false, stageTiming)
+      })));
+
+      // Size columns proportionally to actual measured intrinsic content widths.
+      const maxWidthByCol = new Array(colCount).fill(1);
+      for (const cell of [...headerCellEntries, ...bodyCellEntries]) {
+        const maxWidth = cell.content?.intrinsicSize?.maxWidth ?? 1;
+        maxWidthByCol[cell.col] = Math.max(maxWidthByCol[cell.col], maxWidth);
+      }
+
+      const tableModel = {
+        id: `md-table-${startIndex}`,
+        cellSpacing: 6,
+        columns: Array.from({ length: colCount }, (_, c) => ({
+          id: `c-${c}`,
+          width: { value: Math.max(1, Math.round(maxWidthByCol[c])), unit: 'fr' },
+          minWidth: 88
+        })),
+        header: {
+          rows: [{ id: 'h0', minHeight: 40 }],
+          cells: headerCellEntries
+        },
+        body: {
+          rows: normalizedBody.map((_, r) => ({ id: `b-${r}`, minHeight: 38 })),
+          cells: bodyCellEntries
+        }
+      };
+
+      return { tableModel, nextIndex: i };
+    }
+
+    function getCellMetaMaps(tableModel) {
+      const mapContent = {};
+      const mapRowAbs = {};
+      const mapRowSpan = {};
+      let rowBase = 0;
+
+      const processSection = (section) => {
+        if (!section) return;
+        for (const cell of section.cells) {
+          mapContent[cell.id] = cell.content;
+          mapRowAbs[cell.id] = rowBase + cell.row;
+          mapRowSpan[cell.id] = Math.max(1, cell.span?.rowSpan ?? 1);
+        }
+        rowBase += section.rows.length;
+      };
+
+      processSection(tableModel.header);
+      processSection(tableModel.body);
+      processSection(tableModel.footer);
+
+      return { mapContent, mapRowAbs, mapRowSpan };
+    }
+
+    function applyRowMinHeightsToTable(tableModel, rowMinHeights) {
+      let idx = 0;
+      const applyToSection = (section) => {
+        if (!section) return;
+        section.rows = section.rows.map((row) => {
+          const minHeight = rowMinHeights[idx] ?? row.minHeight ?? 0;
+          idx += 1;
+          return { ...row, minHeight };
+        });
+      };
+      applyToSection(tableModel.header);
+      applyToSection(tableModel.body);
+      applyToSection(tableModel.footer);
+    }
+
+    function getPreferredTableWidth(tableModel) {
+      const spacing = Math.max(0, tableModel.cellSpacing ?? 0);
+      const nCols = tableModel.columns.length;
+      const spacingTotal = nCols > 1 ? spacing * (nCols - 1) : 0;
+
+      let colTotal = 0;
+      for (const col of tableModel.columns) {
+        const fromFrWeight = col.width?.unit === 'fr' ? Math.max(1, col.width.value) : 0;
+        const fromPx = col.width?.unit === 'px' ? Math.max(0, col.width.value) : 0;
+        const preferred = Math.max(fromFrWeight, fromPx, col.minWidth ?? 0);
+        colTotal += preferred;
+      }
+
+      return colTotal + spacingTotal;
+    }
+
+    function layoutTableWithContentFitting(tableModel, contentWidth) {
+      const availableWidth = Math.max(contentWidth, getPreferredTableWidth(tableModel));
+      let layout = tableEngine.layout(tableModel, { availableWidth }, tableMeasurer);
+
+      for (let iter = 0; iter < 4; iter += 1) {
+        const { mapContent, mapRowAbs, mapRowSpan } = getCellMetaMaps(tableModel);
+        const rowMinHeights = layout.rows.map((row) => row.height);
+        let changed = false;
+
+        for (const frame of layout.cells) {
+          const content = mapContent[frame.cellId];
+          if (!content || typeof content.measureHeight !== 'function') {
+            continue;
+          }
+
+          const contentWidthInner = Math.max(8, frame.width - tableInsets.x * 2);
+          const neededInnerHeight = content.measureHeight(contentWidthInner);
+          const neededHeight = neededInnerHeight + tableInsets.y * 2;
+
+          const rowAbs = mapRowAbs[frame.cellId];
+          const rowSpan = mapRowSpan[frame.cellId] ?? 1;
+          const perRowNeeded = neededHeight / rowSpan;
+
+          for (let r = rowAbs; r < rowAbs + rowSpan && r < rowMinHeights.length; r += 1) {
+            if (perRowNeeded > rowMinHeights[r] + 0.5) {
+              rowMinHeights[r] = perRowNeeded;
+              changed = true;
+            }
+          }
+        }
+
+        if (!changed) {
+          break;
+        }
+
+        applyRowMinHeightsToTable(tableModel, rowMinHeights);
+        layout = tableEngine.layout(tableModel, { availableWidth }, tableMeasurer);
+      }
+
+      return layout;
+    }
+
+    function buildTableBackgroundBlocks(tableModel, layout) {
+      const headerCellIds = new Set((tableModel.header?.cells ?? []).map((cell) => cell.id));
+      return layout.cells.map((frame) => rectangle({
+        x: frame.x,
+        y: frame.y,
+        dx: frame.width,
+        dy: frame.height,
+        fill: headerCellIds.has(frame.cellId) ? '#e8eef8' : '#ffffff'
+      }));
+    }
+
+    function buildMarkdownBlocks(markdown, stageTiming = null) {
+      const contentWidth = Math.max(220, dxCanvas - PADDING * 2);
+      const lines = markdown.split('\n');
+      const blocks = [];
+      let y = 0;
+      let i = 0;
+
+      while (i < lines.length) {
+        const table = parseTableBlock(lines, i, stageTiming);
+        if (table) {
+          const tLayoutStart = performance.now();
+          const layout = layoutTableWithContentFitting(table.tableModel, contentWidth);
+          const tLayoutEnd = performance.now();
+          if (stageTiming) {
+            stageTiming.layoutMs += tLayoutEnd - tLayoutStart;
+          }
+          const bgBlocks = buildTableBackgroundBlocks(table.tableModel, layout);
+          const tableBlocks = buildVitrineBlocksFromTableLayout(table.tableModel, layout, tableDelegate, {
+            rootGroupProps: { x: PADDING, y: PADDING + y }
+          });
+
+          blocks.push(group({ x: PADDING, y: PADDING + y }, bgBlocks));
+          blocks.push(tableBlocks);
+          y += layout.height + 20;
+          i = table.nextIndex;
+          continue;
+        }
+
+        let j = i;
+        while (j < lines.length && !isTableStart(lines, j)) {
+          j += 1;
+        }
+
+        const chunk = lines.slice(i, j).join('\n');
+        if (chunk.trim().length > 0) {
+          const mdValue = parseMarkdownToRenderNoCache(chunk, stageTiming);
+          const chunkHeight = measureTextaHeight(mdValue, contentWidth, 22);
+          blocks.push(textaBlock({
+            x: PADDING,
+            y: PADDING + y,
+            texta: mdValue,
+            baseline: 'top',
+            dx: contentWidth
+          }));
+          y += chunkHeight + 10;
+        } else {
+          y += 18;
+        }
+
+        i = j;
+      }
+
+      return blocks;
+    }
+
+    function renderCurrentPreview() {
+      if (contentBlocksCurrent.length === 0) {
+        return;
+      }
+      const scene = renderer.camera([
+        group({}, contentBlocksCurrent)
+      ]);
+      renderer.render(scene);
+      const stats = renderer.getPerformanceStats();
+      perfEl.textContent = `${stats.fps.toFixed(0)} fps · ${stats.blocksRendered} blocks`;
+    }
+
+    function recomputeAndRender() {
+      contentBlocksCurrent = buildMarkdownBlocks(textarea.value);
+      renderCurrentPreview();
+    }
+
+    function median(rgValues) {
+      if (rgValues.length === 0) {
+        return 0;
+      }
+      const sorted = rgValues.slice().sort((a, b) => a - b);
+      const iMid = Math.floor(sorted.length / 2);
+      if (sorted.length % 2 === 1) {
+        return sorted[iMid];
+      }
+      return (sorted[iMid - 1] + sorted[iMid]) / 2;
+    }
+
+    let isBenchmarkRunning = false;
+
+    async function runBenchmark(durationMs = 5000) {
+      if (isBenchmarkRunning) {
+        return;
+      }
+
+      isBenchmarkRunning = true;
+      benchmarkButton.disabled = true;
+      benchEl.textContent = `Running benchmark for ${Math.round(durationMs / 1000)}s...`;
+
+      const markdown = textarea.value;
+      const tDeadline = performance.now() + durationMs;
+      const rgTotalMs = [];
+      const rgParseMs = [];
+      const rgTransformMs = [];
+      const rgLayoutMs = [];
+      const rgRenderMs = [];
+
+      while (performance.now() < tDeadline) {
+        const stageTiming = { parseMs: 0, transformMs: 0, layoutMs: 0 };
+
+        const tTotalStart = performance.now();
+        const blocks = buildMarkdownBlocks(markdown, stageTiming);
+        const tRenderStart = performance.now();
+        const scene = renderer.camera([group({}, blocks)]);
+        renderer.render(scene);
+        const tRenderEnd = performance.now();
+
+        rgTotalMs.push(tRenderEnd - tTotalStart);
+        rgParseMs.push(stageTiming.parseMs);
+        rgTransformMs.push(stageTiming.transformMs);
+        rgLayoutMs.push(stageTiming.layoutMs);
+        rgRenderMs.push(tRenderEnd - tRenderStart);
+
+        if (rgTotalMs.length % 20 === 0) {
+          await new Promise((resolve) => requestAnimationFrame(resolve));
+        }
+      }
+
+      benchEl.textContent = `n=${rgTotalMs.length} median ms: total ${median(rgTotalMs).toFixed(2)} | parse ${median(rgParseMs).toFixed(2)} | transform ${median(rgTransformMs).toFixed(2)} | layout ${median(rgLayoutMs).toFixed(2)} | render ${median(rgRenderMs).toFixed(2)}`;
+
+      recomputeAndRender();
+      benchmarkButton.disabled = false;
+      isBenchmarkRunning = false;
+    }
+
+    textarea.addEventListener('input', recomputeAndRender);
+    textarea.addEventListener('change', recomputeAndRender);
+    canvas.addEventListener('wheel', () => {
+      // Camera state is updated by the renderer's wheel handler; rerender to
+      // immediately show pan/zoom changes in this immediate-mode demo.
+      renderCurrentPreview();
+    });
+
+    // ── Resize handling ──────────────────────────────────────────────────────
+
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        dxCanvas = Math.floor(entry.contentRect.width);
+        dyCanvas = Math.floor(entry.contentRect.height);
+        if (dxCanvas > 0 && dyCanvas > 0) {
+          renderer.resize(dxCanvas, dyCanvas);
+          recomputeAndRender();
+        }
+      }
+    });
+    ro.observe(wrap);
+
+    // ── Sample buttons ───────────────────────────────────────────────────────
+
+    function loadSample(text) {
+      textarea.value = text;
+      recomputeAndRender();
+    }
+
+    document.getElementById('btn-basics').addEventListener('click', () => loadSample(SAMPLE_BASICS));
+    document.getElementById('btn-code').addEventListener('click', () => loadSample(SAMPLE_CODE));
+    document.getElementById('btn-lists').addEventListener('click', () => loadSample(SAMPLE_LISTS));
+    document.getElementById('btn-tables').addEventListener('click', () => loadSample(SAMPLE_TABLES));
+    document.getElementById('btn-texta-doc').addEventListener('click', () => loadSample(SAMPLE_TEXTA_DOC));
+    benchmarkButton.addEventListener('click', () => {
+      runBenchmark(5000);
+    });
+
+    // ── Initial load ─────────────────────────────────────────────────────────
+
+    loadSample(SAMPLE_BASICS);
+  </script>
+</body>
+</html>

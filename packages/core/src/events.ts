@@ -2,7 +2,7 @@
 
 // Event system for handling user interactions
 import { BlockType, type Block, type VitrinePointerEvent } from './core/types.ts';
-import { HitTester, type HitTestResult } from './hit-test.ts';
+import { HitTester, type HitTestLayoutCache, type HitTestResult } from './hit-test.ts';
 import { Matrix2D } from './transform.ts';
 
 const EMPTY_SCENE: Block = {
@@ -42,6 +42,7 @@ export class EventManager {
   private activeTooltip: ActiveTooltip | null = null;
   private pixelRatio: number = 1;
   private sceneTransform: Matrix2D = Matrix2D.identity();
+  private hitTestLayoutCache: HitTestLayoutCache | null = null;
   
   // Store bound event handlers so they can be properly removed
   private boundHandlers: {
@@ -77,6 +78,10 @@ export class EventManager {
 
   setCameraTransform(transform: Matrix2D): void {
     this.sceneTransform = transform;
+  }
+
+  setHitTestLayoutCache(cache: HitTestLayoutCache): void {
+    this.hitTestLayoutCache = cache;
   }
 
   setPixelRatio(ratio: number): void {
@@ -177,7 +182,9 @@ export class EventManager {
         this.portalBlocks[i],
         logicalCoords.x,
         logicalCoords.y,
-        Matrix2D.identity()
+        Matrix2D.identity(),
+        [],
+        this.hitTestLayoutCache ?? undefined
       );
       if (hit) {
         hit.xs = sceneCoords.x;
@@ -193,7 +200,9 @@ export class EventManager {
       this.currentScene,
       logicalCoords.x,
       logicalCoords.y,
-      Matrix2D.identity()
+      Matrix2D.identity(),
+      [],
+      this.hitTestLayoutCache ?? undefined
     );
     if (hit) {
       hit.xs = sceneCoords.x;
@@ -290,7 +299,9 @@ export class EventManager {
         this.portalBlocks[i],
         logicalCoords.x,
         logicalCoords.y,
-        Matrix2D.identity()
+        Matrix2D.identity(),
+        [],
+        this.hitTestLayoutCache ?? undefined
       );
       if (hit) break;
     }
@@ -300,7 +311,9 @@ export class EventManager {
         this.currentScene,
         logicalCoords.x,
         logicalCoords.y,
-        Matrix2D.identity()
+        Matrix2D.identity(),
+        [],
+        this.hitTestLayoutCache ?? undefined
       );
     }
 
