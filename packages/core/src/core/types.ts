@@ -134,7 +134,8 @@ export enum BlockType {
   Arc = 'arc',
   Group = 'group',
   Layer = 'layer',
-  Portal = 'portal'
+  Portal = 'portal',
+  ContentSized = 'content-sized'
 }
 
 export type BlockPropsByType = {
@@ -150,6 +151,7 @@ export type BlockPropsByType = {
   [BlockType.Group]: GroupProps;
   [BlockType.Layer]: LayerProps;
   [BlockType.Portal]: PortalProps;
+  [BlockType.ContentSized]: ContentSizedProps;
 };
 
 export type BlockForType<T extends BlockType = BlockType> = {
@@ -253,6 +255,17 @@ export interface LayerProps extends BaseBlockProps {
 export interface PortalProps extends BaseBlockProps {
   // Portal renders its children in the overlay layer
   // Future: could add targetLayer property for multiple overlay layers
+}
+
+export interface ContentSizedProps extends BaseBlockProps, StrokeProps, FillProps {
+  /** Uniform padding around measured child bounds. */
+  padding?: number;
+  /** Horizontal padding override around measured child bounds. */
+  paddingX?: number;
+  /** Vertical padding override around measured child bounds. */
+  paddingY?: number;
+  /** Optional corner radius for the auto-sized frame. */
+  cornerRadius?: number;
 }
 
 export interface LinkProps extends BaseBlockProps {

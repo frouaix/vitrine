@@ -65,6 +65,7 @@
   <script type="module">
     import {
       ImmediateRenderer,
+      contentSized,
       group,
       line,
       rectangle,
@@ -167,6 +168,38 @@
     });
 
     let frame = 0;
+    let idTextaHovered = null;
+
+    canvas.addEventListener('pointerleave', () => {
+      idTextaHovered = null;
+    });
+
+    function hoverableTexta(id, props) {
+      const x = props.x ?? 0;
+      const y = props.y ?? 0;
+      const textaProps = {
+        ...props,
+        x: 0,
+        y: 0
+      };
+
+      return group({ x, y }, [
+        contentSized({
+          padding: 8,
+          cornerRadius: 6,
+          stroke: idTextaHovered === id ? '#2563eb' : undefined,
+          strokeWidth: 2,
+          onHover: () => {
+            idTextaHovered = id;
+          },
+          onPointerMove: () => {
+            idTextaHovered = id;
+          }
+        }, [
+          textaBlock(textaProps)
+        ])
+      ]);
+    }
 
     function getLiveValue() {
       const pulse = (Math.sin(frame * 0.08) + 1) * 0.5;
@@ -206,18 +239,18 @@
         line({ x1: 0, y1: -92, x2: 0, y2: 92, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
         line({ x1: -120, y1: 0, x2: 120, y2: 0, stroke: '#94a3b8', strokeWidth: 1, lineDash: [4, 4] }),
         text({ x: 0, y: -106, text: 'Anchor', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'middle' }),
-        textaBlock({
+        hoverableTexta('align-left-alpha', {
           texta: createAttributedText('left / alphabetic', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#1f2937' }),
           align: 'left',
           baseline: 'alphabetic'
         }),
-        textaBlock({
+        hoverableTexta('align-center-mid', {
           y: 26,
           texta: createAttributedText('center / middle', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#0f766e' }),
           align: 'center',
           baseline: 'middle'
         }),
-        textaBlock({
+        hoverableTexta('align-right-top', {
           y: 52,
           texta: createAttributedText('right / top', { fontFamily: 'ui-sans-serif', fontSize: 16, fill: '#7c2d12' }),
           align: 'right',
@@ -226,22 +259,35 @@
       ]);
 
       const scene = group({}, [
-        rectangle({ dx: 1100, dy: 860, fill: '#edf2f7' }),
+        rectangle({
+          dx: 1100,
+          dy: 860,
+          fill: '#edf2f7',
+          onPointerMove: () => {
+            idTextaHovered = null;
+          }
+        }),
 
-        sectionCard(24, 24, 740, 170, '1) Per-run fonts, weight, and colors', textaBlock({ texta: valueHeadline, baseline: 'top' })),
+        sectionCard(24, 24, 740, 170, '1) Per-run fonts, weight, and colors',
+          hoverableTexta('headline', { texta: valueHeadline, baseline: 'top' })
+        ),
 
-        sectionCard(24, 212, 740, 235, '2) Multiline attributed text', textaBlock({ texta: valueMultiline, baseline: 'top' })),
+        sectionCard(24, 212, 740, 235, '2) Multiline attributed text',
+          hoverableTexta('multiline', { texta: valueMultiline, baseline: 'top' })
+        ),
 
         sectionCard(24, 468, 740, 375, '3) Mixed script — foreground & background colours',
           group({}, [
             text({ x: 0, y: 0, text: 'Foreground only:', fontSize: 12, fill: '#64748b', baseline: 'top', font: '500 12px ui-sans-serif' }),
-            textaBlock({ y: 16, texta: valueMixedScript, baseline: 'top' }),
+            hoverableTexta('mixed-fg', { y: 16, texta: valueMixedScript, baseline: 'top' }),
             text({ x: 0, y: 158, text: 'Background + foreground:', fontSize: 12, fill: '#64748b', baseline: 'top', font: '500 12px ui-sans-serif' }),
-            textaBlock({ y: 174, texta: valueMixedScriptBg, baseline: 'top' })
+            hoverableTexta('mixed-bg', { y: 174, texta: valueMixedScriptBg, baseline: 'top' })
           ])
         ),
 
-        sectionCard(784, 24, 292, 196, '4) Animated style updates', textaBlock({ texta: liveValue, baseline: 'top', dx: 256 })),
+        sectionCard(784, 24, 292, 196, '4) Animated style updates',
+          hoverableTexta('animated', { texta: liveValue, baseline: 'top', dx: 256 })
+        ),
 
         sectionCard(784, 240, 292, 493, '5) Alignment and baseline', alignmentGuide)
       ]);

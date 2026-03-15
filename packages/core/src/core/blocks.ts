@@ -9,7 +9,7 @@ import type {
 } from './types.ts';
 import { BlockType } from './types.ts';
 
-type ContainerBlockType = BlockType.Group | BlockType.Layer | BlockType.Portal;
+type ContainerBlockType = BlockType.Group | BlockType.Layer | BlockType.Portal | BlockType.ContentSized;
 type LeafBlockType = Exclude<BlockType, ContainerBlockType>;
 
 export function block<T extends ContainerBlockType>(
@@ -80,6 +80,10 @@ export function layer(props: BlockPropsByType[BlockType.Layer], children: Block[
 
 export function portal(props: BlockPropsByType[BlockType.Portal], children: Block[]): BlockOfType<BlockType.Portal> {
   return block(BlockType.Portal, props, children);
+}
+
+export function contentSized(props: BlockPropsByType[BlockType.ContentSized], children: Block[]): BlockOfType<BlockType.ContentSized> {
+  return block(BlockType.ContentSized, props, children);
 }
 
 /** Convenience factory: wraps children in a group that opens `href` in a new tab on click. */

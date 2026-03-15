@@ -8,7 +8,7 @@ import { Canvas2DContext } from './context.ts';
 import { getRgRenderBridgeRun } from 'texta/browser';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
-import { HitTester, type HitTestResult } from '../hit-test.ts';
+import { HitTester, type HitTestLayoutCache, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
 import { group, rectangle, text, portal } from './blocks.ts';
 
@@ -55,6 +55,7 @@ export class ImmediateRenderer {
   private cameraY: number = 0;
   private cameraZoom: number = 1;
   private portalBlocks: Array<{ block: Block; transform: Matrix2D }> = [];
+  private hitTestLayoutCache: HitTestLayoutCache = { boundsByBlock: new WeakMap() };
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
@@ -206,6 +207,9 @@ export class ImmediateRenderer {
   render(block: Block): void {
     const startTime = performance.now();
 
+    // Layout cache is valid for exactly one rendered frame.
+    this.hitTestLayoutCache = { boundsByBlock: new WeakMap() };
+
     // Clear portal collection
     this.portalBlocks = [];
 
@@ -222,13 +226,13 @@ export class ImmediateRenderer {
         // Test portals first for debug hover
         let hit: HitTestResult | null = null;
         for (let i = this.portalBlocks.length - 1; i >= 0; i--) {
-          hit = HitTester.hitTest(this.portalBlocks[i].block, logicalX, logicalY, Matrix2D.identity());
+          hit = HitTester.hitTest(this.portalBlocks[i].block, logicalX, logicalY, Matrix2D.identity(), [], this.hitTestLayoutCache);
           if (hit) break;
         }
         
         // Fall back to main scene
         if (!hit) {
-          hit = HitTester.hitTest(block, logicalX, logicalY, Matrix2D.identity());
+          hit = HitTester.hitTest(block, logicalX, logicalY, Matrix2D.identity(), [], this.hitTestLayoutCache);
         }
         
         this.debugHoveredBlock = hit?.block || null;
@@ -258,6 +262,7 @@ export class ImmediateRenderer {
       // Pass portal blocks to event manager for layer-aware hit testing
       const portalContainers = this.portalBlocks.map(p => p.block);
       this.eventManager.setPortalBlocks(portalContainers);
+      this.eventManager.setHitTestLayoutCache(this.hitTestLayoutCache);
       
       // Camera transform is synced to EventManager via camera() method.
       // For non-camera scenes, still account for pixelRatio.
@@ -382,6 +387,11 @@ export class ImmediateRenderer {
         this.context.transformStack.restore();
         this.context.restore();
         return;
+      case BlockType.ContentSized:
+        this.renderContentSized(block as BlockOfType<BlockType.ContentSized>);
+        this.context.transformStack.restore();
+        this.context.restore();
+        return;
       case BlockType.Group:
       case BlockType.Layer: {
         // Apply blend mode for Layer blocks
@@ -422,6 +432,104 @@ export class ImmediateRenderer {
 
     this.context.transformStack.restore();
     this.context.restore();
+  }
+
+  private getLocalTransformFromProps(props: any): Matrix2D {
+    let transform = Matrix2D.identity();
+    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
+
+    if (x !== undefined || y !== undefined) {
+      transform = transform.translate(x ?? 0, y ?? 0);
+    }
+    if (rotation !== undefined) {
+      transform = transform.rotate(rotation);
+    }
+    if (scaleX !== undefined || scaleY !== undefined) {
+      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
+    }
+    if (skewX !== undefined || skewY !== undefined) {
+      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
+    }
+
+    return transform;
+  }
+
+  private transformBounds(bounds: { x: number; y: number; width: number; height: number }, transform: Matrix2D): { x: number; y: number; width: number; height: number } {
+    const corners = [
+      transform.transformPoint(bounds.x, bounds.y),
+      transform.transformPoint(bounds.x + bounds.width, bounds.y),
+      transform.transformPoint(bounds.x, bounds.y + bounds.height),
+      transform.transformPoint(bounds.x + bounds.width, bounds.y + bounds.height)
+    ];
+
+    const xMin = Math.min(...corners.map((c) => c.x));
+    const xMax = Math.max(...corners.map((c) => c.x));
+    const yMin = Math.min(...corners.map((c) => c.y));
+    const yMax = Math.max(...corners.map((c) => c.y));
+
+    return {
+      x: xMin,
+      y: yMin,
+      width: xMax - xMin,
+      height: yMax - yMin
+    };
+  }
+
+  private renderContentSized(block: BlockOfType<BlockType.ContentSized>): void {
+    const { props, children } = block;
+    if (!children || children.length === 0) {
+      return;
+    }
+
+    for (const child of children) {
+      this.renderBlock(child);
+    }
+
+    const localBoundsChildren = children
+      .map((child) => {
+        const childBoundsLocal = this.hitTestLayoutCache.boundsByBlock.get(child);
+        if (!childBoundsLocal) {
+          return null;
+        }
+        const childTransform = this.getLocalTransformFromProps(child.props);
+        return this.transformBounds(childBoundsLocal, childTransform);
+      })
+      .filter((bounds): bounds is { x: number; y: number; width: number; height: number } => bounds !== null);
+
+    if (localBoundsChildren.length === 0) {
+      return;
+    }
+
+    const xMin = Math.min(...localBoundsChildren.map((b) => b.x));
+    const yMin = Math.min(...localBoundsChildren.map((b) => b.y));
+    const xMax = Math.max(...localBoundsChildren.map((b) => b.x + b.width));
+    const yMax = Math.max(...localBoundsChildren.map((b) => b.y + b.height));
+
+    const padding = props.padding ?? 0;
+    const paddingX = props.paddingX ?? padding;
+    const paddingY = props.paddingY ?? padding;
+
+    const bounds = {
+      x: xMin - paddingX,
+      y: yMin - paddingY,
+      width: xMax - xMin + paddingX * 2,
+      height: yMax - yMin + paddingY * 2
+    };
+
+    this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
+
+    if (props.fill || props.stroke) {
+      this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, {
+        fill: props.fill,
+        stroke: props.stroke,
+        strokeWidth: props.strokeWidth,
+        lineCap: props.lineCap,
+        lineJoin: props.lineJoin,
+        lineDash: props.lineDash,
+        lineDashOffset: props.lineDashOffset,
+        cornerRadius: props.cornerRadius
+      });
+    }
   }
 
   private renderDebugHoverOutline(block: Block): void {
@@ -576,7 +684,55 @@ export class ImmediateRenderer {
 
   private renderText(block: BlockOfType<BlockType.Text>): void {
     const { props } = block;
-    const { text } = props;
+    const { text, fontSize: duFont, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
+
+    let textWidth: number;
+    let textHeight: number;
+    let ascent: number;
+
+    if (this.context.measureText) {
+      const metrics = this.context.measureText(text, props);
+      textWidth = metrics.width;
+      textHeight = metrics.height;
+      ascent = metrics.ascent;
+    } else {
+      const fontSize = duFont ?? 16;
+      const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+      if (dxMax !== undefined) {
+        const singleLineWidth = text.length * fontSize * 0.6;
+        const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
+        textWidth = Math.min(singleLineWidth, dxMax);
+        textHeight = lineCount * duLineHeight;
+      } else {
+        textWidth = text.length * fontSize * 0.6;
+        textHeight = fontSize;
+      }
+      ascent = fontSize;
+    }
+
+    let xOffset = 0;
+    if (align === 'center') {
+      xOffset = -textWidth / 2;
+    } else if (align === 'right' || align === 'end') {
+      xOffset = -textWidth;
+    }
+
+    let yOffset = -ascent;
+    if (baseline === 'top' || baseline === 'hanging') {
+      yOffset = 0;
+    } else if (baseline === 'middle') {
+      yOffset = -textHeight / 2;
+    } else if (baseline === 'bottom') {
+      yOffset = -textHeight;
+    }
+
+    this.hitTestLayoutCache.boundsByBlock.set(block, {
+      x: xOffset,
+      y: yOffset,
+      width: textWidth,
+      height: textHeight
+    });
+
     this.context.drawText(text, 0, 0, props);
   }
 
@@ -748,16 +904,43 @@ export class ImmediateRenderer {
       yLineBaseline = firstAscent * 0.8;
     }
 
+    const getLineStartX = (lineWidth: number): number => {
+      if (align === 'center') {
+        return -lineWidth / 2;
+      }
+      if (align === 'right' || align === 'end') {
+        return -lineWidth;
+      }
+      return 0;
+    };
+
+    const yTop = yLineBaseline - firstAscent;
+    let xMin = 0;
+    let xMax = 0;
+    for (let i = 0; i < lineWidths.length; i++) {
+      const lineWidth = lineWidths[i] ?? 0;
+      const xStart = getLineStartX(lineWidth);
+      if (i === 0) {
+        xMin = xStart;
+        xMax = xStart + lineWidth;
+      } else {
+        xMin = Math.min(xMin, xStart);
+        xMax = Math.max(xMax, xStart + lineWidth);
+      }
+    }
+
+    this.hitTestLayoutCache.boundsByBlock.set(block, {
+      x: xMin,
+      y: yTop,
+      width: Math.max(0, xMax - xMin),
+      height: Math.max(0, totalHeight)
+    });
+
     for (let i = 0; i < lineMetrics.length; i++) {
       const line = lineMetrics[i];
       const lineWidth = lineWidths[i] ?? 0;
 
-      let xRun = 0;
-      if (align === 'center') {
-        xRun = -lineWidth / 2;
-      } else if (align === 'right' || align === 'end') {
-        xRun = -lineWidth;
-      }
+      let xRun = getLineStartX(lineWidth);
 
       for (const seg of line) {
         const { style } = seg.segment;
