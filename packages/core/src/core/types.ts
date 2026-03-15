@@ -205,10 +205,10 @@ export interface TextaProps extends BaseBlockProps {
   texta: AttributedTextValue;
   align?: 'left' | 'center' | 'right' | 'start' | 'end';
   baseline?: 'top' | 'middle' | 'bottom' | 'alphabetic' | 'hanging';
-  /** Optional default fill used when a style run does not define one. */
-  fill?: FillStyle;
-  /** Optional default stroke used when a style run does not define one. */
-  stroke?: FillStyle;
+  /** Optional default fill CSS color string used when a style run does not define one. */
+  fill?: Color;
+  /** Optional default stroke CSS color string used when a style run does not define one. */
+  stroke?: Color;
   /** Optional default stroke width used when a style run does not define one. */
   strokeWidth?: number;
   /** Optional default font used when a style run does not define one. */
