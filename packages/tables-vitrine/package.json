@@ -1,0 +1,31 @@
+{
+  "name": "vitrine-tables-adapter",
+  "version": "0.1.0",
+  "description": "Vitrine adapter for vitrine-tables measurer and render delegate contracts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "vitrine": "workspace:*",
+    "vitrine-tables": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

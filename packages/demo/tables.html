@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Tables Integration Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: ui-sans-serif, sans-serif;
+      background: #eef2f7;
+      color: #0f172a;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #cfd8e3;
+      background: #ffffff;
+    }
+
+    #toolbar .title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1e293b;
+    }
+
+    #toolbar .subtitle {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    #toolbar #perf {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 34%) 1fr;
+      height: calc(100vh - 44px);
+      min-height: 0;
+    }
+
+    #notes {
+      border-right: 1px solid #d6deea;
+      background: #f8fafc;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    #notes h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #0f172a;
+    }
+
+    #notes p {
+      margin: 8px 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    #notes pre {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border: 1px solid #d9e2ec;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow: auto;
+      color: #1e293b;
+    }
+
+    #canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #eef2f7;
+      border-top: 1px solid #cfd8e3;
+      font-size: 14px;
+    }
+
+    .bottom-nav a {
+      text-decoration: none;
+      color: #1a73e8;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <span class="title">Tables Demo</span>
+    <span class="subtitle">vitrine-tables + vitrine-tables-adapter integration patterns</span>
+    <span id="perf">-</span>
+  </div>
+
+  <div id="layout">
+    <section id="notes">
+      <h2>Integration Pattern</h2>
+      <p>Each cell content is a Vitrine block tree with optional intrinsic metrics. The layout engine computes geometry, then the adapter maps frames to renderable blocks.</p>
+      <pre><code>const engine = new ReferenceTableLayoutEngine();
+const measurer = createVitrineTableCellMeasurer();
+const delegate = createVitrineTableRenderDelegate({
+  frameStroke: '#b6c2d2',
+  insetX: 8,
+  insetY: 6
+});
+
+const layout = engine.layout(tableModel, { availableWidth }, measurer);
+const tableBlock = buildVitrineBlocksFromTableLayout(
+  tableModel,
+  layout,
+  delegate,
+  { rootGroupProps: { x: 24, y: 52 } }
+);</code></pre>
+      <p>Try mouse wheel over canvas to pan examples vertically and horizontally.</p>
+    </section>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="markdown.html">&larr; Markdown</a>
+    <a href="performance.html">Performance &rarr;</a>
+  </nav>
+
+  <script type="module">
+    import { ImmediateRenderer, group, rectangle, text } from 'vitrine';
+    import { ReferenceTableLayoutEngine } from 'vitrine-tables';
+    import {
+      buildVitrineBlocksFromTableLayout,
+      createVitrineTableCellMeasurer,
+      createVitrineTableRenderDelegate
+    } from 'vitrine-tables-adapter';
+
+    const canvas = document.getElementById('canvas');
+    const wrap = document.getElementById('canvas-wrap');
+    const perfEl = document.getElementById('perf');
+
+    let dxCanvas = wrap.clientWidth || 1000;
+    let dyCanvas = wrap.clientHeight || 700;
+
+    const renderer = new ImmediateRenderer({
+      canvas,
+      width: dxCanvas,
+      height: dyCanvas,
+      enableCameraControls: true
+    });
+
+    const engine = new ReferenceTableLayoutEngine();
+
+    function estimateTextIntrinsic(stText, fontSize = 13) {
+      const words = stText.split(/\s+/).filter(Boolean);
+      const longestWord = words.reduce((m, w) => Math.max(m, w.length), 0);
+      const maxWidth = Math.max(32, stText.length * fontSize * 0.58);
+      const minWidth = Math.max(24, longestWord * fontSize * 0.58);
+      return {
+        minWidth,
+        maxWidth,
+        minHeight: fontSize * 1.55
+      };
+    }
+
+    function cellText(stText, options = {}) {
+      const fontSize = options.fontSize ?? 13;
+      const fill = options.fill ?? '#1f2937';
+      const fontWeight = options.fontWeight;
+      const lineHeight = options.lineHeight ?? Math.round(fontSize * 1.5);
+
+      return {
+        intrinsicSize: estimateTextIntrinsic(stText, fontSize),
+        renderBlocks: ({ contentWidth, contentHeight }) => [
+          text({
+            text: stText,
+            baseline: 'top',
+            fontSize,
+            lineHeight,
+            fill,
+            fontWeight,
+            dx: contentWidth,
+            dy: contentHeight
+          })
+        ]
+      };
+    }
+
+    function buildEmployeeTable() {
+      return {
+        id: 'tbl-employees',
+        cellSpacing: 6,
+        columns: [
+          { id: 'name', sizingMode: 'fixed', width: { value: 160, unit: 'px' } },
+          { id: 'role', width: { value: 1, unit: 'fr' }, minWidth: 130 },
+          { id: 'status', width: { value: 1, unit: 'fr' }, minWidth: 110 }
+        ],
+        header: {
+          rows: [{ id: 'hr0', minHeight: 34 }],
+          cells: [
+            { id: 'h-name', row: 0, col: 0, content: cellText('Name', { fontWeight: '700' }) },
+            { id: 'h-role', row: 0, col: 1, content: cellText('Role', { fontWeight: '700' }) },
+            { id: 'h-status', row: 0, col: 2, content: cellText('Status', { fontWeight: '700' }) }
+          ]
+        },
+        body: {
+          rows: [{ id: 'br0', minHeight: 30 }, { id: 'br1', minHeight: 30 }, { id: 'br2', minHeight: 30 }],
+          cells: [
+            { id: 'e0n', row: 0, col: 0, content: cellText('Ariane Kline') },
+            { id: 'e0r', row: 0, col: 1, content: cellText('Staff Engineer') },
+            { id: 'e0s', row: 0, col: 2, content: cellText('Active', { fill: '#166534', fontWeight: '600' }) },
+            { id: 'e1n', row: 1, col: 0, content: cellText('Jon Lee') },
+            { id: 'e1r', row: 1, col: 1, content: cellText('Product Manager') },
+            { id: 'e1s', row: 1, col: 2, content: cellText('On Leave', { fill: '#9a3412', fontWeight: '600' }) },
+            { id: 'e2n', row: 2, col: 0, content: cellText('Ravi Patel') },
+            { id: 'e2r', row: 2, col: 1, content: cellText('Designer') },
+            { id: 'e2s', row: 2, col: 2, content: cellText('Active', { fill: '#166534', fontWeight: '600' }) }
+          ]
+        }
+      };
+    }
+
+    function buildRoadmapTable() {
+      return {
+        id: 'tbl-roadmap',
+        cellSpacing: 6,
+        columns: [
+          { id: 'track', sizingMode: 'fixed', width: { value: 160, unit: 'px' } },
+          { id: 'owner', width: { value: 1, unit: 'fr' }, minWidth: 120 },
+          { id: 'summary', width: { value: 2, unit: 'fr' }, minWidth: 240 }
+        ],
+        header: {
+          rows: [{ id: 'hr0', minHeight: 34 }],
+          cells: [
+            { id: 'h-track', row: 0, col: 0, content: cellText('Track', { fontWeight: '700' }) },
+            { id: 'h-owner', row: 0, col: 1, content: cellText('Owner', { fontWeight: '700' }) },
+            { id: 'h-summary', row: 0, col: 2, content: cellText('Summary', { fontWeight: '700' }) }
+          ]
+        },
+        body: {
+          rows: [{ id: 'br0', minHeight: 52 }, { id: 'br1', minHeight: 56 }],
+          cells: [
+            { id: 'r0t', row: 0, col: 0, content: cellText('Core Runtime') },
+            { id: 'r0o', row: 0, col: 1, content: cellText('Francois') },
+            {
+              id: 'r0s',
+              row: 0,
+              col: 2,
+              content: cellText('Stabilize renderer extension hooks and baseline diagnostics.')
+            },
+            { id: 'r1t', row: 1, col: 0, content: cellText('Tables') },
+            {
+              id: 'r1sum',
+              row: 1,
+              col: 1,
+              span: { colSpan: 2 },
+              content: cellText('Introduce table engine + Vitrine adapter and validate with markdown-table examples.')
+            }
+          ]
+        }
+      };
+    }
+
+    function buildDenseMetricsTable() {
+      return {
+        id: 'tbl-metrics',
+        cellSpacing: 4,
+        columns: [
+          { id: 'metric', width: { value: 1, unit: 'fr' }, minWidth: 130 },
+          { id: 'today', width: { value: 1, unit: 'fr' }, minWidth: 110 },
+          { id: 'week', width: { value: 1, unit: 'fr' }, minWidth: 110 },
+          { id: 'trend', width: { value: 1, unit: 'fr' }, minWidth: 120 }
+        ],
+        header: {
+          rows: [{ id: 'hr0', minHeight: 32 }],
+          cells: [
+            { id: 'h-m', row: 0, col: 0, content: cellText('Metric', { fontWeight: '700' }) },
+            { id: 'h-d', row: 0, col: 1, content: cellText('Today', { fontWeight: '700' }) },
+            { id: 'h-w', row: 0, col: 2, content: cellText('7d Avg', { fontWeight: '700' }) },
+            { id: 'h-t', row: 0, col: 3, content: cellText('Trend', { fontWeight: '700' }) }
+          ]
+        },
+        body: {
+          rows: [{ id: 'r0', minHeight: 28 }, { id: 'r1', minHeight: 28 }, { id: 'r2', minHeight: 28 }],
+          cells: [
+            { id: 'm0', row: 0, col: 0, content: cellText('Render FPS') },
+            { id: 'd0', row: 0, col: 1, content: cellText('59.8') },
+            { id: 'w0', row: 0, col: 2, content: cellText('58.9') },
+            { id: 't0', row: 0, col: 3, content: cellText('Up 1.4%', { fill: '#166534', fontWeight: '600' }) },
+            { id: 'm1', row: 1, col: 0, content: cellText('Blocks/s') },
+            { id: 'd1', row: 1, col: 1, content: cellText('18,940') },
+            { id: 'w1', row: 1, col: 2, content: cellText('18,102') },
+            { id: 't1', row: 1, col: 3, content: cellText('Up 4.6%', { fill: '#166534', fontWeight: '600' }) },
+            { id: 'm2', row: 2, col: 0, content: cellText('Frame Time') },
+            { id: 'd2', row: 2, col: 1, content: cellText('6.4 ms') },
+            { id: 'w2', row: 2, col: 2, content: cellText('6.9 ms') },
+            { id: 't2', row: 2, col: 3, content: cellText('Down 7.1%', { fill: '#166534', fontWeight: '600' }) }
+          ]
+        }
+      };
+    }
+
+    const measurer = createVitrineTableCellMeasurer();
+    const delegate = createVitrineTableRenderDelegate({
+      insetX: 8,
+      insetY: 6,
+      clipCellContent: true,
+      frameStroke: '#c3cedd',
+      frameStrokeWidth: 1
+    });
+
+    function buildTableCellBackgrounds(tableModel, layout) {
+      const headerCellIds = new Set((tableModel.header?.cells ?? []).map((cell) => cell.id));
+
+      return layout.cells.map((cellFrame) => {
+        const isHeader = headerCellIds.has(cellFrame.cellId);
+        return rectangle({
+          x: cellFrame.x,
+          y: cellFrame.y,
+          dx: cellFrame.width,
+          dy: cellFrame.height,
+          fill: isHeader ? '#e8eef8' : '#ffffff'
+        });
+      });
+    }
+
+    function tableCard(stTitle, stDescription, tableModel, x, y, availableWidth) {
+      const layout = engine.layout(tableModel, { availableWidth }, measurer);
+      const tableBlock = buildVitrineBlocksFromTableLayout(tableModel, layout, delegate, {
+        rootGroupProps: { x: 20, y: 58 }
+      });
+      const backgroundBlocks = buildTableCellBackgrounds(tableModel, layout);
+
+      const dyCard = layout.height + 84;
+
+      return {
+        block: group({ x, y }, [
+          rectangle({
+            x: 0,
+            y: 0,
+            dx: availableWidth + 40,
+            dy: dyCard,
+            fill: '#fefefe',
+            stroke: '#d2dae7',
+            cornerRadius: 12
+          }),
+          text({
+            x: 20,
+            y: 18,
+            text: stTitle,
+            fontSize: 16,
+            fontWeight: '700',
+            baseline: 'top',
+            fill: '#111827'
+          }),
+          text({
+            x: 20,
+            y: 38,
+            text: stDescription,
+            fontSize: 12,
+            baseline: 'top',
+            fill: '#64748b'
+          }),
+          group({ x: 20, y: 58 }, backgroundBlocks),
+          tableBlock
+        ]),
+        dyCard
+      };
+    }
+
+    function buildScene() {
+      const dxAvail = Math.max(420, dxCanvas - 120);
+
+      const cardA = tableCard(
+        'Example A - Fixed + FR tracks',
+        'Shows deterministic first column and proportional remainder allocation.',
+        buildEmployeeTable(),
+        40,
+        36,
+        dxAvail
+      );
+
+      const cardB = tableCard(
+        'Example B - ColSpan content',
+        'Second row summary spans owner + summary columns.',
+        buildRoadmapTable(),
+        40,
+        36 + cardA.dyCard + 24,
+        dxAvail
+      );
+
+      const cardC = tableCard(
+        'Example C - Dense metrics',
+        'Uniform FR layout with compact spacing and status color coding.',
+        buildDenseMetricsTable(),
+        40,
+        36 + cardA.dyCard + 24 + cardB.dyCard + 24,
+        dxAvail
+      );
+
+      const totalHeight = 36 + cardA.dyCard + 24 + cardB.dyCard + 24 + cardC.dyCard + 32;
+
+      return renderer.camera([
+        group({}, [
+          rectangle({ x: 20, y: 20, dx: dxAvail + 80, dy: totalHeight, fill: '#eef2f7' }),
+          cardA.block,
+          cardB.block,
+          cardC.block
+        ])
+      ]);
+    }
+
+    function renderFrame() {
+      const scene = buildScene();
+      renderer.render(scene);
+      const stats = renderer.getPerformanceStats();
+      perfEl.textContent = `${stats.fps.toFixed(0)} fps · ${stats.blocksRendered} blocks`;
+      requestAnimationFrame(renderFrame);
+    }
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        dxCanvas = Math.floor(entry.contentRect.width);
+        dyCanvas = Math.floor(entry.contentRect.height);
+        if (dxCanvas > 0 && dyCanvas > 0) {
+          renderer.resize(dxCanvas, dyCanvas);
+        }
+      }
+    });
+    ro.observe(wrap);
+
+    renderFrame();
+  </script>
+</body>
+</html>
