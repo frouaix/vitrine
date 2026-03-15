@@ -41,6 +41,7 @@ export interface RendererConfig {
 export class ImmediateRenderer {
   private canvas: HTMLCanvasElement;
   private context: RenderContext;
+  private imageCache: Map<string, HTMLImageElement> = new Map();
   private dxc: number;
   private dyc: number;
   private pixelRatio: number;
@@ -286,6 +287,8 @@ export class ImmediateRenderer {
     if (this.eventManager) {
       this.eventManager.destroy();
     }
+
+    this.imageCache.clear();
   }
 
   private renderBlock(block: Block): void {
@@ -986,11 +989,25 @@ export class ImmediateRenderer {
   private renderImage(block: BlockOfType<BlockType.Image>): void {
     const { props } = block;
     const { src, dx, dy } = props;
-    const img = typeof src === 'string' ? new Image() : src;
-    if (typeof src === 'string' && img instanceof HTMLImageElement) {
-      img.src = src;
+    const img = typeof src === 'string' ? this.getCachedImage(src) : src;
+
+    if (!img.complete || img.naturalWidth === 0) {
+      return;
     }
+
     this.context.drawImage(img as HTMLImageElement, 0, 0, dx, dy, props);
+  }
+
+  private getCachedImage(src: string): HTMLImageElement {
+    const cached = this.imageCache.get(src);
+    if (cached) {
+      return cached;
+    }
+
+    const img = new Image();
+    img.src = src;
+    this.imageCache.set(src, img);
+    return img;
   }
 
   private renderArc(block: BlockOfType<BlockType.Arc>): void {

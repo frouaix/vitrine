@@ -1,147 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vitrine - Basic Blocks Example</title>
+  <title>Vitrine - Basic Blocks Reference</title>
   <style>
+    :root {
+      color-scheme: light;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #0f172a;
+    }
+
     body {
       margin: 0;
-      padding: 20px 20px 50px;
-      font-family: sans-serif;
-      background: #f0f0f0;
+      min-height: 100vh;
+      padding: 24px 20px 84px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
     }
-    canvas {
-      border: 1px solid #ccc;
-      background: white;
-      display: block;
+
+    .page {
+      max-width: 1080px;
       margin: 0 auto;
-      max-width: 100%;
-      height: auto;
     }
+
     h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
       text-align: center;
     }
+
+    .intro {
+      max-width: 760px;
+      margin: 14px auto 24px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #475569;
+    }
+
+    .canvas-shell {
+      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      background: #ffffff;
+    }
+
+    .caption {
+      margin: 14px 4px 0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
     .page-nav {
       position: fixed;
-      bottom: 0;
       left: 0;
       right: 0;
+      bottom: 0;
       display: flex;
       justify-content: space-between;
+      gap: 12px;
       padding: 12px 20px;
-      border-top: 1px solid #ccc;
-      background: #f0f0f0;
+      border-top: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(248, 250, 252, 0.92);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
       font-size: 14px;
     }
+
     .page-nav a {
-      color: #1a73e8;
+      color: #2563eb;
       text-decoration: none;
+      font-weight: 600;
     }
+
     .page-nav a:hover {
       text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>Vitrine Basic Blocks</h1>
-  <canvas id="canvas"></canvas>
-  
+  <div class="page">
+    <h1>Vitrine Basic Blocks</h1>
+    <p class="intro">
+      One page for the core drawing vocabulary: filled shapes, strokes, paths, text, grouping,
+      transforms, opacity, and an SVG rendered through the image block.
+    </p>
+    <div class="canvas-shell">
+      <canvas id="canvas"></canvas>
+      <p class="caption">This page is intentionally exhaustive at the block level, but keeps each example simple.</p>
+    </div>
+  </div>
+
   <script type="module">
-    import { 
-      ImmediateRenderer, 
-      rectangle, 
-      circle, 
-      text, 
-      group 
+    import {
+      ImmediateRenderer,
+      arc,
+      circle,
+      ellipse,
+      group,
+      image,
+      line,
+      path,
+      rectangle,
+      text
     } from 'vitrine';
 
+    function buildSvgDataUrl() {
+      const stSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160">
+          <defs>
+            <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#dbeafe"/>
+              <stop offset="100%" stop-color="#bfdbfe"/>
+            </linearGradient>
+          </defs>
+          <rect width="240" height="160" rx="22" fill="url(#bg)"/>
+          <circle cx="62" cy="54" r="28" fill="#2563eb" opacity="0.9"/>
+          <rect x="100" y="30" width="104" height="20" rx="10" fill="#1d4ed8" opacity="0.9"/>
+          <rect x="100" y="60" width="82" height="12" rx="6" fill="#60a5fa"/>
+          <path d="M30 118 C66 82, 96 138, 126 102 S182 92, 210 112" fill="none" stroke="#0f172a" stroke-width="8" stroke-linecap="round"/>
+          <text x="30" y="144" font-family="Arial, sans-serif" font-size="17" fill="#0f172a">SVG via image()</text>
+        </svg>
+      `.trim();
+
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(stSvg)}`;
+    }
+
+    function starPath(dxCenter, dyCenter, duOuter, duInner) {
+      const parts = [];
+
+      for (let i = 0; i < 10; i += 1) {
+        const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+        const radius = i % 2 === 0 ? duOuter : duInner;
+        const x = dxCenter + Math.cos(angle) * radius;
+        const y = dyCenter + Math.sin(angle) * radius;
+        parts.push(`${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`);
+      }
+
+      parts.push('Z');
+      return parts.join(' ');
+    }
+
     const canvas = document.getElementById('canvas');
-    const renderer = new ImmediateRenderer({ 
-      canvas, 
-      width: 800, 
-      height: 600 
+    const renderer = new ImmediateRenderer({
+      canvas,
+      width: 980,
+      height: 860
     });
 
-    function render() {
-      const scene = group({ x: 0, y: 0 }, [
-        rectangle({ 
-          dx: 800, 
-          dy: 600, 
-          fill: '#f5f5f5' 
-        }),
+    const svgImage = new Image();
+    svgImage.src = buildSvgDataUrl();
 
-        rectangle({ 
-          x: 100, 
-          y: 100, 
-          dx: 200, 
-          dy: 150, 
-          fill: '#ff6b6b',
-          stroke: '#c92a2a',
-          strokeWidth: 3,
-          cornerRadius: 10
-        }),
-
-        circle({ 
-          x: 500, 
-          y: 175, 
-          radius: 75, 
-          fill: '#4dabf7',
-          stroke: '#1971c2',
-          strokeWidth: 3
-        }),
-
-        text({ 
-          x: 400, 
-          y: 50, 
-          text: 'Hello Vitrine!', 
-          fontSize: 32,
-          fill: '#212529',
-          align: 'center',
-          baseline: 'middle'
-        }),
-
-        group({ 
-          x: 400, 
-          y: 400, 
-          rotation: Math.PI / 4 
-        }, [
-          rectangle({ 
-            x: -50, 
-            y: -50, 
-            dx: 100, 
-            dy: 100, 
-            fill: '#51cf66',
-            stroke: '#2f9e44',
-            strokeWidth: 2
+    function renderSvgPanel() {
+      if (!svgImage.complete || svgImage.naturalWidth === 0) {
+        return [
+          rectangle({
+            x: 620,
+            y: 520,
+            dx: 290,
+            dy: 220,
+            fill: '#ffffff',
+            stroke: '#cbd5e1',
+            strokeWidth: 2,
+            cornerRadius: 18
           }),
-          circle({ 
-            x: 0, 
-            y: 0, 
-            radius: 10, 
-            fill: '#ff6b6b'
-          })
-        ]),
-
-        group({ x: 600, y: 400, opacity: 0.5 }, [
-          circle({ 
-            radius: 60, 
-            fill: '#f59f00'
-          }),
-          text({ 
-            x: 0, 
-            y: 0, 
-            text: '50%', 
-            fontSize: 16,
-            fill: 'white',
+          text({
+            x: 765,
+            y: 630,
+            text: 'Loading SVG...',
+            fontSize: 18,
+            fill: '#64748b',
             align: 'center',
             baseline: 'middle'
           })
-        ])
+        ];
+      }
+
+      return [
+        rectangle({
+          x: 620,
+          y: 520,
+          dx: 290,
+          dy: 220,
+          fill: '#ffffff',
+          stroke: '#cbd5e1',
+          strokeWidth: 2,
+          cornerRadius: 18,
+          shadow: { color: 'rgba(15, 23, 42, 0.08)', blur: 16, offsetX: 0, offsetY: 8 }
+        }),
+        image({
+          x: 645,
+          y: 548,
+          dx: 240,
+          dy: 160,
+          src: svgImage
+        }),
+        text({
+          x: 765,
+          y: 722,
+          text: 'SVG data URL loaded into an HTMLImageElement',
+          fontSize: 12,
+          fill: '#64748b',
+          align: 'center',
+          baseline: 'middle'
+        })
+      ];
+    }
+
+    let time = 0;
+
+    function render() {
+      time += 0.016;
+      const angle = Math.sin(time * 1.2) * 0.32;
+
+      const scene = group({ x: 0, y: 0 }, [
+        rectangle({ dx: 980, dy: 860, fill: '#f8fafc' }),
+
+        text({ x: 90, y: 54, text: 'Filled Shapes', fontSize: 17, fill: '#334155', baseline: 'middle' }),
+        rectangle({ x: 40, y: 84, dx: 180, dy: 120, fill: '#fb7185', stroke: '#be123c', strokeWidth: 3, cornerRadius: 18 }),
+        text({ x: 130, y: 220, text: 'rectangle()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+        circle({ x: 330, y: 144, radius: 60, fill: '#38bdf8', stroke: '#0369a1', strokeWidth: 3 }),
+        text({ x: 330, y: 220, text: 'circle()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+        ellipse({ x: 520, y: 144, radiusX: 86, radiusY: 52, fill: '#4ade80', stroke: '#15803d', strokeWidth: 3 }),
+        text({ x: 520, y: 220, text: 'ellipse()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+
+        text({ x: 104, y: 286, text: 'Lines, Arcs, Paths', fontSize: 17, fill: '#334155', baseline: 'middle' }),
+        line({ x1: 40, y1: 336, x2: 220, y2: 390, stroke: '#8b5cf6', strokeWidth: 6 }),
+        text({ x: 130, y: 402, text: 'line()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+        arc({ x: 330, y: 360, radius: 54, startAngle: -Math.PI * 0.8, endAngle: Math.PI * 0.15, fill: '#fde68a', stroke: '#d97706', strokeWidth: 3 }),
+        text({ x: 330, y: 422, text: 'arc()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+        path({ pathData: starPath(520, 360, 56, 24), fill: '#c4b5fd', stroke: '#7c3aed', strokeWidth: 3 }),
+        text({ x: 520, y: 422, text: 'path()', fontSize: 12, fill: '#64748b', align: 'center', baseline: 'top' }),
+
+        text({ x: 110, y: 500, text: 'Text & Styling', fontSize: 17, fill: '#334155', baseline: 'middle' }),
+        text({ x: 40, y: 540, text: 'text()', fontSize: 34, fill: '#0f172a', baseline: 'top' }),
+        text({ x: 40, y: 586, text: 'Alignment, sizing, fill, and baseline control start here.', fontSize: 15, fill: '#475569', baseline: 'top' }),
+
+        text({ x: 420, y: 500, text: 'Groups, Rotation, Opacity', fontSize: 17, fill: '#334155', baseline: 'middle' }),
+        group({ x: 430, y: 630, rotation: angle }, [
+          rectangle({ x: -62, y: -62, dx: 124, dy: 124, fill: '#fdba74', stroke: '#ea580c', strokeWidth: 2, cornerRadius: 18 }),
+          circle({ x: 0, y: 0, radius: 24, fill: '#ffffff', stroke: '#9a3412', strokeWidth: 2 }),
+          text({ x: 0, y: 0, text: 'group()', fontSize: 12, fill: '#9a3412', align: 'center', baseline: 'middle' })
+        ]),
+        group({ x: 560, y: 630, opacity: 0.45 }, [
+          circle({ radius: 58, fill: '#60a5fa' }),
+          text({ x: 0, y: 0, text: 'opacity', fontSize: 14, fill: '#ffffff', align: 'center', baseline: 'middle' })
+        ]),
+
+        text({ x: 715, y: 500, text: 'Image Block', fontSize: 17, fill: '#334155', baseline: 'middle' }),
+        ...renderSvgPanel()
       ]);
 
       renderer.render(scene);
+      requestAnimationFrame(render);
     }
 
     render();
@@ -149,7 +276,7 @@
 
   <nav class="page-nav">
     <a href="gallery.html">← Gallery</a>
-    <a href="primitives.html">Primitives →</a>
+    <a href="events.html">Events →</a>
   </nav>
 </body>
 </html>

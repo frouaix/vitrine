@@ -1,7 +1,7 @@
 // Copyright (c) 2026 François Rouaix
 
 // Demo Gallery Framework
-import { ImmediateRenderer } from 'vitrine';
+import { ImmediateRenderer, type Block } from 'vitrine';
 
 interface DemoDefinition<S = unknown> {
   id: string;
@@ -13,7 +13,7 @@ interface DemoDefinition<S = unknown> {
   enableCulling?: boolean;
   init: (renderer: ImmediateRenderer) => S;
   update?: (state: S, dt: number) => void;
-  render: (state: S) => unknown;
+  render: (state: S) => Block;
   cleanup?: () => void;
 }
 
@@ -48,6 +48,7 @@ import { demo as gradientsDemo } from './demos/gradients.ts';
 import { demo as imageFiltersDemo } from './demos/image-filters.ts';
 import { demo as textWrappingDemo } from './demos/text-wrapping.ts';
 import { demo as linksDemo } from './demos/links.ts';
+import { demo as basicBlocksDemo } from './demos/basic-blocks.ts';
 
 // Demo registry
 const demos: GalleryDemo[] = [
@@ -62,6 +63,7 @@ const demos: GalleryDemo[] = [
   { ...patternsDemo, category: 'creative' },
   { ...lineStylesDemo, category: 'creative' },
   { ...gradientsDemo, category: 'creative' },
+  { ...basicBlocksDemo, category: 'creative' },
   { ...imageFiltersDemo, category: 'creative' },
   { ...textWrappingDemo, category: 'creative' },
   { ...clockDemo, category: 'creative' },

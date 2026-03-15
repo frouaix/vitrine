@@ -194,9 +194,8 @@ Try the live demos on GitHub Pages:
 - **[Gallery](https://frouaix.github.io/vitrine/gallery.html)** — 12+ interactive demos
 - **[Calendar](https://frouaix.github.io/vitrine/calendar.html)** — Month and day calendar views
 - **[Camera Controls](https://frouaix.github.io/vitrine/camera-controls.html)** — Pan and zoom
-- **[Basic](https://frouaix.github.io/vitrine/basic.html)** — Shapes and hierarchy
+- **[Basic](https://frouaix.github.io/vitrine/basic.html)** — Core blocks, transforms, and SVG image rendering
 - **[Events](https://frouaix.github.io/vitrine/events.html)** — Click, hover, drag
-- **[Primitives](https://frouaix.github.io/vitrine/primitives.html)** — All primitive types
 - **[Texta](https://frouaix.github.io/vitrine/texta.html)** — Attributed text rendering examples
 - **[Performance](https://frouaix.github.io/vitrine/performance.html)** — 10k+ blocks stress test
 
