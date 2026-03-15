@@ -772,7 +772,9 @@ export class ImmediateRenderer {
     };
 
     type SegmentMetrics = {
-      segment: Segment;
+      text: string;
+      style: StyleEntryLike;
+      font: string | undefined;
       width: number;
       ascent: number;
       descent: number;
@@ -806,6 +808,25 @@ export class ImmediateRenderer {
       return `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
     };
 
+    const measureSegment = (segment: Segment): SegmentMetrics => {
+      const fontSize = getFontSize(segment.style);
+      const font = getFont(segment.style);
+      const textMeasureProps = font ? { font } : { fontSize };
+      const metrics = this.context.measureText
+        ? this.context.measureText(segment.text, textMeasureProps)
+        : { width: segment.text.length * fontSize * 0.6, height: fontSize, ascent: fontSize, descent: 0 };
+      return {
+        text: segment.text,
+        style: segment.style,
+        font,
+        width: metrics.width,
+        ascent: metrics.ascent,
+        descent: metrics.descent,
+        fontSize,
+        lineHeight: getLineHeight(segment.style)
+      };
+    };
+
     // Split runs by explicit newlines while preserving style ids.
     const lineSegments: Segment[][] = [[]];
     for (const run of runs) {
@@ -822,57 +843,35 @@ export class ImmediateRenderer {
     }
 
     // Word-wrap logical lines if dx is set.
-    let finalLineSegments: Segment[][] = lineSegments;
+    let lineMetrics: SegmentMetrics[][];
     if (duDx !== undefined) {
-      finalLineSegments = [];
+      lineMetrics = [];
       for (const segs of lineSegments) {
         // Tokenize each segment into space-delimited atoms (word + trailing space)
-        const atoms: Segment[] = [];
+        const atoms: SegmentMetrics[] = [];
         for (const seg of segs) {
           const parts = seg.text.split(' ');
           for (let pi = 0; pi < parts.length; pi++) {
             const t = pi < parts.length - 1 ? parts[pi] + ' ' : parts[pi];
-            if (t.length > 0) atoms.push({ text: t, style: seg.style });
+            if (t.length > 0) atoms.push(measureSegment({ text: t, style: seg.style }));
           }
         }
         // Greedy pack atoms into visual lines
-        const vLines: Segment[][] = [[]];
+        const vLines: SegmentMetrics[][] = [[]];
         let xCur = 0;
         for (const atom of atoms) {
-          const font = getFont(atom.style);
-          const fs = getFontSize(atom.style);
-          const w = this.context.measureText
-            ? this.context.measureText(atom.text, font ? { font } : { fontSize: fs }).width
-            : atom.text.length * fs * 0.6;
-          if (xCur + w > duDx && vLines[vLines.length - 1].length > 0) {
+          if (xCur + atom.width > duDx && vLines[vLines.length - 1].length > 0) {
             vLines.push([]);
             xCur = 0;
           }
           vLines[vLines.length - 1].push(atom);
-          xCur += w;
+          xCur += atom.width;
         }
-        for (const vl of vLines) finalLineSegments.push(vl);
+        for (const vl of vLines) lineMetrics.push(vl);
       }
+    } else {
+      lineMetrics = lineSegments.map((segments) => segments.map(measureSegment));
     }
-
-    const lineMetrics: SegmentMetrics[][] = finalLineSegments.map((segments) => {
-      return segments.map((segment) => {
-        const fontSize = getFontSize(segment.style);
-        const font = getFont(segment.style);
-        const textMeasureProps = font ? { font } : { fontSize };
-        const metrics = this.context.measureText
-          ? this.context.measureText(segment.text, textMeasureProps)
-          : { width: segment.text.length * fontSize * 0.6, height: fontSize, ascent: fontSize, descent: 0 };
-        return {
-          segment,
-          width: metrics.width,
-          ascent: metrics.ascent,
-          descent: metrics.descent,
-          fontSize,
-          lineHeight: getLineHeight(segment.style)
-        };
-      });
-    });
 
     const lineWidths = lineMetrics.map((line) => line.reduce((sum, seg) => sum + seg.width, 0));
     const lineHeights = lineMetrics.map((line) => {
@@ -943,9 +942,7 @@ export class ImmediateRenderer {
       let xRun = getLineStartX(lineWidth);
 
       for (const seg of line) {
-        const { style } = seg.segment;
-        const font = getFont(style);
-        const fontSize = getFontSize(style);
+        const { style } = seg;
         const fill = style.fill
           ?? (typeof fillDefault === 'string' ? fillDefault : undefined)
           ?? styleDefault.fill;
@@ -968,9 +965,9 @@ export class ImmediateRenderer {
           this.context.drawRectangle(xRun, yLineBaseline - seg.ascent, seg.width, bgHeight, { fill: background });
         }
 
-        this.context.drawText(seg.segment.text, xRun, yLineBaseline, {
-          font,
-          fontSize,
+        this.context.drawText(seg.text, xRun, yLineBaseline, {
+          font: seg.font,
+          fontSize: seg.fontSize,
           fill,
           stroke,
           strokeWidth: duStrokeWidthDefault,
