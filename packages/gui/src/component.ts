@@ -345,9 +345,9 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    // Find which text block was clicked
-    // For now, try both known blocks in demo
-    const blockIds = ['text1', 'text2'];
+    // Try to hit-test all known text blocks
+    // TODO: Make this dynamic by discovering blocks from the scene
+    const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10'];
     for (const blockId of blockIds) {
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
       if (charIndex !== null) {
@@ -373,9 +373,8 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    // Find character at current position
-    // This is used for drag-to-select
-    const blockIds = ['text1', 'text2'];
+    // Try to hit-test all known text blocks
+    const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10'];
     for (const blockId of blockIds) {
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
       if (charIndex !== null) {
