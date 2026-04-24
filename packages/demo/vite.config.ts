@@ -25,7 +25,8 @@ export default defineConfig({
         markdown: resolve(__dirname, 'markdown.html'),
         tables: resolve(__dirname, 'tables.html'),
         textSelection: resolve(__dirname, 'text-selection.html'),
-        textSelectionDebug: resolve(__dirname, 'text-selection-debug.html')
+        textSelectionDebug: resolve(__dirname, 'text-selection-debug.html'),
+        textSelectionMinimal: resolve(__dirname, 'text-selection-minimal.html')
       }
     }
   },

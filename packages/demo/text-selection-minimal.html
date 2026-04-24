@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Text Selection Minimal Test</title>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+    .container { max-width: 1000px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0 0 10px 0; }
+    .instructions { background: #e0e0e0; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    #canvas { border: 2px solid #333; border-radius: 8px; background: white; margin: 20px 0; }
+    .debug { background: white; border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .debug-label { font-weight: bold; color: #d32f2f; margin-top: 10px; }
+    #log { height: 300px; overflow-y: auto; background: #fafafa; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 11px; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Vitrine Text Selection - Minimal Test</h1>
+    <div class="instructions">
+      <p><strong>Test Instructions:</strong></p>
+      <p>1. Click exactly at the beginning of the word "Click" → should place caret at character 0</p>
+      <p>2. Click on the space before "and" → should place caret around character 5-6</p>
+      <p>3. Click at end of "text" → should place caret around character 18-19</p>
+      <p>Check debug output below to see coordinates and character index</p>
+    </div>
+
+    <div id="canvas" style="border-radius: 8px; background: white; min-height: 400px;"></div>
+
+    <div class="debug">
+      <div class="debug-label">Debug Information:</div>
+      <div id="log">Waiting for click...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { VitrineComponent } from 'vitrine-gui';
+    import { group, rectangle, text } from 'vitrine';
+
+    const logEl = document.getElementById('log');
+    let selectionManager = null;
+
+    function log(msg) {
+      logEl.textContent += msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+      logEl.textContent = '';
+    }
+
+    function buildScene() {
+      return group({}, [
+        rectangle({ dx: 800, dy: 400, fill: '#ffffff' }),
+        
+        // Single test text block
+        text({
+          id: 'testText',
+          x: 50,
+          y: 50,
+          text: 'Click and drag to select',
+          fontSize: 24,
+          fill: '#000000',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 50,
+          y: 150,
+          text: 'Expected character indices:',
+          fontSize: 14,
+          fill: '#333333',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 50,
+          y: 180,
+          text: '"Click" = 0-5',
+          fontSize: 12,
+          fill: '#666666',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 50,
+          y: 210,
+          text: '"and" = 6-8',
+          fontSize: 12,
+          fill: '#666666',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 50,
+          y: 240,
+          text: '"drag" = 10-14',
+          fontSize: 12,
+          fill: '#666666',
+          baseline: 'top'
+        }),
+      ]);
+    }
+
+    const component = new VitrineComponent(
+      buildScene,
+      {
+        dx: 800,
+        dy: 400,
+        renderMode: 'demand',
+        invalidateOnInteraction: true,
+        selectionConfig: {
+          caretColor: '#ff0000',
+          selectionColor: 'rgba(0, 0, 255, 0.3)',
+          caretWidth: 3
+        }
+      }
+    );
+
+    const canvas = document.getElementById('canvas');
+    component.mount(canvas);
+    selectionManager = component.getSelectionManager();
+
+    // Set up character bounds provider
+    if (selectionManager) {
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+
+      selectionManager.setCharacterBoundsProvider((blockId, charIndex) => {
+        if (blockId !== 'testText') return null;
+
+        const text = 'Click and drag to select';
+        const x = 50;
+        const y = 50;
+        const fontSize = 24;
+        const lineHeight = 32;
+
+        if (charIndex >= text.length) return null;
+
+        if (tempCtx) {
+          tempCtx.font = `${fontSize}px sans-serif`;
+
+          const textBefore = text.substring(0, charIndex);
+          const charAtIndex = text.charAt(charIndex);
+
+          const widthBefore = tempCtx.measureText(textBefore).width;
+          const widthChar = tempCtx.measureText(charAtIndex).width;
+
+          return {
+            x: x + widthBefore,
+            y: y,
+            width: widthChar,
+            height: lineHeight
+          };
+        }
+
+        return null;
+      });
+    }
+
+    // Add click handler to actual canvas element
+    setTimeout(() => {
+      const actualCanvas = canvas.querySelector('canvas');
+      if (actualCanvas) {
+        actualCanvas.addEventListener('click', (e) => {
+          clearLog();
+
+          const rect = actualCanvas.getBoundingClientRect();
+          const dxcCanvas = actualCanvas.width;
+          const dycCanvas = actualCanvas.height;
+          const dxwCanvas = rect.width;
+          const dywCanvas = rect.height;
+
+          log('=== CANVAS INFORMATION ===');
+          log(`Buffer size: ${dxcCanvas} x ${dycCanvas}`);
+          log(`Display size: ${Math.round(dxwCanvas)} x ${Math.round(dywCanvas)}`);
+          log(`Scale factor: ${(dxcCanvas / dxwCanvas).toFixed(3)} x ${(dycCanvas / dywCanvas).toFixed(3)}`);
+
+          log('\n=== CLICK EVENT ===');
+          log(`clientX: ${e.clientX.toFixed(0)}`);
+          log(`clientY: ${e.clientY.toFixed(0)}`);
+          log(`rect.left: ${rect.left.toFixed(0)}`);
+          log(`rect.top: ${rect.top.toFixed(0)}`);
+
+          const screenX = e.clientX - rect.left;
+          const screenY = e.clientY - rect.top;
+          log('\n=== SCREEN COORDINATES (CSS px) ===');
+          log(`screenX: ${screenX.toFixed(1)}`);
+          log(`screenY: ${screenY.toFixed(1)}`);
+
+          const scaleX = dxcCanvas / dxwCanvas;
+          const scaleY = dycCanvas / dywCanvas;
+          const bufferX = screenX * scaleX;
+          const bufferY = screenY * scaleY;
+
+          log('\n=== CANVAS BUFFER COORDINATES ===');
+          log(`bufferX: ${bufferX.toFixed(1)}`);
+          log(`bufferY: ${bufferY.toFixed(1)}`);
+
+          if (selectionManager) {
+            log('\n=== HIT-TESTING ===');
+            const charIndex = selectionManager.hitTestBlockCharacter('testText', bufferX, bufferY, 100);
+            if (charIndex !== null) {
+              log(`✓ Hit! Character index: ${charIndex}`);
+              const sel = selectionManager.getSelection();
+              if (sel) {
+                log(`Selection: anchor=${sel.anchor}, focus=${sel.focus}`);
+                log(`Block: ${sel.blockId}`);
+
+                // Show what character this is
+                const text = 'Click and drag to select';
+                log(`\nCharacter: "${text.charAt(charIndex)}"`);
+                log(`Substring [0..${charIndex}]: "${text.substring(0, charIndex)}"`);
+                log(`Substring [0..${charIndex + 1}]: "${text.substring(0, charIndex + 1)}"`);
+              }
+            } else {
+              log(`✗ No hit on testText block`);
+            }
+          }
+        });
+      }
+    }, 100);
+  </script>
+</body>
+</html>
