@@ -103,20 +103,16 @@
       ]);
     }
 
-    const component = new VitrineComponent(
-      buildScene,
-      {
-        dx: 800,
-        dy: 400,
-        renderMode: 'demand',
-        invalidateOnInteraction: true,
-        selectionConfig: {
-          caretColor: '#ff0000',
-          selectionColor: 'rgba(0, 0, 255, 0.3)',
-          caretWidth: 3
-        }
+    const component = VitrineComponent.block(buildScene, {
+      width: 800,
+      height: 400,
+      selectionConfig: {
+        enabled: true,
+        caretColor: '#ff0000',
+        selectionColor: 'rgba(0, 0, 255, 0.3)',
+        caretWidth: 3
       }
-    );
+    });
 
     const canvas = document.getElementById('canvas');
     component.mount(canvas);
