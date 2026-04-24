@@ -24,6 +24,10 @@ export type { PointerEventData, ActiveTooltip } from './events.ts';
 export { HitTester } from './hit-test.ts';
 export type { HitTestResult } from './hit-test.ts';
 
+// Selection system
+export type { Selection, TextMetrics, CharacterBounds, TextLayout, TextLine } from './selection/types.ts';
+export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter } from './selection/text-layout.ts';
+
 // Block factory functions
 export * from './core/blocks.ts';
 
