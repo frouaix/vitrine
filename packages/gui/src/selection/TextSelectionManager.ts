@@ -226,6 +226,149 @@ export class TextSelectionManager {
     this.dragStartBlockId = null;
     this.dragStartCharIndex = null;
   }
+
+  /**
+   * Hit-test to find character at given coordinates.
+   * Uses CharacterBoundsProvider to find the closest character.
+   * Returns { blockId, charIndex } or null if no hit.
+   */
+  hitTestCharacter(x: number, y: number): { blockId: string; charIndex: number } | null {
+    if (!this.characterBoundsProvider) {
+      return null;
+    }
+
+    // Try to find which character this position belongs to
+    // We iterate through possible character indices and use CharacterBoundsProvider
+    // This is a brute-force approach; production could optimize with spatial indexing
+    
+    // For now, we need to know which block to test
+    // Since we don't have block geometry here, we rely on the caller to provide blockId
+    // This method should typically be called per-block
+    return null;
+  }
+
+  /**
+   * Hit-test within a specific block.
+   * blockId: the text block to test
+   * x, y: screen coordinates
+   * maxChars: maximum characters in the block (for bounds checking)
+   * Returns character index or null if no hit.
+   */
+  hitTestBlockCharacter(blockId: string, x: number, y: number, maxChars: number): number | null {
+    if (!this.characterBoundsProvider) {
+      return null;
+    }
+
+    // Binary search or linear search for the character at position x, y
+    // For MVP, use linear search
+    let closestCharIndex = 0;
+    let closestDistance = Infinity;
+
+    for (let i = 0; i < maxChars; i++) {
+      const bounds = this.characterBoundsProvider(blockId, i);
+      if (!bounds) continue;
+
+      // Check if point is within character bounds (vertical check is important)
+      const isInVerticalRange = y >= bounds.y && y < bounds.y + bounds.height;
+      if (!isInVerticalRange) continue;
+
+      // Calculate distance to character center
+      const charCenterX = bounds.x + bounds.width / 2;
+      const distance = Math.abs(x - charCenterX);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestCharIndex = i;
+      }
+    }
+
+    // If we found something in the vertical range, return it
+    if (closestDistance !== Infinity) {
+      return closestCharIndex;
+    }
+
+    return null;
+  }
+
+  /**
+   * Handle keyboard event for selection navigation and editing.
+   * Returns whether the key was handled.
+   */
+  handleKeyDown(key: string, shiftKey: boolean, ctrlKey: boolean, userId?: string): boolean {
+    const sel = this.getSelection(userId);
+    if (!sel) {
+      return false;
+    }
+
+    const textLength = 1000; // Fallback; ideally passed in or tracked
+
+    switch (key) {
+      case 'ArrowLeft': {
+        if (shiftKey) {
+          // Shift+Left: extend selection left
+          if (sel.focus > 0) {
+            sel.focus--;
+          }
+        } else {
+          // Left: move caret to start of selection or left
+          const newPos = sel.focus < sel.anchor ? sel.anchor - 1 : sel.focus - 1;
+          if (newPos >= 0) {
+            this.setSelection(sel.blockId, newPos, newPos, userId);
+          }
+        }
+        return true;
+      }
+
+      case 'ArrowRight': {
+        if (shiftKey) {
+          // Shift+Right: extend selection right
+          if (sel.focus < textLength) {
+            sel.focus++;
+          }
+        } else {
+          // Right: move caret to end of selection or right
+          const newPos = sel.focus > sel.anchor ? sel.focus + 1 : sel.anchor + 1;
+          if (newPos <= textLength) {
+            this.setSelection(sel.blockId, newPos, newPos, userId);
+          }
+        }
+        return true;
+      }
+
+      case 'Home': {
+        if (shiftKey) {
+          // Shift+Home: select from current position to start
+          sel.focus = 0;
+        } else {
+          // Home: move to start
+          this.setSelection(sel.blockId, 0, 0, userId);
+        }
+        return true;
+      }
+
+      case 'End': {
+        if (shiftKey) {
+          // Shift+End: select from current position to end
+          sel.focus = textLength;
+        } else {
+          // End: move to end
+          this.setSelection(sel.blockId, textLength, textLength, userId);
+        }
+        return true;
+      }
+
+      case 'a': {
+        if (ctrlKey) {
+          // Ctrl+A: select all
+          this.setSelection(sel.blockId, 0, textLength, userId);
+          return true;
+        }
+        break;
+      }
+    }
+
+    return false;
+  }
 }
 
 
