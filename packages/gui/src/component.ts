@@ -58,12 +58,13 @@ export class VitrineComponent {
   private fDirty: boolean = false;
   private selectionManager: TextSelectionManager | null = null;
   private boundInteractionHandlers: {
-    pointerdown: () => void;
-    pointerup: () => void;
-    pointermove: () => void;
-    click: () => void;
+    pointerdown: (e: PointerEvent) => void;
+    pointerup: (e: PointerEvent) => void;
+    pointermove: (e: PointerEvent) => void;
+    click: (e: PointerEvent) => void;
     pointerleave: () => void;
-    wheel: () => void;
+    wheel: (e: WheelEvent) => void;
+    keydown: (e: KeyboardEvent) => void;
   };
 
   constructor(
@@ -78,12 +79,13 @@ export class VitrineComponent {
     this.renderMode = config.renderMode ?? 'continuous';
     this.invalidateOnInteraction = config.invalidateOnInteraction ?? true;
     this.boundInteractionHandlers = {
-      pointerdown: this.handleInteractionInvalidate.bind(this),
-      pointerup: this.handleInteractionInvalidate.bind(this),
-      pointermove: this.handleInteractionInvalidate.bind(this),
-      click: this.handleInteractionInvalidate.bind(this),
-      pointerleave: this.handleInteractionInvalidate.bind(this),
-      wheel: this.handleInteractionInvalidate.bind(this)
+      pointerdown: this.handlePointerDown.bind(this),
+      pointerup: this.handlePointerUp.bind(this),
+      pointermove: this.handlePointerMove.bind(this),
+      click: () => this.handleSimpleInvalidate(),
+      pointerleave: () => this.handleSimpleInvalidate(),
+      wheel: () => this.handleSimpleInvalidate(),
+      keydown: this.handleKeyDown.bind(this)
     };
   }
 
@@ -292,28 +294,115 @@ export class VitrineComponent {
 
   private setupInteractionInvalidation(): void {
     if (!this.canvas) return;
-    this.canvas.addEventListener('pointerdown', this.boundInteractionHandlers.pointerdown);
-    this.canvas.addEventListener('pointerup', this.boundInteractionHandlers.pointerup);
-    this.canvas.addEventListener('pointermove', this.boundInteractionHandlers.pointermove);
-    this.canvas.addEventListener('click', this.boundInteractionHandlers.click);
+    this.canvas.addEventListener('pointerdown', this.boundInteractionHandlers.pointerdown as any);
+    this.canvas.addEventListener('pointerup', this.boundInteractionHandlers.pointerup as any);
+    this.canvas.addEventListener('pointermove', this.boundInteractionHandlers.pointermove as any);
+    this.canvas.addEventListener('click', this.boundInteractionHandlers.click as any);
     this.canvas.addEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
-    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel, { passive: true });
+    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel as any, { passive: true });
+    
+    // Make canvas focusable for keyboard events
+    this.canvas.tabIndex = 0;
+    this.canvas.addEventListener('keydown', this.boundInteractionHandlers.keydown as any);
   }
 
   private removeInteractionInvalidation(): void {
     if (!this.canvas) return;
-    this.canvas.removeEventListener('pointerdown', this.boundInteractionHandlers.pointerdown);
-    this.canvas.removeEventListener('pointerup', this.boundInteractionHandlers.pointerup);
-    this.canvas.removeEventListener('pointermove', this.boundInteractionHandlers.pointermove);
-    this.canvas.removeEventListener('click', this.boundInteractionHandlers.click);
+    this.canvas.removeEventListener('pointerdown', this.boundInteractionHandlers.pointerdown as any);
+    this.canvas.removeEventListener('pointerup', this.boundInteractionHandlers.pointerup as any);
+    this.canvas.removeEventListener('pointermove', this.boundInteractionHandlers.pointermove as any);
+    this.canvas.removeEventListener('click', this.boundInteractionHandlers.click as any);
     this.canvas.removeEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
-    this.canvas.removeEventListener('wheel', this.boundInteractionHandlers.wheel);
+    this.canvas.removeEventListener('wheel', this.boundInteractionHandlers.wheel as any);
+    this.canvas.removeEventListener('keydown', this.boundInteractionHandlers.keydown as any);
   }
 
-  private handleInteractionInvalidate(): void {
+  private handleSimpleInvalidate(): void {
     if (!this.invalidateOnInteraction) return;
     if (this.renderMode === 'continuous') return;
     this.invalidate();
+  }
+
+  private getCanvasCoordinates(e: PointerEvent): { x: number; y: number } | null {
+    if (!this.canvas) return null;
+    const rect = this.canvas.getBoundingClientRect();
+    const dxcCanvas = this.canvas.width;
+    const dywCanvas = this.canvas.height;
+    const dxwCanvas = rect.width;
+    const dywCanvas_display = rect.height;
+    
+    // Scale factor from display size to canvas buffer size
+    const scaleX = dxcCanvas / dxwCanvas;
+    const scaleY = dywCanvas / dywCanvas_display;
+    
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  private handlePointerDown(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    
+    const coords = this.getCanvasCoordinates(e);
+    if (!coords) return;
+    
+    // Find which text block was clicked
+    // For now, try both known blocks in demo
+    const blockIds = ['text1', 'text2'];
+    for (const blockId of blockIds) {
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
+      if (charIndex !== null) {
+        this.selectionManager.handlePointerDown(blockId, charIndex);
+        this.invalidate();
+        return;
+      }
+    }
+  }
+
+  private handlePointerUp(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    
+    this.selectionManager.handlePointerUp();
+    this.invalidate();
+  }
+
+  private handlePointerMove(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    
+    const coords = this.getCanvasCoordinates(e);
+    if (!coords) return;
+    
+    // Find character at current position
+    // This is used for drag-to-select
+    const blockIds = ['text1', 'text2'];
+    for (const blockId of blockIds) {
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
+      if (charIndex !== null) {
+        this.selectionManager.handlePointerMove(charIndex);
+        this.invalidate();
+        return;
+      }
+    }
+  }
+
+  private handleKeyDown(e: KeyboardEvent): void {
+    if (!this.selectionManager) return;
+    
+    // Only handle text navigation keys
+    const handled = this.selectionManager.handleKeyDown(
+      e.key,
+      e.shiftKey,
+      e.ctrlKey || e.metaKey
+    );
+    
+    if (handled) {
+      e.preventDefault();
+      this.invalidate();
+    }
   }
 
   private stopRenderLoop(): void {
