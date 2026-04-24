@@ -3,7 +3,9 @@
 // Text selection manager for VitrineComponent
 // Tracks selections across text/texta blocks and manages selection state.
 
-import type { Selection } from 'vitrine';
+import type { Selection, Block } from 'vitrine';
+import { rectangle, portal, group } from 'vitrine';
+import type { CharacterBounds } from 'vitrine';
 
 /** Configuration for selection rendering. */
 export interface SelectionRenderConfig {
@@ -17,6 +19,9 @@ export interface SelectionRenderConfig {
   caretWidth?: number;
 }
 
+/** Function that provides character bounds for hit-testing and rendering. */
+export type CharacterBoundsProvider = (blockId: string, charIndex: number) => CharacterBounds | null;
+
 /** Text selection manager for a VitrineComponent instance. */
 export class TextSelectionManager {
   private selections: Map<string, Selection> = new Map();
@@ -24,6 +29,7 @@ export class TextSelectionManager {
   private isDragging: boolean = false;
   private dragStartBlockId: string | null = null;
   private dragStartCharIndex: number | null = null;
+  private characterBoundsProvider: CharacterBoundsProvider | null = null;
 
   constructor(config: SelectionRenderConfig = {}) {
     this.renderConfig = {
@@ -100,6 +106,83 @@ export class TextSelectionManager {
   }
 
   /**
+   * Set the function that provides character bounds for rendering/hit-testing.
+   * This is called by VitrineComponent to provide layout information.
+   */
+  setCharacterBoundsProvider(provider: CharacterBoundsProvider): void {
+    this.characterBoundsProvider = provider;
+  }
+
+  /**
+   * Build overlay blocks for all active selections.
+   * Returns a Portal block containing caret/highlight blocks.
+   * Returns null if rendering is disabled or no selections exist.
+   */
+  buildSelectionOverlays(): Block | null {
+    if (!this.isRenderingEnabled() || this.selections.size === 0 || !this.characterBoundsProvider) {
+      return null;
+    }
+
+    const overlayChildren: Block[] = [];
+
+    for (const sel of this.selections.values()) {
+      const isCaret = sel.anchor === sel.focus;
+
+      if (isCaret) {
+        const caretBounds = this.characterBoundsProvider(sel.blockId, sel.anchor);
+        if (caretBounds) {
+          const caretBlock = rectangle(
+            {
+              x: caretBounds.x,
+              y: caretBounds.y,
+              dx: this.renderConfig.caretWidth ?? 1,
+              dy: caretBounds.height,
+              fill: sel.color ?? this.renderConfig.caretColor ?? '#000'
+            },
+            []
+          );
+          overlayChildren.push(caretBlock);
+        }
+      } else {
+        const startBounds = this.characterBoundsProvider(sel.blockId, sel.anchor);
+        const endBounds = this.characterBoundsProvider(sel.blockId, sel.focus - 1);
+
+        if (startBounds && endBounds) {
+          const x1 = startBounds.x;
+          const y1 = startBounds.y;
+          const x2 = endBounds.x + endBounds.width;
+          const y2 = endBounds.y + endBounds.height;
+
+          const highlightBlock = rectangle(
+            {
+              x: x1,
+              y: y1,
+              dx: x2 - x1,
+              dy: y2 - y1,
+              fill: sel.color ?? this.renderConfig.selectionColor ?? 'rgba(0, 0, 255, 0.2)'
+            },
+            []
+          );
+          overlayChildren.push(highlightBlock);
+        }
+      }
+    }
+
+    if (overlayChildren.length === 0) {
+      return null;
+    }
+
+    return portal(
+      {
+        visible: true
+      },
+      overlayChildren.length === 1
+        ? [overlayChildren[0]!]
+        : [group({}, overlayChildren)]
+    );
+  }
+
+  /**
    * Handle pointer down: start or update selection.
    * charIndex: character index where pointer down occurred (result of hit-testing).
    * blockId: ID of the text block under the pointer.
@@ -144,4 +227,5 @@ export class TextSelectionManager {
     this.dragStartCharIndex = null;
   }
 }
+
 

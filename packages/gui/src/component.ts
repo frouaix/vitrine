@@ -5,7 +5,7 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { ImmediateRenderer } from 'vitrine';
+import { ImmediateRenderer, group } from 'vitrine';
 import type { RendererConfig } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
@@ -324,11 +324,18 @@ export class VitrineComponent {
   }
 
   private buildBlock(): Block {
-    if (this.mode === 'gui') {
-      const control = (this.renderFn as GUIControlBuilder)();
-      const context: TransformContext = { theme: this.theme };
-      return transformGUIControl(control, context);
+    const contentBlock = this.mode === 'gui'
+      ? transformGUIControl((this.renderFn as GUIControlBuilder)(), { theme: this.theme })
+      : (this.renderFn as BlockBuilder)();
+
+    // If selection manager is active, wrap content with selection overlay
+    if (this.selectionManager && this.selectionManager.isRenderingEnabled()) {
+      const selectionOverlay = this.selectionManager.buildSelectionOverlays();
+      if (selectionOverlay) {
+        return group({}, [contentBlock, selectionOverlay]);
+      }
     }
-    return (this.renderFn as BlockBuilder)();
+
+    return contentBlock;
   }
 }
