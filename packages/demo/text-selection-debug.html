@@ -447,11 +447,16 @@
           const widthBefore = tempCtx.measureText(textBefore).width;
           const widthChar = tempCtx.measureText(charAtIndex).width;
           
+          // IMPORTANT: Get the actual canvas element to determine pixelRatio
+          // Character bounds must be returned in canvas BUFFER coordinates, not scene coordinates
+          const actualCanvas = document.getElementById('canvas').querySelector('canvas');
+          const scale = actualCanvas ? actualCanvas.width / actualCanvas.getBoundingClientRect().width : 1;
+          
           return {
-            x: blockInfo.x + widthBefore,
-            y: blockInfo.y,
-            width: widthChar,
-            height: blockInfo.lineHeight
+            x: (blockInfo.x + widthBefore) * scale,
+            y: blockInfo.y * scale,
+            width: widthChar * scale,
+            height: blockInfo.lineHeight * scale
           };
         }
         
