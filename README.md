@@ -22,7 +22,7 @@ Explore 12+ interactive examples including data visualization, productivity apps
 
 ## Packages
 
-Vitrine is organized as a pnpm workspace monorepo with several publishable packages:
+Vitrine is organized as a pnpm workspace monorepo with several publishable packages, plus a private demo package:
 
 | Package | Directory | npm name | Description |
 |---------|-----------|----------|-------------|
@@ -31,6 +31,7 @@ Vitrine is organized as a pnpm workspace monorepo with several publishable packa
 | Tables | `packages/tables` | `vitrine-tables` | Table layout model and extension contracts |
 | Tables Adapter | `packages/tables-vitrine` | `vitrine-tables-adapter` | Vitrine adapter for table rendering |
 | Texta | `packages/texta` | `texta` | Attributed text engine for semantic and render transformations |
+| Demo | `packages/demo` | *(private)* | Gallery of interactive demos; not published to npm |
 
 **Typical usage**: Use `vitrine` for core rendering. Add `vitrine-gui` for interactive controls (buttons, sliders, calendars, …). The table and texta packages are specialized extensions for complex layouts and rich text.
 
