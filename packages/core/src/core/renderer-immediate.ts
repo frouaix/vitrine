@@ -76,7 +76,10 @@ export class ImmediateRenderer {
 
     this.setupCanvas();
     
-    const ctx = this.canvas.getContext('2d');
+    const ctx = this.canvas.getContext('2d', {
+      alpha: true,
+      willReadFrequently: false
+    });
     if (!ctx) throw new Error('Failed to get 2D context');
     this.context = new Canvas2DContext(ctx);
 
