@@ -68,3 +68,7 @@ export {
 // Component system
 export { VitrineComponent } from './component.ts';
 export type { VitrineComponentConfig, GUIControlBuilder, BlockBuilder, RenderFunction, RenderMode } from './component.ts';
+
+// Text selection system
+export { TextSelectionManager } from './selection/TextSelectionManager.ts';
+export type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
