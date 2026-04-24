@@ -71,4 +71,4 @@ export type { VitrineComponentConfig, GUIControlBuilder, BlockBuilder, RenderFun
 
 // Text selection system
 export { TextSelectionManager } from './selection/TextSelectionManager.ts';
-export type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
+export type { SelectionRenderConfig, CharacterBoundsProvider } from './selection/TextSelectionManager.ts';
