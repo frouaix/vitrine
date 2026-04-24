@@ -213,7 +213,7 @@ const c2 = VitrineComponent.gui(() => /* ... */, {
 
 // Auto mode (continuous by default; explicit control if needed)
 const c3 = VitrineComponent.gui(() => /* ... */, {
-  renderMode: 'auto'  // Time-based animations render continuously; no RAF overhead when idle
+  renderMode: 'auto'  // Starts continuous; with beginAnimation()/endAnimation(), RAF stops when idle
 });
 
 // Explicit animation lifecycle (for power users)
