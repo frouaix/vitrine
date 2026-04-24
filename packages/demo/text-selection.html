@@ -287,6 +287,30 @@
     component.mount(canvas);
     selectionManager = component.getSelectionManager();
 
+    // Provide a character bounds provider for demo purposes
+    if (selectionManager) {
+      selectionManager.setCharacterBoundsProvider((blockId, charIndex) => {
+        // Simple mock implementation: assume monospace-ish layout
+        // Character width ~10px, line height ~24px for text1/text2, ~18px for others
+        const charWidth = 10;
+        const blocks = {
+          'text1': { x: 40, y: 60, lineHeight: 24, fontSize: 18 },
+          'text2': { x: 40, y: 140, lineHeight: 24, fontSize: 16 }
+        };
+        const blockInfo = blocks[blockId];
+        if (!blockInfo) return null;
+        
+        const x = blockInfo.x + charIndex * charWidth;
+        const y = blockInfo.y;
+        return {
+          x,
+          y,
+          width: charWidth,
+          height: blockInfo.lineHeight
+        };
+      });
+    }
+
     // Update stats
     function updateStats() {
       const selections = selectionManager.getAllSelections();
