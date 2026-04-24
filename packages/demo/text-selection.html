@@ -328,14 +328,26 @@
       const userId = document.getElementById('userId').value || 'default';
       const startChar = parseInt(document.getElementById('startChar').value) || 0;
       const endChar = parseInt(document.getElementById('endChar').value) || 0;
-      const color = document.getElementById('selColor').value;
+      const hexColor = document.getElementById('selColor').value;
 
       selectionManager.setSelection('text1', startChar, endChar, userId);
       
-      // Update color
+      // Convert hex color to rgba with transparency for range selections
       const sel = selectionManager.getSelection(userId);
       if (sel) {
-        sel.color = color;
+        // Parse hex color (#RRGGBB) to RGB
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        
+        // For caret (anchor === focus), use solid color
+        // For range selection, use rgba with low opacity
+        if (startChar === endChar) {
+          sel.color = hexColor; // Solid for caret
+        } else {
+          sel.color = `rgba(${r}, ${g}, ${b}, 0.05)`; // Transparent for range
+        }
       }
 
       updateStats();
