@@ -23,7 +23,8 @@ export default defineConfig({
         componentDemo: resolve(__dirname, 'component-demo.html'),
         texta: resolve(__dirname, 'texta.html'),
         markdown: resolve(__dirname, 'markdown.html'),
-        tables: resolve(__dirname, 'tables.html')
+        tables: resolve(__dirname, 'tables.html'),
+        textSelection: resolve(__dirname, 'text-selection.html')
       }
     }
   },

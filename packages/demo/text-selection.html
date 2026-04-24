@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Text Selection Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #0f172a;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px 20px 84px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: -0.03em;
+      text-align: center;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 14px auto 24px;
+      text-align: center;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #475569;
+    }
+
+    .canvas-shell {
+      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      margin-bottom: 24px;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      background: #ffffff;
+    }
+
+    .caption {
+      margin: 14px 4px 0;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .controls {
+      padding: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.5);
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, button {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    button {
+      background: #2563eb;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:active {
+      background: #1e40af;
+    }
+
+    .stats {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #334155;
+      font-family: "Monaco", "Menlo", monospace;
+    }
+
+    .page-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 20px;
+      border-top: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(248, 250, 252, 0.92);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      font-size: 14px;
+    }
+
+    .page-nav a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Vitrine Text Selection</h1>
+    <p class="intro">
+      Test multi-user text selection with configurable caret and highlight colors.
+      Click to place caret, drag to select. Try adding multiple user selections below.
+    </p>
+    <div class="canvas-shell">
+      <canvas id="canvas"></canvas>
+      <p class="caption">Selection overlays are rendered as Portal blocks above the content.</p>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>User ID</label>
+        <input type="text" id="userId" value="user1" placeholder="e.g., user1" style="width: 100px;">
+      </div>
+      <div class="control-group">
+        <label>Start Char</label>
+        <input type="number" id="startChar" value="0" min="0" style="width: 80px;">
+      </div>
+      <div class="control-group">
+        <label>End Char</label>
+        <input type="number" id="endChar" value="5" min="0" style="width: 80px;">
+      </div>
+      <div class="control-group">
+        <label>Color</label>
+        <input type="color" id="selColor" value="#3b82f6" style="width: 60px;">
+      </div>
+      <button onclick="addSelection()">Add Selection</button>
+      <button onclick="clearAllSelections()" style="background: #64748b;">Clear All</button>
+    </div>
+
+    <div class="stats">
+      <div><strong>Active Selections:</strong> <span id="selectionCount">0</span></div>
+      <div id="selectionList" style="margin-top: 8px; white-space: pre-wrap; font-size: 12px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { VitrineComponent, textbox } from 'vitrine-gui';
+    import { group, rectangle, text } from 'vitrine';
+
+    let selectionManager = null;
+
+    function buildScene() {
+      return group({}, [
+        rectangle({ dx: 800, dy: 600, fill: '#ffffff' }),
+        
+        text({
+          id: 'text1',
+          x: 40,
+          y: 60,
+          text: 'Click and drag to select this text block',
+          fontSize: 18,
+          fill: '#0f172a',
+          baseline: 'top'
+        }),
+
+        text({
+          id: 'text2',
+          x: 40,
+          y: 140,
+          text: 'Multiple selections with different colors are supported for collaborative editing',
+          fontSize: 16,
+          fill: '#475569',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 40,
+          y: 240,
+          text: 'Instructions:',
+          fontSize: 14,
+          fill: '#334155',
+          baseline: 'top',
+          fontWeight: 'bold'
+        }),
+
+        text({
+          x: 40,
+          y: 275,
+          text: '1. Click above to place a caret',
+          fontSize: 13,
+          fill: '#64748b',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 40,
+          y: 305,
+          text: '2. Drag to create a selection range',
+          fontSize: 13,
+          fill: '#64748b',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 40,
+          y: 335,
+          text: '3. Use controls below to add selections for other users',
+          fontSize: 13,
+          fill: '#64748b',
+          baseline: 'top'
+        }),
+
+        text({
+          x: 40,
+          y: 400,
+          text: 'Caret: █  | Selection: ▮▮▮',
+          fontSize: 14,
+          fill: '#2563eb',
+          baseline: 'top'
+        })
+      ]);
+    }
+
+    const component = VitrineComponent.block(buildScene, {
+      width: 800,
+      height: 600,
+      selectionConfig: {
+        enabled: true,
+        caretColor: '#dc2626',
+        selectionColor: 'rgba(59, 130, 246, 0.25)',
+        caretWidth: 2
+      }
+    });
+
+    const canvas = document.getElementById('canvas');
+    component.mount(canvas);
+    selectionManager = component.getSelectionManager();
+
+    // Update stats
+    function updateStats() {
+      const selections = selectionManager.getAllSelections();
+      document.getElementById('selectionCount').textContent = selections.length;
+
+      const list = selections.map(sel => 
+        `${sel.userId || 'default'}: [${sel.anchor}, ${sel.focus}) in "${sel.blockId}" ${sel.color ? `color: ${sel.color}` : ''}`
+      ).join('\n');
+
+      document.getElementById('selectionList').textContent = list || '(no selections)';
+    }
+
+    // Global functions for controls
+    window.addSelection = function() {
+      const userId = document.getElementById('userId').value || 'default';
+      const startChar = parseInt(document.getElementById('startChar').value) || 0;
+      const endChar = parseInt(document.getElementById('endChar').value) || 0;
+      const color = document.getElementById('selColor').value;
+
+      selectionManager.setSelection('text1', startChar, endChar, userId);
+      
+      // Update color
+      const sel = selectionManager.getSelection(userId);
+      if (sel) {
+        sel.color = color;
+      }
+
+      updateStats();
+    };
+
+    window.clearAllSelections = function() {
+      selectionManager.clearAllSelections();
+      updateStats();
+    };
+
+    updateStats();
+  </script>
+
+  <nav class="page-nav">
+    <a href="gallery.html">← Gallery</a>
+    <a href="component-demo.html">Component Demo →</a>
+  </nav>
+</body>
+</html>
