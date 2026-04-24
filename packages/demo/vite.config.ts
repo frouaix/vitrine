@@ -24,7 +24,8 @@ export default defineConfig({
         texta: resolve(__dirname, 'texta.html'),
         markdown: resolve(__dirname, 'markdown.html'),
         tables: resolve(__dirname, 'tables.html'),
-        textSelection: resolve(__dirname, 'text-selection.html')
+        textSelection: resolve(__dirname, 'text-selection.html'),
+        textSelectionDebug: resolve(__dirname, 'text-selection-debug.html')
       }
     }
   },

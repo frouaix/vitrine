@@ -325,19 +325,16 @@ export class VitrineComponent {
 
   private getCanvasCoordinates(e: PointerEvent): { x: number; y: number } | null {
     if (!this.canvas) return null;
-    const rect = this.canvas.getBoundingClientRect();
-    const dxcCanvas = this.canvas.width;
-    const dywCanvas = this.canvas.height;
-    const dxwCanvas = rect.width;
-    const dywCanvas_display = rect.height;
+    const { width: dxcCanvas, height: dycCanvas } = this.canvas;
+    const { left: xwCanvas, top: ywCanvas, width: dxwCanvas, height: dywCanvas } = this.canvas.getBoundingClientRect();
+    const { clientX: xwPointer, clientY: ywPointer } = e;
     
-    // Scale factor from display size to canvas buffer size
     const scaleX = dxcCanvas / dxwCanvas;
-    const scaleY = dywCanvas / dywCanvas_display;
+    const scaleY = dycCanvas / dywCanvas;
     
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: (xwPointer - xwCanvas) * scaleX,
+      y: (ywPointer - ywCanvas) * scaleY
     };
   }
 
