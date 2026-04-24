@@ -756,7 +756,7 @@ type VitrinePointerEvent = PointerEvent & {
 
 ## 9. `VitrineComponent`
 
-`VitrineComponent` wraps a single Vitrine render function in its own `<canvas>` element. It manages the canvas lifecycle, render loop, and device pixel ratio, making it easy to embed Vitrine inside any HTML page or JavaScript framework (React, Vue, etc.).
+`VitrineComponent` wraps a single Vitrine render function in its own `<canvas>` element. It manages the canvas lifecycle, render scheduling, and device pixel ratio, making it easy to embed Vitrine inside any HTML page or JavaScript framework (React, Vue, etc.).
 
 ### 9.1 Creating a component
 
@@ -795,12 +795,14 @@ const animatedComponent = VitrineComponent.block(
 | `height` | `number` | Canvas height in CSS pixels. If omitted in GUI mode, auto-sized from the root control. |
 | `theme` | `ThemeDefinition` | Theme for GUI controls (GUI mode only). Defaults to `lightTheme`. |
 | `pixelRatio` | `number` | Device pixel ratio override. |
+| `renderMode` | `'continuous' \| 'onDemand' \| 'auto'` | Render scheduler mode. Defaults to `'continuous'`. |
+| `invalidateOnInteraction` | `boolean` | In non-continuous modes, auto-calls `invalidate()` on pointer/wheel interaction. Defaults to `true`. |
 | `rendererConfig` | `Partial<RendererConfig>` | Additional options forwarded to `ImmediateRenderer`. |
 
 ### 9.3 Lifecycle
 
 ```typescript
-// Mount — creates a <canvas>, appends it to the container, starts the render loop
+// Mount — creates a <canvas>, appends it to the container, and starts scheduler-managed rendering
 myComponent.mount(document.getElementById('my-container')!);
 
 // Resize at any time
@@ -812,7 +814,19 @@ myComponent.setRenderFunction(() => /* new tree */);
 // Update the theme (GUI mode only)
 myComponent.setTheme(darkTheme);
 
-// Unmount — stops the render loop, removes the canvas, releases event listeners
+// Mark dirty after external state mutation (needed in onDemand/auto when state changes outside component mutators)
+myComponent.invalidate();
+
+// Optional explicit animation lifecycle for auto mode.
+// Once used, auto mode follows begin/end animation count.
+myComponent.beginAnimation();
+// ...update your animation state from app code...
+myComponent.endAnimation();
+
+// Optional: switch mode at runtime
+myComponent.setRenderMode('onDemand');
+
+// Unmount — stops scheduled rendering, removes the canvas, releases event listeners
 myComponent.unmount();
 
 // Check if currently mounted
@@ -822,7 +836,13 @@ if (myComponent.isMounted()) { /* ... */ }
 const canvas = myComponent.getCanvas();
 ```
 
-### 9.4 Auto-sizing
+### 9.4 Render modes
+
+- `continuous`: RAF always runs. Best for constantly animated scenes.
+- `onDemand`: renders only when invalidated (for example `invalidate()`, `setTheme()`, `resize()`, or `setRenderFunction()`).
+- `auto`: starts as continuous (so time-based animations render without extra wiring). If you call `beginAnimation()` or `endAnimation()`, it switches to explicit animation control and then runs continuously only while animation count is active.
+
+### 9.5 Auto-sizing
 
 In GUI mode, if `width` or `height` is omitted from the config, the component calls `rsControl()` on the root control to compute the canvas size from the control's natural dimensions:
 
@@ -1010,4 +1030,3 @@ circle({ x: cx, y: cy, radius: 30, fill: '#ff6b6b',
 ```
 
 Supported CSS filter functions include: `blur`, `brightness`, `contrast`, `grayscale`, `hue-rotate`, `invert`, `opacity`, `saturate`, `sepia`, `drop-shadow`.
-
