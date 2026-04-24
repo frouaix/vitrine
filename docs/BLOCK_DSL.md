@@ -817,7 +817,8 @@ myComponent.setTheme(darkTheme);
 // Mark dirty after external state mutation (needed in onDemand/auto when state changes outside component mutators)
 myComponent.invalidate();
 
-// Auto mode animation lifecycle (run RAF while animation count > 0)
+// Optional explicit animation lifecycle for auto mode.
+// Once used, auto mode follows begin/end animation count.
 myComponent.beginAnimation();
 // ...update your animation state from app code...
 myComponent.endAnimation();
@@ -839,7 +840,7 @@ const canvas = myComponent.getCanvas();
 
 - `continuous`: RAF always runs. Best for constantly animated scenes.
 - `onDemand`: renders only when invalidated (for example `invalidate()`, `setTheme()`, `resize()`, or `setRenderFunction()`).
-- `auto`: runs continuously only while `beginAnimation()`/`endAnimation()` indicates active animations; otherwise behaves like on-demand.
+- `auto`: starts as continuous (so time-based animations render without extra wiring). If you call `beginAnimation()` or `endAnimation()`, it switches to explicit animation control and then runs continuously only while animation count is active.
 
 ### 9.5 Auto-sizing
 

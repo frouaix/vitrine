@@ -50,6 +50,7 @@ export class VitrineComponent {
   private renderMode: RenderMode;
   private invalidateOnInteraction: boolean;
   private activeAnimationCount: number = 0;
+  private hasExplicitAnimationControl: boolean = false;
   private fDirty: boolean = false;
   private boundInteractionHandlers: {
     pointerdown: () => void;
@@ -125,6 +126,7 @@ export class VitrineComponent {
     this.removeInteractionInvalidation();
     this.fDirty = false;
     this.activeAnimationCount = 0;
+    this.hasExplicitAnimationControl = false;
 
     if (this.renderer) {
       this.renderer.destroy();
@@ -197,6 +199,7 @@ export class VitrineComponent {
    * In auto mode, this enables continuous RAF until endAnimation() balances it.
    */
   beginAnimation(): void {
+    this.hasExplicitAnimationControl = true;
     this.activeAnimationCount += 1;
     this.invalidate();
   }
@@ -206,6 +209,7 @@ export class VitrineComponent {
    * The count is clamped at zero to keep state robust across mismatched calls.
    */
   endAnimation(): void {
+    this.hasExplicitAnimationControl = true;
     this.activeAnimationCount = Math.max(0, this.activeAnimationCount - 1);
     this.invalidate();
   }
@@ -237,6 +241,9 @@ export class VitrineComponent {
       return true;
     }
     if (this.renderMode === 'auto') {
+      if (!this.hasExplicitAnimationControl) {
+        return true;
+      }
       return this.activeAnimationCount > 0;
     }
     return false;
