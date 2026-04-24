@@ -36,7 +36,7 @@ export class TextSelectionManager {
       enabled: config.enabled ?? true,
       caretColor: config.caretColor ?? '#000',
       selectionColor: config.selectionColor ?? 'rgba(0, 0, 255, 0.2)',
-      caretWidth: config.caretWidth ?? 1
+      caretWidth: config.caretWidth ?? 2
     };
   }
 
@@ -131,6 +131,13 @@ export class TextSelectionManager {
       if (isCaret) {
         const caretBounds = this.characterBoundsProvider(sel.blockId, sel.anchor);
         if (caretBounds) {
+          console.log('[TextSelectionManager] Rendering caret at', {
+            x: caretBounds.x,
+            y: caretBounds.y,
+            dx: this.renderConfig.caretWidth,
+            dy: caretBounds.height,
+            fill: sel.color ?? this.renderConfig.caretColor
+          });
           const caretBlock = rectangle(
             {
               x: caretBounds.x,
@@ -171,6 +178,8 @@ export class TextSelectionManager {
     if (overlayChildren.length === 0) {
       return null;
     }
+
+    console.log('[TextSelectionManager] Built', overlayChildren.length, 'overlay blocks');
 
     return portal(
       {
