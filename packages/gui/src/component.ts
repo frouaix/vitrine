@@ -9,6 +9,8 @@ import { ImmediateRenderer } from 'vitrine';
 import type { RendererConfig } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
+import { TextSelectionManager } from './selection/TextSelectionManager.ts';
+import type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
 
 /** Function that returns a GUI control tree each frame. */
 export type GUIControlBuilder = () => GUIControl;
@@ -35,6 +37,8 @@ export interface VitrineComponentConfig {
   invalidateOnInteraction?: boolean;
   /** Additional renderer config overrides. */
   rendererConfig?: Partial<RendererConfig>;
+  /** Text selection configuration. Defaults to disabled. */
+  selectionConfig?: SelectionRenderConfig;
 }
 
 export class VitrineComponent {
@@ -52,6 +56,7 @@ export class VitrineComponent {
   private activeAnimationCount: number = 0;
   private hasExplicitAnimationControl: boolean = false;
   private fDirty: boolean = false;
+  private selectionManager: TextSelectionManager | null = null;
   private boundInteractionHandlers: {
     pointerdown: () => void;
     pointerup: () => void;
@@ -113,6 +118,11 @@ export class VitrineComponent {
       ...this.config.rendererConfig
     });
 
+    // Initialize selection manager if configured
+    if (this.config.selectionConfig?.enabled !== false) {
+      this.selectionManager = new TextSelectionManager(this.config.selectionConfig);
+    }
+
     this.mounted = true;
     this.setupInteractionInvalidation();
     this.invalidate();
@@ -127,6 +137,7 @@ export class VitrineComponent {
     this.fDirty = false;
     this.activeAnimationCount = 0;
     this.hasExplicitAnimationControl = false;
+    this.selectionManager = null;
 
     if (this.renderer) {
       this.renderer.destroy();
@@ -192,6 +203,14 @@ export class VitrineComponent {
   /** Get current render mode. */
   getRenderMode(): RenderMode {
     return this.renderMode;
+  }
+
+  /**
+   * Get the text selection manager (if enabled).
+   * Returns null if selection is not configured for this component.
+   */
+  getSelectionManager(): TextSelectionManager | null {
+    return this.selectionManager;
   }
 
   /**

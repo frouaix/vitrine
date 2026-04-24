@@ -21,6 +21,9 @@ export interface SelectionRenderConfig {
 export class TextSelectionManager {
   private selections: Map<string, Selection> = new Map();
   private renderConfig: SelectionRenderConfig;
+  private isDragging: boolean = false;
+  private dragStartBlockId: string | null = null;
+  private dragStartCharIndex: number | null = null;
 
   constructor(config: SelectionRenderConfig = {}) {
     this.renderConfig = {
@@ -95,4 +98,50 @@ export class TextSelectionManager {
   isRenderingEnabled(): boolean {
     return this.renderConfig.enabled ?? true;
   }
+
+  /**
+   * Handle pointer down: start or update selection.
+   * charIndex: character index where pointer down occurred (result of hit-testing).
+   * blockId: ID of the text block under the pointer.
+   */
+  handlePointerDown(blockId: string, charIndex: number, userId?: string): void {
+    this.isDragging = true;
+    this.dragStartBlockId = blockId;
+    this.dragStartCharIndex = charIndex;
+
+    // Place caret at click position
+    this.setSelection(blockId, charIndex, charIndex, userId);
+  }
+
+  /**
+   * Handle pointer move: extend selection during drag.
+   * charIndex: character index under the pointer.
+   * userId: optional user ID.
+   */
+  handlePointerMove(charIndex: number, userId?: string): void {
+    if (!this.isDragging || this.dragStartCharIndex === null || this.dragStartBlockId === null) {
+      return;
+    }
+
+    const sel = this.getSelection(userId);
+    if (!sel || sel.blockId !== this.dragStartBlockId) {
+      return;
+    }
+
+    // Extend selection from anchor to current position
+    const anchor = Math.min(this.dragStartCharIndex, charIndex);
+    const focus = Math.max(this.dragStartCharIndex, charIndex);
+
+    this.setSelection(this.dragStartBlockId, anchor, focus, userId);
+  }
+
+  /**
+   * Handle pointer up: end drag operation.
+   */
+  handlePointerUp(): void {
+    this.isDragging = false;
+    this.dragStartBlockId = null;
+    this.dragStartCharIndex = null;
+  }
 }
+
