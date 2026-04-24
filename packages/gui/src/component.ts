@@ -278,7 +278,7 @@ export class VitrineComponent {
     this.canvas.addEventListener('pointermove', this.boundInteractionHandlers.pointermove);
     this.canvas.addEventListener('click', this.boundInteractionHandlers.click);
     this.canvas.addEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
-    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel);
+    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel, { passive: true });
   }
 
   private removeInteractionInvalidation(): void {
