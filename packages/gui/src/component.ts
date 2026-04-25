@@ -5,7 +5,7 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { ImmediateRenderer, group } from 'vitrine';
+import { BlockType, ImmediateRenderer, group } from 'vitrine';
 import type { RendererConfig } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
@@ -57,6 +57,7 @@ export class VitrineComponent {
   private hasExplicitAnimationControl: boolean = false;
   private fDirty: boolean = false;
   private selectionManager: TextSelectionManager | null = null;
+  private selectableTextBlockIds: string[] = [];
   private boundInteractionHandlers: {
     pointerdown: (e: PointerEvent) => void;
     pointerup: (e: PointerEvent) => void;
@@ -325,16 +326,12 @@ export class VitrineComponent {
 
   private getCanvasCoordinates(e: PointerEvent): { x: number; y: number } | null {
     if (!this.canvas) return null;
-    const { width: dxcCanvas, height: dycCanvas } = this.canvas;
-    const { left: xwCanvas, top: ywCanvas, width: dxwCanvas, height: dywCanvas } = this.canvas.getBoundingClientRect();
+    const { left: xwCanvas, top: ywCanvas } = this.canvas.getBoundingClientRect();
     const { clientX: xwPointer, clientY: ywPointer } = e;
-    
-    const scaleX = dxcCanvas / dxwCanvas;
-    const scaleY = dycCanvas / dywCanvas;
-    
+
     return {
-      x: (xwPointer - xwCanvas) * scaleX,
-      y: (ywPointer - ywCanvas) * scaleY
+      x: xwPointer - xwCanvas,
+      y: ywPointer - ywCanvas
     };
   }
 
@@ -345,10 +342,7 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    // Try to hit-test all known text blocks
-    // TODO: Make this dynamic by discovering blocks from the scene
-    const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10'];
-    for (const blockId of blockIds) {
+    for (const blockId of this.selectableTextBlockIds) {
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
       if (charIndex !== null) {
         this.selectionManager.handlePointerDown(blockId, charIndex);
@@ -373,9 +367,7 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    // Try to hit-test all known text blocks
-    const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10'];
-    for (const blockId of blockIds) {
+    for (const blockId of this.selectableTextBlockIds) {
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
       if (charIndex !== null) {
         this.selectionManager.handlePointerMove(charIndex);
@@ -412,6 +404,7 @@ export class VitrineComponent {
     const contentBlock = this.mode === 'gui'
       ? transformGUIControl((this.renderFn as GUIControlBuilder)(), { theme: this.theme })
       : (this.renderFn as BlockBuilder)();
+    this.selectableTextBlockIds = this.collectSelectableTextBlockIds(contentBlock);
 
     // If selection manager is active, wrap content with selection overlay
     if (this.selectionManager && this.selectionManager.isRenderingEnabled()) {
@@ -422,5 +415,34 @@ export class VitrineComponent {
     }
 
     return contentBlock;
+  }
+
+  private collectSelectableTextBlockIds(root: Block): string[] {
+    const ids: string[] = [];
+    const stack: Block[] = [root];
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) continue;
+
+      if (
+        (current.type === BlockType.Text || current.type === BlockType.Texta) &&
+        typeof current.props.id === 'string' &&
+        current.props.id.length > 0
+      ) {
+        ids.push(current.props.id);
+      }
+
+      if (current.children) {
+        for (let i = current.children.length - 1; i >= 0; i--) {
+          const child = current.children[i];
+          if (child) {
+            stack.push(child);
+          }
+        }
+      }
+    }
+
+    return ids;
   }
 }

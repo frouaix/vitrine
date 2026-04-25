@@ -106,6 +106,7 @@
     const component = VitrineComponent.block(buildScene, {
       width: 800,
       height: 400,
+      renderMode: 'auto',
       selectionConfig: {
         enabled: true,
         caretColor: '#ff0000',
@@ -143,16 +144,11 @@
           const widthBefore = tempCtx.measureText(textBefore).width;
           const widthChar = tempCtx.measureText(charAtIndex).width;
 
-          // IMPORTANT: Get the actual canvas element to determine pixelRatio
-          // Character bounds must be returned in canvas BUFFER coordinates, not scene coordinates
-          const actualCanvas = canvas.querySelector('canvas');
-          const scale = actualCanvas ? actualCanvas.width / actualCanvas.getBoundingClientRect().width : 1;
-
           return {
-            x: (x + widthBefore) * scale,
-            y: y * scale,
-            width: widthChar * scale,
-            height: lineHeight * scale
+            x: x + widthBefore,
+            y,
+            width: widthChar,
+            height: lineHeight
           };
         }
 
@@ -201,7 +197,7 @@
 
           if (selectionManager) {
             log('\n=== HIT-TESTING ===');
-            const charIndex = selectionManager.hitTestBlockCharacter('testText', bufferX, bufferY, 100);
+            const charIndex = selectionManager.hitTestBlockCharacter('testText', screenX, screenY, 100);
             if (charIndex !== null) {
               log(`✓ Hit! Character index: ${charIndex}`);
               const sel = selectionManager.getSelection();

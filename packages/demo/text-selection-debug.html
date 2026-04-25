@@ -167,10 +167,10 @@
           x: 40,
           y: 30,
           text: 'Single-line text (18px)',
+          font: 'bold 18px sans-serif',
           fontSize: 18,
           fill: '#0f172a',
-          baseline: 'top',
-          fontWeight: 'bold'
+          baseline: 'top'
         }),
 
         // Test 2: Single-line text, small
@@ -201,10 +201,10 @@
           x: 40,
           y: 180,
           text: 'Text with monospace font rendering',
+          font: '14px monospace',
           fontSize: 14,
           fill: '#1e293b',
-          baseline: 'top',
-          fontFamily: 'monospace'
+          baseline: 'top'
         }),
 
         // Test 5: Wider character spacing
@@ -224,10 +224,10 @@
           x: 40,
           y: 270,
           text: 'LARGE TEXT (24px)',
+          font: 'bold 24px sans-serif',
           fontSize: 24,
           fill: '#0f172a',
-          baseline: 'top',
-          fontWeight: 'bold'
+          baseline: 'top'
         }),
 
         // Test 7: Text with different baseline
@@ -258,10 +258,10 @@
           x: 40,
           y: 400,
           text: 'IPv4: 192.168.1.1 File: document.pdf Hash: #abc123def',
+          font: '13px monospace',
           fontSize: 13,
           fill: '#0f172a',
-          baseline: 'top',
-          fontFamily: 'monospace'
+          baseline: 'top'
         }),
 
         // Test 10: Short text
@@ -271,6 +271,46 @@
           y: 450,
           text: 'Hi',
           fontSize: 16,
+          fill: '#475569',
+          baseline: 'top'
+        }),
+
+        // Test 11: Wrapped text with narrow width
+        text({
+          id: 'text11',
+          x: 520,
+          y: 30,
+          text: 'Wrapped (dx=280): this paragraph intentionally wraps across multiple lines to stress caret placement and range rendering.',
+          dx: 280,
+          fontSize: 14,
+          lineHeight: 20,
+          fill: '#0f172a',
+          baseline: 'top'
+        }),
+
+        // Test 12: Wrapped text with larger line height
+        text({
+          id: 'text12',
+          x: 520,
+          y: 210,
+          text: 'Wrapped (dx=360, lineHeight=28): larger leading should keep selection rectangles aligned to each visual row.',
+          dx: 360,
+          fontSize: 16,
+          lineHeight: 28,
+          fill: '#334155',
+          baseline: 'top'
+        }),
+
+        // Test 13: Wrapped and clipped text (dx + dy)
+        text({
+          id: 'text13',
+          x: 520,
+          y: 360,
+          text: 'Wrapped + clipped (dx=300, dy=56): this line should clip after a couple of rows so we can test edge behavior near the clipping boundary.',
+          dx: 300,
+          dy: 56,
+          fontSize: 14,
+          lineHeight: 18,
           fill: '#475569',
           baseline: 'top'
         }),
@@ -328,6 +368,7 @@
     const component = VitrineComponent.block(buildScene, {
       width: 1000,
       height: 900,
+      renderMode: 'auto',
       selectionConfig: {
         enabled: true,
         caretColor: '#dc2626',
@@ -354,8 +395,7 @@
             y: 30, 
             fontSize: 18,
             lineHeight: 26,
-            fontFamily: 'sans-serif',
-            fontWeight: 'bold'
+            font: 'bold 18px sans-serif'
           },
           'text2': { 
             text: 'Smaller single-line text (12px)',
@@ -363,7 +403,7 @@
             y: 70, 
             fontSize: 12,
             lineHeight: 18,
-            fontFamily: 'sans-serif'
+            font: '12px sans-serif'
           },
           'text3': { 
             text: 'This is a longer text block that would normally wrap in a real editor. It has multiple words and should help test multi-line selection.',
@@ -371,7 +411,7 @@
             y: 110, 
             fontSize: 14,
             lineHeight: 20,
-            fontFamily: 'sans-serif'
+            font: '14px sans-serif'
           },
           'text4': { 
             text: 'Text with monospace font rendering',
@@ -379,7 +419,7 @@
             y: 180, 
             fontSize: 14,
             lineHeight: 20,
-            fontFamily: 'monospace'
+            font: '14px monospace'
           },
           'text5': { 
             text: 'W i d e l y   s p a c e d   t e x t',
@@ -387,7 +427,7 @@
             y: 220, 
             fontSize: 14,
             lineHeight: 20,
-            fontFamily: 'sans-serif'
+            font: '14px sans-serif'
           },
           'text6': { 
             text: 'LARGE TEXT (24px)',
@@ -395,8 +435,7 @@
             y: 270, 
             fontSize: 24,
             lineHeight: 32,
-            fontFamily: 'sans-serif',
-            fontWeight: 'bold'
+            font: 'bold 24px sans-serif'
           },
           'text7': { 
             text: 'Text with baseline: alphabetic',
@@ -404,7 +443,8 @@
             y: 320, 
             fontSize: 14,
             lineHeight: 20,
-            fontFamily: 'sans-serif'
+            font: '14px sans-serif',
+            baseline: 'alphabetic'
           },
           'text8': { 
             text: 'Numbers: 0123456789 Symbols: !@#$%^&*()',
@@ -412,7 +452,7 @@
             y: 360, 
             fontSize: 14,
             lineHeight: 20,
-            fontFamily: 'sans-serif'
+            font: '14px sans-serif'
           },
           'text9': { 
             text: 'IPv4: 192.168.1.1 File: document.pdf Hash: #abc123def',
@@ -420,7 +460,7 @@
             y: 400, 
             fontSize: 13,
             lineHeight: 20,
-            fontFamily: 'monospace'
+            font: '13px monospace'
           },
           'text10': { 
             text: 'Hi',
@@ -428,7 +468,35 @@
             y: 450, 
             fontSize: 16,
             lineHeight: 24,
-            fontFamily: 'sans-serif'
+            font: '16px sans-serif'
+          },
+          'text11': {
+            text: 'Wrapped (dx=280): this paragraph intentionally wraps across multiple lines to stress caret placement and range rendering.',
+            x: 520,
+            y: 30,
+            dx: 280,
+            fontSize: 14,
+            lineHeight: 20,
+            font: '14px sans-serif'
+          },
+          'text12': {
+            text: 'Wrapped (dx=360, lineHeight=28): larger leading should keep selection rectangles aligned to each visual row.',
+            x: 520,
+            y: 210,
+            dx: 360,
+            fontSize: 16,
+            lineHeight: 28,
+            font: '16px sans-serif'
+          },
+          'text13': {
+            text: 'Wrapped + clipped (dx=300, dy=56): this line should clip after a couple of rows so we can test edge behavior near the clipping boundary.',
+            x: 520,
+            y: 360,
+            dx: 300,
+            dy: 56,
+            fontSize: 14,
+            lineHeight: 18,
+            font: '14px sans-serif'
           }
         };
         
@@ -437,26 +505,88 @@
         
         // Measure character width using canvas text metrics
         if (tempCtx) {
-          const fontWeight = blockInfo.fontWeight ? blockInfo.fontWeight + ' ' : '';
-          tempCtx.font = `${fontWeight}${blockInfo.fontSize}px ${blockInfo.fontFamily}`;
+          tempCtx.font = blockInfo.font;
+          const yTop = blockInfo.baseline === 'alphabetic'
+            ? blockInfo.y - blockInfo.fontSize
+            : blockInfo.y;
           
-          // Measure position of character at charIndex
-          const textBefore = blockInfo.text.substring(0, charIndex);
           const charAtIndex = blockInfo.text.charAt(charIndex);
-          
-          const widthBefore = tempCtx.measureText(textBefore).width;
-          const widthChar = tempCtx.measureText(charAtIndex).width;
-          
-          // IMPORTANT: Get the actual canvas element to determine pixelRatio
-          // Character bounds must be returned in canvas BUFFER coordinates, not scene coordinates
-          const actualCanvas = document.getElementById('canvas').querySelector('canvas');
-          const scale = actualCanvas ? actualCanvas.width / actualCanvas.getBoundingClientRect().width : 1;
-          
+          const widthBefore = tempCtx.measureText(blockInfo.text.substring(0, charIndex)).width;
+          const widthToEnd = tempCtx.measureText(blockInfo.text.substring(0, charIndex + 1)).width;
+          const widthChar = widthToEnd - widthBefore;
+
+          if (!blockInfo.dx) {
+            return {
+              x: blockInfo.x + widthBefore,
+              y: yTop,
+              width: widthChar,
+              height: blockInfo.lineHeight
+            };
+          }
+
+          // Match renderer word-wrap behavior (Canvas2DContext.wrapText).
+          const words = blockInfo.text.split(/\s+/);
+          const lines = [];
+          if (words.length > 0) {
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+              const candidate = `${currentLine} ${words[i]}`;
+              if (tempCtx.measureText(candidate).width > blockInfo.dx) {
+                lines.push(currentLine);
+                currentLine = words[i];
+              } else {
+                currentLine = candidate;
+              }
+            }
+            lines.push(currentLine);
+          }
+
+          let normalizedOffset = 0;
+          for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const lineText = lines[lineIndex];
+            if (!lineText) continue;
+
+            const lineStart = normalizedOffset;
+            const lineEnd = lineStart + lineText.length;
+            const hasNextLine = lineIndex < lines.length - 1;
+
+            if (charIndex < lineEnd) {
+              const lineCharIndex = Math.max(0, charIndex - lineStart);
+              const xInLine = tempCtx.measureText(lineText.substring(0, lineCharIndex)).width;
+              const wrappedChar = lineText.charAt(lineCharIndex);
+              const wrappedWidth = wrappedChar ? tempCtx.measureText(wrappedChar).width : 0;
+
+              return {
+                x: blockInfo.x + xInLine,
+                y: yTop + lineIndex * blockInfo.lineHeight,
+                width: wrappedWidth || widthChar,
+                height: blockInfo.lineHeight
+              };
+            }
+
+            if (hasNextLine && charIndex === lineEnd) {
+              // Separator that became a line break: place caret at end of current line.
+              const xAtEnd = tempCtx.measureText(lineText).width;
+              return {
+                x: blockInfo.x + xAtEnd,
+                y: yTop + lineIndex * blockInfo.lineHeight,
+                width: tempCtx.measureText(' ').width,
+                height: blockInfo.lineHeight
+              };
+            }
+
+            normalizedOffset = lineEnd + (hasNextLine ? 1 : 0);
+          }
+
+          // Fallback to end of last wrapped line.
+          const lastLine = lines[lines.length - 1] ?? '';
+          const lastLineIndex = Math.max(0, lines.length - 1);
+          const xInLine = tempCtx.measureText(lastLine).width;
           return {
-            x: (blockInfo.x + widthBefore) * scale,
-            y: blockInfo.y * scale,
-            width: widthChar * scale,
-            height: blockInfo.lineHeight * scale
+            x: blockInfo.x + xInLine,
+            y: yTop + lastLineIndex * blockInfo.lineHeight,
+            width: widthChar || 1,
+            height: blockInfo.lineHeight
           };
         }
         
@@ -483,18 +613,14 @@
         const screenY = clientY - rect.top;
         log(`Screen coords (relative to canvas element): (${screenX.toFixed(1)}, ${screenY.toFixed(1)})`);
         
-        const scaleX = canvas_elem.width / rect.width;
-        const scaleY = canvas_elem.height / rect.height;
-        const canvasX = screenX * scaleX;
-        const canvasY = screenY * scaleY;
-        log(`Canvas buffer coords (scaled): (${canvasX.toFixed(1)}, ${canvasY.toFixed(1)})`);
+        log(`Scene coords (for hit-testing): (${screenX.toFixed(1)}, ${screenY.toFixed(1)})`);
         
         if (selectionManager) {
-          const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10'];
+          const blockIds = ['text1', 'text2', 'text3', 'text4', 'text5', 'text6', 'text7', 'text8', 'text9', 'text10', 'text11', 'text12', 'text13'];
           log(`\nHit-testing against blocks: ${blockIds.join(', ')}`);
           
           for (const blockId of blockIds) {
-            const charIndex = selectionManager.hitTestBlockCharacter(blockId, canvasX, canvasY, 1000);
+            const charIndex = selectionManager.hitTestBlockCharacter(blockId, screenX, screenY, 1000);
             if (charIndex !== null) {
               log(`✓ Hit in ${blockId}: character index ${charIndex}`);
               const sel = selectionManager.getSelection();
