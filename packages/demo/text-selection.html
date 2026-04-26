@@ -288,56 +288,6 @@
     component.mount(canvas);
     selectionManager = component.getSelectionManager();
 
-    // Provide a character bounds provider for demo purposes
-    if (selectionManager) {
-      // Create a temporary canvas context for measuring text
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-      
-      selectionManager.setCharacterBoundsProvider((blockId, charIndex) => {
-        const blocks = {
-          'text1': { 
-            text: 'Click and drag to select this text block',
-            x: 40, 
-            y: 60, 
-            fontSize: 18,
-            lineHeight: 24 
-          },
-          'text2': { 
-            text: 'Multiple selections with different colors are supported for collaborative editing',
-            x: 40, 
-            y: 140, 
-            fontSize: 16,
-            lineHeight: 24 
-          }
-        };
-        
-        const blockInfo = blocks[blockId];
-        if (!blockInfo || charIndex >= blockInfo.text.length) return null;
-        
-        // Measure character width using canvas text metrics
-        if (tempCtx) {
-          tempCtx.font = `${blockInfo.fontSize}px sans-serif`;
-          
-          // Measure position of character at charIndex
-          const textBefore = blockInfo.text.substring(0, charIndex);
-          const charAtIndex = blockInfo.text.charAt(charIndex);
-          
-          const widthBefore = tempCtx.measureText(textBefore).width;
-          const widthChar = tempCtx.measureText(charAtIndex).width;
-          
-          return {
-            x: blockInfo.x + widthBefore,
-            y: blockInfo.y,
-            width: widthChar,
-            height: blockInfo.lineHeight
-          };
-        }
-        
-        return null;
-      });
-    }
-
     // Update stats
     function updateStats() {
       const selections = selectionManager.getAllSelections();

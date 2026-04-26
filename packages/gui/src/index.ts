@@ -72,3 +72,5 @@ export type { VitrineComponentConfig, GUIControlBuilder, BlockBuilder, RenderFun
 // Text selection system
 export { TextSelectionManager } from './selection/TextSelectionManager.ts';
 export type { SelectionRenderConfig, CharacterBoundsProvider } from './selection/TextSelectionManager.ts';
+export { createCharacterBoundsProviderFromBlockTree } from './selection/character-bounds-adapter.ts';
+export type { CharacterBoundsAdapterOptions } from './selection/character-bounds-adapter.ts';

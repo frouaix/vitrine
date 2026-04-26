@@ -5,12 +5,13 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { BlockType, ImmediateRenderer, group } from 'vitrine';
-import type { RendererConfig } from 'vitrine';
+import { BlockType, ImmediateRenderer, group, Canvas2DContext } from 'vitrine';
+import type { RendererConfig, RenderContext } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
 import { TextSelectionManager } from './selection/TextSelectionManager.ts';
 import type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
+import { createCharacterBoundsProviderFromBlockTree } from './selection/character-bounds-adapter.ts';
 
 /** Function that returns a GUI control tree each frame. */
 export type GUIControlBuilder = () => GUIControl;
@@ -57,6 +58,7 @@ export class VitrineComponent {
   private hasExplicitAnimationControl: boolean = false;
   private fDirty: boolean = false;
   private selectionManager: TextSelectionManager | null = null;
+  private selectionMeasureContext: RenderContext | undefined;
   private selectableTextBlockIds: string[] = [];
   private boundInteractionHandlers: {
     pointerdown: (e: PointerEvent) => void;
@@ -124,6 +126,8 @@ export class VitrineComponent {
     // Initialize selection manager if configured
     if (this.config.selectionConfig?.enabled !== false) {
       this.selectionManager = new TextSelectionManager(this.config.selectionConfig);
+      const canvasContext = this.canvas.getContext('2d');
+      this.selectionMeasureContext = canvasContext ? new Canvas2DContext(canvasContext) : undefined;
     }
 
     this.mounted = true;
@@ -141,6 +145,7 @@ export class VitrineComponent {
     this.activeAnimationCount = 0;
     this.hasExplicitAnimationControl = false;
     this.selectionManager = null;
+    this.selectionMeasureContext = undefined;
 
     if (this.renderer) {
       this.renderer.destroy();
@@ -338,12 +343,13 @@ export class VitrineComponent {
   private handlePointerDown(e: PointerEvent): void {
     this.handleSimpleInvalidate();
     if (!this.selectionManager) return;
+    this.canvas?.focus();
     
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
     for (const blockId of this.selectableTextBlockIds) {
-      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
       if (charIndex !== null) {
         this.selectionManager.handlePointerDown(blockId, charIndex);
         this.invalidate();
@@ -368,7 +374,7 @@ export class VitrineComponent {
     if (!coords) return;
     
     for (const blockId of this.selectableTextBlockIds) {
-      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y, 1000);
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
       if (charIndex !== null) {
         this.selectionManager.handlePointerMove(charIndex);
         this.invalidate();
@@ -408,6 +414,11 @@ export class VitrineComponent {
 
     // If selection manager is active, wrap content with selection overlay
     if (this.selectionManager && this.selectionManager.isRenderingEnabled()) {
+      this.selectionManager.setCharacterBoundsProvider(
+        createCharacterBoundsProviderFromBlockTree(contentBlock, {
+          context: this.selectionMeasureContext
+        })
+      );
       const selectionOverlay = this.selectionManager.buildSelectionOverlays();
       if (selectionOverlay) {
         return group({}, [contentBlock, selectionOverlay]);

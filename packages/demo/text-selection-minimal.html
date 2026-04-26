@@ -119,43 +119,6 @@
     component.mount(canvas);
     selectionManager = component.getSelectionManager();
 
-    // Set up character bounds provider
-    if (selectionManager) {
-      const tempCanvas = document.createElement('canvas');
-      const tempCtx = tempCanvas.getContext('2d');
-
-      selectionManager.setCharacterBoundsProvider((blockId, charIndex) => {
-        if (blockId !== 'testText') return null;
-
-        const text = 'Click and drag to select';
-        const x = 50;
-        const y = 50;
-        const fontSize = 24;
-        const lineHeight = 32;
-
-        if (charIndex >= text.length) return null;
-
-        if (tempCtx) {
-          tempCtx.font = `${fontSize}px sans-serif`;
-
-          const textBefore = text.substring(0, charIndex);
-          const charAtIndex = text.charAt(charIndex);
-
-          const widthBefore = tempCtx.measureText(textBefore).width;
-          const widthChar = tempCtx.measureText(charAtIndex).width;
-
-          return {
-            x: x + widthBefore,
-            y,
-            width: widthChar,
-            height: lineHeight
-          };
-        }
-
-        return null;
-      });
-    }
-
     // Add click handler to actual canvas element
     setTimeout(() => {
       const actualCanvas = canvas.querySelector('canvas');
@@ -197,7 +160,7 @@
 
           if (selectionManager) {
             log('\n=== HIT-TESTING ===');
-            const charIndex = selectionManager.hitTestBlockCharacter('testText', screenX, screenY, 100);
+            const charIndex = selectionManager.hitTestBlockCharacter('testText', screenX, screenY);
             if (charIndex !== null) {
               log(`✓ Hit! Character index: ${charIndex}`);
               const sel = selectionManager.getSelection();

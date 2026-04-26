@@ -17,10 +17,46 @@ export interface SelectionRenderConfig {
   selectionColor?: string;
   /** Caret stroke width. Defaults to 1. */
   caretWidth?: number;
+  /** Enable internal selection geometry debug logs. Defaults to false. */
+  debug?: boolean;
+  /** Optional debug logger; defaults to console.debug when debug is enabled. */
+  debugLogger?: (...args: unknown[]) => void;
 }
 
-/** Function that provides character bounds for hit-testing and rendering. */
+/**
+ * Provides character bounds in scene/CSS coordinates for a text block.
+ *
+ * Contract:
+ * - `charIndex` refers to a character position in the block's text.
+ * - Returned bounds must use the same coordinate space as rendered block positions.
+ * - Return `null` when the index is out of range for the block.
+ */
 export type CharacterBoundsProvider = (blockId: string, charIndex: number) => CharacterBounds | null;
+
+interface InsertionPoint {
+  index: number;
+  x: number;
+  y: number;
+  height: number;
+}
+
+interface LineGroup {
+  y: number;
+  height: number;
+  points: Array<{ index: number; x: number }>;
+}
+
+interface RangeRect {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+}
+
+interface BlockInsertionGeometry {
+  points: InsertionPoint[];
+  pointByIndex: Map<number, InsertionPoint>;
+}
 
 /** Text selection manager for a VitrineComponent instance. */
 export class TextSelectionManager {
@@ -32,14 +68,25 @@ export class TextSelectionManager {
   private dragStartBlockId: string | null = null;
   private dragStartCharIndex: number | null = null;
   private characterBoundsProvider: CharacterBoundsProvider | null = null;
+  private insertionGeometryByBlock: Map<string, BlockInsertionGeometry> = new Map();
 
   constructor(config: SelectionRenderConfig = {}) {
     this.renderConfig = {
       enabled: config.enabled ?? true,
       caretColor: config.caretColor ?? '#000',
       selectionColor: config.selectionColor ?? 'rgba(0, 0, 255, 0.2)',
-      caretWidth: config.caretWidth ?? 2
+      caretWidth: config.caretWidth ?? 2,
+      debug: config.debug ?? false,
+      debugLogger: config.debugLogger
     };
+  }
+
+  private debugLog(...args: unknown[]): void {
+    if (!this.renderConfig.debug) {
+      return;
+    }
+    const debugLogger = this.renderConfig.debugLogger ?? console.debug.bind(console);
+    debugLogger(...args);
   }
 
   private getSelectionKey(userId?: string): string {
@@ -117,13 +164,17 @@ export class TextSelectionManager {
 
   /**
    * Set the function that provides character bounds for rendering/hit-testing.
-   * This is called by VitrineComponent to provide layout information.
+   * VitrineComponent provides this automatically for standard `text` blocks.
+   * Call this to override the default provider or to support custom text rendering.
    */
   setCharacterBoundsProvider(provider: CharacterBoundsProvider): void {
+    if (this.characterBoundsProvider !== provider) {
+      this.insertionGeometryByBlock.clear();
+    }
     this.characterBoundsProvider = provider;
   }
 
-  private getInsertionBounds(blockId: string, index: number): CharacterBounds | null {
+  private queryInsertionBounds(blockId: string, index: number): CharacterBounds | null {
     if (!this.characterBoundsProvider) {
       return null;
     }
@@ -153,47 +204,94 @@ export class TextSelectionManager {
     return null;
   }
 
-  private buildRangeRects(
-    blockId: string,
-    start: number,
-    end: number
-  ): Array<{ x: number; y: number; dx: number; dy: number }> {
-    const insertionPoints: Array<{ index: number; x: number; y: number; height: number }> = [];
-    for (let i = start; i <= end; i++) {
-      const bounds = this.getInsertionBounds(blockId, i);
+  private buildBlockInsertionGeometry(blockId: string): BlockInsertionGeometry {
+    const points: InsertionPoint[] = [];
+    const pointByIndex = new Map<number, InsertionPoint>();
+    let missStreak = 0;
+    const maxProbe = 20000;
+
+    for (let index = 0; index <= maxProbe; index++) {
+      const bounds = this.queryInsertionBounds(blockId, index);
       if (!bounds) {
+        missStreak++;
+        if (missStreak >= 8) {
+          break;
+        }
         continue;
       }
-      insertionPoints.push({
-        index: i,
-        x: bounds.x,
-        y: bounds.y,
-        height: bounds.height
+
+      missStreak = 0;
+      const point = this.toInsertionPoint(index, bounds);
+      points.push(point);
+      pointByIndex.set(index, point);
+    }
+
+    return { points, pointByIndex };
+  }
+
+  private getBlockInsertionGeometry(blockId: string): BlockInsertionGeometry {
+    const geometry = this.insertionGeometryByBlock.get(blockId);
+    if (geometry) {
+      return geometry;
+    }
+    const nextGeometry = this.buildBlockInsertionGeometry(blockId);
+    this.insertionGeometryByBlock.set(blockId, nextGeometry);
+    return nextGeometry;
+  }
+
+  private getInsertionBounds(blockId: string, index: number): CharacterBounds | null {
+    const point = this.getInsertionPoint(blockId, index);
+    if (!point) {
+      return null;
+    }
+    return {
+      x: point.x,
+      y: point.y,
+      width: 0,
+      height: point.height
+    };
+  }
+
+  private toInsertionPoint(index: number, bounds: CharacterBounds): InsertionPoint {
+    return {
+      index,
+      x: bounds.x,
+      y: bounds.y,
+      height: bounds.height
+    };
+  }
+
+  private getInsertionPoint(blockId: string, index: number): InsertionPoint | null {
+    const { pointByIndex } = this.getBlockInsertionGeometry(blockId);
+    return pointByIndex.get(index) ?? null;
+  }
+
+  private collectInsertionPointsInRange(blockId: string, start: number, end: number): InsertionPoint[] {
+    const { points } = this.getBlockInsertionGeometry(blockId);
+    return points.filter((point) => point.index >= start && point.index <= end);
+  }
+
+  private groupInsertionPointsByLine(points: InsertionPoint[], lineTolerance: number = 0.5): LineGroup[] {
+    const lineGroups: LineGroup[] = [];
+    for (const point of points) {
+      const lineGroup = lineGroups.find((line) =>
+        Math.abs(line.y - point.y) <= lineTolerance
+        && Math.abs(line.height - point.height) <= lineTolerance
+      );
+      if (lineGroup) {
+        lineGroup.points.push({ index: point.index, x: point.x });
+        continue;
+      }
+      lineGroups.push({
+        y: point.y,
+        height: point.height,
+        points: [{ index: point.index, x: point.x }]
       });
     }
+    return lineGroups;
+  }
 
-    if (insertionPoints.length < 2) {
-      return [];
-    }
-
-    const duLineTolerance = 0.5;
-    const lineGroups: Array<{ y: number; height: number; points: Array<{ index: number; x: number }> }> = [];
-    for (const point of insertionPoints) {
-      const group = lineGroups.find((lineGroup) =>
-        Math.abs(lineGroup.y - point.y) <= duLineTolerance
-        && Math.abs(lineGroup.height - point.height) <= duLineTolerance
-      );
-      if (group) {
-        group.points.push({ index: point.index, x: point.x });
-      } else {
-        lineGroups.push({
-          y: point.y,
-          height: point.height,
-          points: [{ index: point.index, x: point.x }]
-        });
-      }
-    }
-
+  private createRangeRectsFromLineGroups(lineGroups: LineGroup[]): RangeRect[] {
     return lineGroups
       .filter((lineGroup) => lineGroup.points.length >= 2)
       .map((lineGroup) => {
@@ -209,34 +307,26 @@ export class TextSelectionManager {
       });
   }
 
-  private collectInsertionPoints(blockId: string): Array<{ index: number; x: number; y: number; height: number }> {
-    const points: Array<{ index: number; x: number; y: number; height: number }> = [];
-    let missStreak = 0;
-    const maxProbe = 20000;
-
-    for (let i = 0; i <= maxProbe; i++) {
-      const bounds = this.getInsertionBounds(blockId, i);
-      if (!bounds) {
-        missStreak++;
-        if (missStreak >= 8) {
-          break;
-        }
-        continue;
-      }
-
-      missStreak = 0;
-      points.push({
-        index: i,
-        x: bounds.x,
-        y: bounds.y,
-        height: bounds.height
-      });
+  private buildRangeRects(
+    blockId: string,
+    start: number,
+    end: number
+  ): RangeRect[] {
+    const insertionPoints = this.collectInsertionPointsInRange(blockId, start, end);
+    if (insertionPoints.length < 2) {
+      return [];
     }
+    const lineGroups = this.groupInsertionPointsByLine(insertionPoints);
+    return this.createRangeRectsFromLineGroups(lineGroups);
+  }
 
+  private collectInsertionPoints(blockId: string): InsertionPoint[] {
+    const { points } = this.getBlockInsertionGeometry(blockId);
     return points;
   }
 
-  private getTextLength(blockId: string): number {
+  /** Returns the largest known insertion index for a block from current bounds provider data. */
+  getTextLengthForBlock(blockId: string): number {
     const points = this.collectInsertionPoints(blockId);
     if (points.length === 0) {
       return 0;
@@ -244,60 +334,51 @@ export class TextSelectionManager {
     return Math.max(...points.map((point) => point.index));
   }
 
-  private moveVerticalInsertion(
-    blockId: string,
-    index: number,
-    direction: -1 | 1,
-    selectionKey: string
-  ): number | null {
-    const points = this.collectInsertionPoints(blockId);
-    if (points.length === 0) {
-      return null;
+  private findCurrentLineIndex(lineGroups: LineGroup[], index: number, currentY: number): number {
+    const lineIndex = lineGroups.findIndex((lineGroup) =>
+      lineGroup.points.some((point) => point.index === index)
+    );
+    if (lineIndex >= 0) {
+      return lineIndex;
     }
+    return lineGroups.reduce((bestIdx, lineGroup, idx) => {
+      const bestDistance = Math.abs(lineGroups[bestIdx]!.y - currentY);
+      const distance = Math.abs(lineGroup.y - currentY);
+      return distance < bestDistance ? idx : bestIdx;
+    }, 0);
+  }
 
+  private getNearestPointByX(points: Array<{ index: number; x: number }>, desiredX: number): { index: number; x: number } {
+    let bestPoint = points[0]!;
+    let bestDistance = Math.abs(bestPoint.x - desiredX);
+    for (const point of points) {
+      const distance = Math.abs(point.x - desiredX);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestPoint = point;
+      }
+    }
+    return bestPoint;
+  }
+
+  private moveVerticalInsertion(blockId: string, index: number, direction: -1 | 1, selectionKey: string): number | null {
+    const points = this.collectInsertionPoints(blockId);
     const current = points.find((point) => point.index === index);
     if (!current) {
       return null;
     }
 
-    const lineTolerance = 0.5;
-    const lineGroups: Array<{ y: number; height: number; points: Array<{ index: number; x: number }> }> = [];
-    for (const point of points) {
-      const lineGroup = lineGroups.find((line) =>
-        Math.abs(line.y - point.y) <= lineTolerance
-        && Math.abs(line.height - point.height) <= lineTolerance
-      );
-      if (lineGroup) {
-        lineGroup.points.push({ index: point.index, x: point.x });
-      } else {
-        lineGroups.push({
-          y: point.y,
-          height: point.height,
-          points: [{ index: point.index, x: point.x }]
-        });
-      }
-    }
-
+    const lineGroups = this.groupInsertionPointsByLine(points)
+      .map((lineGroup) => ({
+        ...lineGroup,
+        points: [...lineGroup.points].sort((a, b) => a.index - b.index)
+      }))
+      .sort((a, b) => a.y - b.y);
     if (lineGroups.length <= 1) {
       return index;
     }
 
-    lineGroups.sort((a, b) => a.y - b.y);
-    for (const lineGroup of lineGroups) {
-      lineGroup.points.sort((a, b) => a.index - b.index);
-    }
-
-    let currentLineIndex = lineGroups.findIndex((lineGroup) =>
-      lineGroup.points.some((point) => point.index === index)
-    );
-    if (currentLineIndex < 0) {
-      currentLineIndex = lineGroups.reduce((bestIdx, lineGroup, idx) => {
-        const bestDistance = Math.abs(lineGroups[bestIdx]!.y - current.y);
-        const distance = Math.abs(lineGroup.y - current.y);
-        return distance < bestDistance ? idx : bestIdx;
-      }, 0);
-    }
-
+    const currentLineIndex = this.findCurrentLineIndex(lineGroups, index, current.y);
     const targetLineIndex = currentLineIndex + direction;
     if (targetLineIndex < 0 || targetLineIndex >= lineGroups.length) {
       return index;
@@ -305,18 +386,15 @@ export class TextSelectionManager {
 
     const desiredX = this.preferredXBySelection.get(selectionKey) ?? current.x;
     const targetLine = lineGroups[targetLineIndex]!;
-    let bestPoint = targetLine.points[0]!;
-    let bestDistance = Math.abs(bestPoint.x - desiredX);
+    return this.getNearestPointByX(targetLine.points, desiredX).index;
+  }
 
-    for (const point of targetLine.points) {
-      const distance = Math.abs(point.x - desiredX);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        bestPoint = point;
-      }
-    }
+  private setCaretSelection(blockId: string, position: number, userId?: string): void {
+    this.setSelection(blockId, position, position, userId);
+  }
 
-    return bestPoint.index;
+  private setFocusSelection(blockId: string, anchor: number, focus: number, userId?: string): void {
+    this.setSelection(blockId, anchor, focus, userId);
   }
 
   /**
@@ -338,9 +416,9 @@ export class TextSelectionManager {
         const caretBounds = this.getInsertionBounds(sel.blockId, sel.anchor);
         if (caretBounds) {
           const logSignature = `caret:${sel.blockId}:${sel.anchor}:${caretBounds.x}:${caretBounds.y}:${caretBounds.height}`;
-          if (this.lastLoggedGeometry.get(selectionKey) !== logSignature) {
+          if (this.renderConfig.debug && this.lastLoggedGeometry.get(selectionKey) !== logSignature) {
             this.lastLoggedGeometry.set(selectionKey, logSignature);
-            console.debug('[TextSelectionManager] Caret geometry', {
+            this.debugLog('[TextSelectionManager] Caret geometry', {
               blockId: sel.blockId,
               index: sel.anchor,
               x: caretBounds.x,
@@ -367,9 +445,9 @@ export class TextSelectionManager {
 
         if (rangeRects.length > 0) {
           const logSignature = `range:${sel.blockId}:${start}:${end}:${JSON.stringify(rangeRects)}`;
-          if (this.lastLoggedGeometry.get(selectionKey) !== logSignature) {
+          if (this.renderConfig.debug && this.lastLoggedGeometry.get(selectionKey) !== logSignature) {
             this.lastLoggedGeometry.set(selectionKey, logSignature);
-            console.debug('[TextSelectionManager] Range geometry', {
+            this.debugLog('[TextSelectionManager] Range geometry', {
               blockId: sel.blockId,
               start,
               end,
@@ -421,7 +499,7 @@ export class TextSelectionManager {
     this.dragStartCharIndex = charIndex;
 
     // Place caret at click position
-    this.setSelection(blockId, charIndex, charIndex, userId);
+    this.setCaretSelection(blockId, charIndex, userId);
   }
 
   /**
@@ -443,7 +521,7 @@ export class TextSelectionManager {
     const anchor = Math.min(this.dragStartCharIndex, charIndex);
     const focus = Math.max(this.dragStartCharIndex, charIndex);
 
-    this.setSelection(this.dragStartBlockId, anchor, focus, userId);
+    this.setFocusSelection(this.dragStartBlockId, anchor, focus, userId);
   }
 
   /**
@@ -479,45 +557,47 @@ export class TextSelectionManager {
    * Hit-test within a specific block.
    * blockId: the text block to test
    * x, y: screen coordinates
-   * maxChars: maximum characters in the block (for bounds checking)
+   * maxChars: optional maximum characters in the block.
    * Returns insertion index (caret position) or null if no hit.
    */
-  hitTestBlockCharacter(blockId: string, x: number, y: number, maxChars: number): number | null {
-    if (!this.characterBoundsProvider) {
+  hitTestBlockCharacter(blockId: string, x: number, y: number, maxChars?: number): number | null {
+    const points = this.collectInsertionPoints(blockId);
+    if (points.length === 0) {
       return null;
     }
 
     const dxHitPadding = 6;
-    let lastCharIndexInRow: number | null = null;
-    let xMinRow = Infinity;
-    let xMaxRow = -Infinity;
+    const lineGroups = this.groupInsertionPointsByLine(points)
+      .map((lineGroup) => ({
+        ...lineGroup,
+        points: [...lineGroup.points].sort((a, b) => a.index - b.index)
+      }))
+      .sort((a, b) => a.y - b.y);
 
-    for (let i = 0; i < maxChars; i++) {
-      const bounds = this.characterBoundsProvider(blockId, i);
-      if (!bounds) continue;
-
-      const isInVerticalRange = y >= bounds.y && y < bounds.y + bounds.height;
-      if (!isInVerticalRange) continue;
-
-      xMinRow = Math.min(xMinRow, bounds.x);
-      xMaxRow = Math.max(xMaxRow, bounds.x + bounds.width);
-
-      const midpointX = bounds.x + bounds.width / 2;
-      if (x < midpointX) {
+    for (const lineGroup of lineGroups) {
+      const isInVerticalRange = y >= lineGroup.y && y < lineGroup.y + lineGroup.height;
+      if (!isInVerticalRange) {
+        continue;
+      }
+      if (maxChars !== undefined) {
+        const pointsWithinLimit = lineGroup.points.filter((point) => point.index <= maxChars);
+        if (pointsWithinLimit.length === 0) {
+          continue;
+        }
+        const xMinRow = Math.min(...pointsWithinLimit.map((point) => point.x));
+        const xMaxRow = Math.max(...pointsWithinLimit.map((point) => point.x));
         if (x < xMinRow - dxHitPadding || x > xMaxRow + dxHitPadding) {
           return null;
         }
-        return i;
+        return this.getNearestPointByX(pointsWithinLimit, x).index;
       }
 
-      lastCharIndexInRow = i;
-    }
-
-    if (lastCharIndexInRow !== null) {
+      const xMinRow = Math.min(...lineGroup.points.map((point) => point.x));
+      const xMaxRow = Math.max(...lineGroup.points.map((point) => point.x));
       if (x < xMinRow - dxHitPadding || x > xMaxRow + dxHitPadding) {
         return null;
       }
-      return lastCharIndexInRow + 1;
+      return this.getNearestPointByX(lineGroup.points, x).index;
     }
 
     return null;
@@ -527,114 +607,130 @@ export class TextSelectionManager {
    * Handle keyboard event for selection navigation and editing.
    * Returns whether the key was handled.
    */
+  private handleHorizontalArrowKey(
+    key: 'ArrowLeft' | 'ArrowRight',
+    selection: Selection,
+    shiftKey: boolean,
+    textLength: number,
+    userId?: string
+  ): boolean {
+    if (shiftKey) {
+      if (key === 'ArrowLeft') {
+        const focus = selection.focus > 0 ? selection.focus - 1 : selection.focus;
+        this.setFocusSelection(selection.blockId, selection.anchor, focus, userId);
+        return true;
+      }
+      const focus = selection.focus < textLength ? selection.focus + 1 : selection.focus;
+      this.setFocusSelection(selection.blockId, selection.anchor, focus, userId);
+      return true;
+    }
+
+    if (key === 'ArrowLeft') {
+      const newPos = selection.focus < selection.anchor ? selection.anchor - 1 : selection.focus - 1;
+      if (newPos >= 0) {
+        this.setCaretSelection(selection.blockId, newPos, userId);
+      }
+      return true;
+    }
+
+    const newPos = selection.focus > selection.anchor ? selection.focus + 1 : selection.anchor + 1;
+    if (newPos <= textLength) {
+      this.setCaretSelection(selection.blockId, newPos, userId);
+    }
+    return true;
+  }
+
+  private getVerticalSourceIndex(selection: Selection, direction: -1 | 1, shiftKey: boolean): number {
+    if (shiftKey || selection.anchor === selection.focus) {
+      return selection.focus;
+    }
+    return direction < 0
+      ? Math.min(selection.anchor, selection.focus)
+      : Math.max(selection.anchor, selection.focus);
+  }
+
+  private ensurePreferredX(selection: Selection, sourceIndex: number, selectionKey: string): void {
+    const sourceBounds = this.getInsertionBounds(selection.blockId, sourceIndex);
+    if (sourceBounds && !this.preferredXBySelection.has(selectionKey)) {
+      this.preferredXBySelection.set(selectionKey, sourceBounds.x);
+    }
+  }
+
+  private handleVerticalArrowKey(
+    key: 'ArrowUp' | 'ArrowDown',
+    selection: Selection,
+    shiftKey: boolean,
+    selectionKey: string,
+    userId?: string
+  ): boolean {
+    const direction: -1 | 1 = key === 'ArrowUp' ? -1 : 1;
+    const sourceIndex = this.getVerticalSourceIndex(selection, direction, shiftKey);
+    this.ensurePreferredX(selection, sourceIndex, selectionKey);
+
+    const targetIndex = this.moveVerticalInsertion(selection.blockId, sourceIndex, direction, selectionKey);
+    if (targetIndex === null) {
+      return true;
+    }
+
+    if (shiftKey) {
+      this.setFocusSelection(selection.blockId, selection.anchor, targetIndex, userId);
+      return true;
+    }
+
+    this.setCaretSelection(selection.blockId, targetIndex, userId);
+    return true;
+  }
+
+  private handleBoundaryNavigationKey(
+    key: 'Home' | 'End',
+    selection: Selection,
+    shiftKey: boolean,
+    textLength: number,
+    userId?: string
+  ): boolean {
+    const target = key === 'Home' ? 0 : textLength;
+    if (shiftKey) {
+      this.setFocusSelection(selection.blockId, selection.anchor, target, userId);
+      return true;
+    }
+    this.setCaretSelection(selection.blockId, target, userId);
+    return true;
+  }
+
   handleKeyDown(key: string, shiftKey: boolean, ctrlKey: boolean, userId?: string): boolean {
-    const sel = this.getSelection(userId);
-    if (!sel) {
+    const selection = this.getSelection(userId);
+    if (!selection) {
       return false;
     }
 
     const selectionKey = this.getSelectionKey(userId);
-    const textLength = this.getTextLength(sel.blockId);
+    const textLength = this.getTextLengthForBlock(selection.blockId);
 
     switch (key) {
-      case 'ArrowLeft': {
-        this.preferredXBySelection.delete(selectionKey);
-        if (shiftKey) {
-          // Shift+Left: extend selection left
-          if (sel.focus > 0) {
-            sel.focus--;
-          }
-        } else {
-          // Left: move caret to start of selection or left
-          const newPos = sel.focus < sel.anchor ? sel.anchor - 1 : sel.focus - 1;
-          if (newPos >= 0) {
-            this.setSelection(sel.blockId, newPos, newPos, userId);
-          }
-        }
-        return true;
-      }
-
+      case 'ArrowLeft':
       case 'ArrowRight': {
         this.preferredXBySelection.delete(selectionKey);
-        if (shiftKey) {
-          // Shift+Right: extend selection right
-          if (sel.focus < textLength) {
-            sel.focus++;
-          }
-        } else {
-          // Right: move caret to end of selection or right
-          const newPos = sel.focus > sel.anchor ? sel.focus + 1 : sel.anchor + 1;
-          if (newPos <= textLength) {
-            this.setSelection(sel.blockId, newPos, newPos, userId);
-          }
-        }
-        return true;
+        return this.handleHorizontalArrowKey(key, selection, shiftKey, textLength, userId);
       }
-
       case 'ArrowUp':
       case 'ArrowDown': {
-        const direction: -1 | 1 = key === 'ArrowUp' ? -1 : 1;
-        const sourceIndex = shiftKey
-          ? sel.focus
-          : sel.anchor === sel.focus
-            ? sel.focus
-            : direction < 0
-              ? Math.min(sel.anchor, sel.focus)
-              : Math.max(sel.anchor, sel.focus);
-
-        const sourceBounds = this.getInsertionBounds(sel.blockId, sourceIndex);
-        if (sourceBounds && !this.preferredXBySelection.has(selectionKey)) {
-          this.preferredXBySelection.set(selectionKey, sourceBounds.x);
-        }
-
-        const targetIndex = this.moveVerticalInsertion(sel.blockId, sourceIndex, direction, selectionKey);
-        if (targetIndex === null) {
-          return true;
-        }
-
-        if (shiftKey) {
-          this.setSelection(sel.blockId, sel.anchor, targetIndex, userId);
-        } else {
-          this.setSelection(sel.blockId, targetIndex, targetIndex, userId);
-        }
-        return true;
+        return this.handleVerticalArrowKey(key, selection, shiftKey, selectionKey, userId);
       }
-
-      case 'Home': {
-        this.preferredXBySelection.delete(selectionKey);
-        if (shiftKey) {
-          // Shift+Home: select from current position to start
-          sel.focus = 0;
-        } else {
-          // Home: move to start
-          this.setSelection(sel.blockId, 0, 0, userId);
-        }
-        return true;
-      }
-
+      case 'Home':
       case 'End': {
         this.preferredXBySelection.delete(selectionKey);
-        if (shiftKey) {
-          // Shift+End: select from current position to end
-          sel.focus = textLength;
-        } else {
-          // End: move to end
-          this.setSelection(sel.blockId, textLength, textLength, userId);
-        }
-        return true;
+        return this.handleBoundaryNavigationKey(key, selection, shiftKey, textLength, userId);
       }
-
       case 'a': {
         this.preferredXBySelection.delete(selectionKey);
         if (ctrlKey) {
-          // Ctrl+A: select all
-          this.setSelection(sel.blockId, 0, textLength, userId);
+          this.setSelection(selection.blockId, 0, textLength, userId);
           return true;
         }
-        break;
+        return false;
       }
+      default:
+        return false;
     }
-
-    return false;
   }
 }
