@@ -1,0 +1,112 @@
+:root {
+  color-scheme: light;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  color: #0f172a;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 24px 20px 84px;
+  background:
+    radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.intro {
+  max-width: 760px;
+  margin: 14px auto 24px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.canvas-shell {
+  padding: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow:
+    0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 2px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+#canvas {
+  display: block;
+  border-radius: 16px;
+  background: #ffffff;
+  width: 100%;
+  height: auto;
+  min-height: 800px;
+}
+
+.caption {
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.debug-info {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #334155;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.debug-label {
+  font-weight: bold;
+  color: #0f172a;
+  margin-top: 8px;
+}
+
+.page-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(248, 250, 252, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 14px;
+}
+
+.page-nav a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.page-nav a:hover {
+  text-decoration: underline;
+}

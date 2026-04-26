@@ -126,7 +126,8 @@ export class VitrineComponent {
     // Initialize selection manager if configured
     if (this.config.selectionConfig?.enabled !== false) {
       this.selectionManager = new TextSelectionManager(this.config.selectionConfig);
-      const canvasContext = this.canvas.getContext('2d');
+      const canvasMeasure = document.createElement('canvas');
+      const canvasContext = canvasMeasure.getContext('2d');
       this.selectionMeasureContext = canvasContext ? new Canvas2DContext(canvasContext) : undefined;
     }
 

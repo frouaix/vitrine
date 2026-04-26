@@ -20,8 +20,8 @@ export function measureText(text: string, props: Partial<TextProps> & { font?: s
   return {
     width: text.length * fontSize * 0.6,
     height: fontSize,
-    ascent: fontSize,
-    descent: 0
+    ascent: fontSize * 0.8,
+    descent: fontSize * 0.2
   };
 }
 
@@ -172,6 +172,12 @@ export function layoutTextCharacterBounds(
   const fontSize = props.fontSize ?? 16;
   const metrics = measureText(text, props, context);
   const lineHeight = props.lineHeight ?? fontSize * 1.4;
+  const propsUnwrapped: Partial<TextProps> & { font?: string } = {
+    ...props,
+    dx: undefined,
+    dy: undefined
+  };
+  const measureInlineWidth = (value: string): number => measureText(value, propsUnwrapped, context).width;
   const bounds: Array<CharacterBounds | null> = new Array(text.length).fill(null);
 
   const getLineStartX = (lineWidth: number): number => {
@@ -193,8 +199,8 @@ export function layoutTextCharacterBounds(
       props.baseline
     );
     for (let i = 0; i < text.length; i++) {
-      const widthBefore = measureText(text.slice(0, i), props, context).width;
-      const widthToEnd = measureText(text.slice(0, i + 1), props, context).width;
+      const widthBefore = measureInlineWidth(text.slice(0, i));
+      const widthToEnd = measureInlineWidth(text.slice(0, i + 1));
       bounds[i] = {
         x: xOffset + widthBefore,
         y: yOffset,
@@ -217,7 +223,7 @@ export function layoutTextCharacterBounds(
     let currentLine = words[0] ?? '';
     for (let i = 1; i < words.length; i++) {
       const candidate = `${currentLine} ${words[i]}`;
-      if (measureText(candidate, props, context).width > dxMax) {
+      if (measureInlineWidth(candidate) > dxMax) {
         lines.push(currentLine);
         currentLine = words[i] ?? '';
       } else {
@@ -241,7 +247,7 @@ export function layoutTextCharacterBounds(
     const lineStart = normalizedOffset;
     const lineEnd = lineStart + lineText.length;
     const hasNextLine = lineIndex < lines.length - 1;
-    const lineWidth = measureText(lineText, props, context).width;
+    const lineWidth = measureInlineWidth(lineText);
     const xLineStart = getLineStartX(lineWidth);
     const yLine = yOffset + lineIndex * lineHeight;
 
@@ -250,8 +256,8 @@ export function layoutTextCharacterBounds(
       if (charIndex >= text.length) {
         break;
       }
-      const widthBefore = measureText(lineText.slice(0, lineCharIndex), props, context).width;
-      const widthToEnd = measureText(lineText.slice(0, lineCharIndex + 1), props, context).width;
+      const widthBefore = measureInlineWidth(lineText.slice(0, lineCharIndex));
+      const widthToEnd = measureInlineWidth(lineText.slice(0, lineCharIndex + 1));
       bounds[charIndex] = {
         x: xLineStart + widthBefore,
         y: yLine,
@@ -262,7 +268,7 @@ export function layoutTextCharacterBounds(
 
     if (hasNextLine && lineEnd < text.length) {
       const xAtLineEnd = xLineStart + lineWidth;
-      const widthSpace = measureText(' ', props, context).width;
+      const widthSpace = measureInlineWidth(' ');
       bounds[lineEnd] = {
         x: xAtLineEnd,
         y: yLine,

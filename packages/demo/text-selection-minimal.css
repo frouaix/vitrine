@@ -1,0 +1,25 @@
+body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+.container { max-width: 1000px; margin: 0 auto; }
+h1 { font-size: 24px; margin: 0 0 10px 0; }
+.instructions { background: #e0e0e0; padding: 10px; border-radius: 5px; margin: 10px 0; }
+#canvas {
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: white;
+  margin: 20px 0;
+  min-height: 400px;
+}
+.debug { background: white; border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 5px; }
+.debug-label { font-weight: bold; color: #d32f2f; margin-top: 10px; }
+#log {
+  height: 300px;
+  overflow-y: auto;
+  background: #fafafa;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}

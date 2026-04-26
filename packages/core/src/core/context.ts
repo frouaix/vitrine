@@ -227,17 +227,22 @@ export class Canvas2DContext implements RenderContext {
 
   measureText(text: string, props: any): { width: number; height: number; ascent: number; descent: number } {
     const { font, fontSize, dx: dxMax, lineHeight: lineHeightProp } = props;
+    const duFont = fontSize ?? 16;
     // Apply font settings
     if (font) this.ctx.font = font;
     else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     
     const metrics = this.ctx.measureText(text);
-    const ascent = metrics.actualBoundingBoxAscent ?? (fontSize ?? 16);
-    const descent = metrics.actualBoundingBoxDescent ?? 0;
+    const ascent = metrics.fontBoundingBoxAscent
+      ?? metrics.actualBoundingBoxAscent
+      ?? duFont * 0.8;
+    const descent = metrics.fontBoundingBoxDescent
+      ?? metrics.actualBoundingBoxDescent
+      ?? duFont * 0.2;
 
     if (dxMax !== undefined) {
       const lines = this.wrapText(text, dxMax);
-      const duLineHeight = lineHeightProp ?? (fontSize ?? 16) * 1.4;
+      const duLineHeight = lineHeightProp ?? duFont * 1.4;
       const maxLineWidth = Math.min(dxMax, Math.max(...lines.map(l => this.ctx.measureText(l).width)));
       const totalHeight = lines.length * duLineHeight;
       return { width: maxLineWidth, height: totalHeight, ascent, descent };
