@@ -3,9 +3,9 @@
 // Text layout utilities extracted from renderer for reuse in selection management.
 // These functions are used by both the renderer (for display) and selection system (for hit-testing).
 
-import type { TextProps, TextaProps } from '../core/types.ts';
-import type { RenderContext } from '../core/context.ts';
-import type { TextMetrics, CharacterBounds, TextLayout, TextLine } from './types.ts';
+import type { TextProps } from './types.ts';
+import type { RenderContext } from './context.ts';
+import type { TextMetrics, CharacterBounds } from './selection-types.ts';
 
 /**
  * Measure text metrics using the provided render context.
@@ -22,6 +22,32 @@ export function measureText(text: string, props: Partial<TextProps> & { font?: s
     height: fontSize,
     ascent: fontSize,
     descent: 0
+  };
+}
+
+/**
+ * Compute a text block's local bounding box for rendering and hit-test caches.
+ * The returned bounds are in block-local coordinates and include alignment/baseline offsets.
+ */
+export function getTextBlockBounds(
+  text: string,
+  props: Partial<TextProps> & { font?: string },
+  context?: RenderContext
+): CharacterBounds {
+  const metrics = measureText(text, props, context);
+  const { xOffset, yOffset } = calculateTextOffset(
+    metrics.width,
+    metrics.height,
+    metrics.ascent,
+    props.align,
+    props.baseline
+  );
+
+  return {
+    x: xOffset,
+    y: yOffset,
+    width: metrics.width,
+    height: metrics.height
   };
 }
 
@@ -70,7 +96,6 @@ export function getCharacterBounds(
     return null;
   }
 
-  const fontSize = props.fontSize ?? 16;
   const metrics = measureText(text, props, context);
   const { xOffset, yOffset } = calculateTextOffset(
     metrics.width,
@@ -101,7 +126,6 @@ export function hitTestCharacter(
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
 ): number | null {
-  const fontSize = props.fontSize ?? 16;
   const metrics = measureText(text, props, context);
   const { xOffset, yOffset } = calculateTextOffset(
     metrics.width,

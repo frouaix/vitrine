@@ -10,6 +10,7 @@ import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestLayoutCache, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
+import { calculateTextOffset, measureText, getTextBlockBounds } from './text-layout.ts';
 import { group, rectangle, text, portal } from './blocks.ts';
 
 const TOOLTIP_DEFAULTS = {
@@ -568,71 +569,16 @@ export class ImmediateRenderer {
       }
       case BlockType.Text: {
         const { text, fontSize, align, baseline } = block.props;
-        
-        // Get actual text metrics
-        if (this.context.measureText) {
-          const metrics = this.context.measureText(text, block.props);
-          const { width, ascent, descent } = metrics;
-          const height = ascent + descent;
-          
-          // Calculate x offset based on alignment
-          let xOffset = 0;
-          if (align === 'center') {
-            xOffset = -width / 2;
-          } else if (align === 'right' || align === 'end') {
-            xOffset = -width;
-          }
-          
-          // Calculate y offset based on baseline
-          let yOffset = -ascent; // Default for 'alphabetic' baseline
-          if (baseline === 'top' || baseline === 'hanging') {
-            yOffset = 0;
-          } else if (baseline === 'middle') {
-            yOffset = -height / 2;
-          } else if (baseline === 'bottom') {
-            yOffset = -height;
-          }
-          
-          this.context.drawRectangle(xOffset, yOffset, width, height, propsOutline);
-        } else {
-          // Fallback to approximation if measureText not available
-          const duFont = fontSize ?? 16;
-          const textWidth = text.length * duFont * 0.6;
-          this.context.drawRectangle(0, 0, textWidth, duFont, propsOutline);
-        }
+        const bounds = getTextBlockBounds(text, { ...block.props, align, baseline, fontSize }, this.context);
+        this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, propsOutline);
         return;
       }
       case BlockType.Texta: {
         const { texta: attributedText, fontSize, align, baseline } = block.props;
         const textValue = attributedText.strText;
-
-        if (this.context.measureText) {
-          const metrics = this.context.measureText(textValue, { fontSize });
-          const { width, ascent, descent } = metrics;
-          const height = ascent + descent;
-
-          let xOffset = 0;
-          if (align === 'center') {
-            xOffset = -width / 2;
-          } else if (align === 'right' || align === 'end') {
-            xOffset = -width;
-          }
-
-          let yOffset = -ascent;
-          if (baseline === 'top' || baseline === 'hanging') {
-            yOffset = 0;
-          } else if (baseline === 'middle') {
-            yOffset = -height / 2;
-          } else if (baseline === 'bottom') {
-            yOffset = -height;
-          }
-
-          this.context.drawRectangle(xOffset, yOffset, width, height, propsOutline);
-        } else {
-          const duFont = fontSize ?? 16;
-          const textWidth = textValue.length * duFont * 0.6;
-          this.context.drawRectangle(0, 0, textWidth, duFont, propsOutline);
-        }
+        const metrics = measureText(textValue, { fontSize, align, baseline }, this.context);
+        const { xOffset, yOffset } = calculateTextOffset(metrics.width, metrics.height, metrics.ascent, align, baseline);
+        this.context.drawRectangle(xOffset, yOffset, metrics.width, metrics.height, propsOutline);
         return;
       }
       case BlockType.Image: {
@@ -690,54 +636,9 @@ export class ImmediateRenderer {
 
   private renderText(block: BlockOfType<BlockType.Text>): void {
     const { props } = block;
-    const { text, fontSize: duFont, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
-
-    let textWidth: number;
-    let textHeight: number;
-    let ascent: number;
-
-    if (this.context.measureText) {
-      const metrics = this.context.measureText(text, props);
-      textWidth = metrics.width;
-      textHeight = metrics.height;
-      ascent = metrics.ascent;
-    } else {
-      const fontSize = duFont ?? 16;
-      const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-      if (dxMax !== undefined) {
-        const singleLineWidth = text.length * fontSize * 0.6;
-        const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
-        textWidth = Math.min(singleLineWidth, dxMax);
-        textHeight = lineCount * duLineHeight;
-      } else {
-        textWidth = text.length * fontSize * 0.6;
-        textHeight = fontSize;
-      }
-      ascent = fontSize;
-    }
-
-    let xOffset = 0;
-    if (align === 'center') {
-      xOffset = -textWidth / 2;
-    } else if (align === 'right' || align === 'end') {
-      xOffset = -textWidth;
-    }
-
-    let yOffset = -ascent;
-    if (baseline === 'top' || baseline === 'hanging') {
-      yOffset = 0;
-    } else if (baseline === 'middle') {
-      yOffset = -textHeight / 2;
-    } else if (baseline === 'bottom') {
-      yOffset = -textHeight;
-    }
-
-    this.hitTestLayoutCache.boundsByBlock.set(block, {
-      x: xOffset,
-      y: yOffset,
-      width: textWidth,
-      height: textHeight
-    });
+    const { text } = props;
+    const bounds = getTextBlockBounds(text, props, this.context);
+    this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
 
     this.context.drawText(text, 0, 0, props);
   }
