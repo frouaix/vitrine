@@ -16,8 +16,9 @@ import type { CharacterBoundsProvider } from './TextSelectionManager.ts';
 
 export interface CharacterBoundsAdapterOptions {
   /**
-   * Optional measurement context. When omitted, an offscreen 2D canvas is created
-   * (when available) and falls back to approximated metrics if unavailable.
+   * Optional measurement context. When omitted, the adapter attempts to create
+   * an internal fallback 2D measurement context and falls back to approximated
+   * metrics if that is unavailable.
    */
   context?: RenderContext;
 }
