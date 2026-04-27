@@ -15,7 +15,7 @@ export interface SelectionRenderConfig {
   caretColor?: string;
   /** Selection highlight color. Defaults to 'rgba(0, 0, 255, 0.2)'. */
   selectionColor?: string;
-  /** Caret stroke width. Defaults to 1. */
+  /** Caret stroke width. Defaults to 2. */
   caretWidth?: number;
   /** Enable internal selection geometry debug logs. Defaults to false. */
   debug?: boolean;
