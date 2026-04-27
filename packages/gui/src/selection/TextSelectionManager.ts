@@ -174,6 +174,20 @@ export class TextSelectionManager {
     this.characterBoundsProvider = provider;
   }
 
+  invalidateInsertionGeometry(blockIds?: string[]): void {
+    if (!blockIds) {
+      this.insertionGeometryByBlock.clear();
+      return;
+    }
+    if (blockIds.length === 0) {
+      return;
+    }
+
+    for (const blockId of blockIds) {
+      this.insertionGeometryByBlock.delete(blockId);
+    }
+  }
+
   private queryInsertionBounds(blockId: string, index: number): CharacterBounds | null {
     if (!this.characterBoundsProvider) {
       return null;
@@ -492,6 +506,10 @@ export class TextSelectionManager {
    * blockId: ID of the text block under the pointer.
    */
   handlePointerDown(blockId: string, charIndex: number, userId?: string): void {
+    if (this.getTextLengthForBlock(blockId) === 0) {
+      return;
+    }
+
     const selectionKey = this.getSelectionKey(userId);
     this.preferredXBySelection.delete(selectionKey);
     this.isDragging = true;

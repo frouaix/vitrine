@@ -12,6 +12,16 @@ import type { TextMetrics, CharacterBounds } from './selection-types.ts';
  * Falls back to approximation if context doesn't support measureText.
  */
 export function measureText(text: string, props: Partial<TextProps> & { font?: string }, context?: RenderContext): TextMetrics {
+  if (text.length === 0) {
+    const fontSize = props.fontSize ?? 16;
+    return {
+      width: 0,
+      height: fontSize,
+      ascent: fontSize * 0.8,
+      descent: fontSize * 0.2
+    };
+  }
+
   if (context?.measureText) {
     return context.measureText(text, props);
   }
@@ -92,7 +102,11 @@ export function getCharacterBounds(
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
 ): CharacterBounds | null {
-  if (charIndex < 0 || charIndex > text.length) {
+  if (text.length === 0) {
+    return null;
+  }
+
+  if (charIndex < 0 || charIndex >= text.length) {
     return null;
   }
 
@@ -126,6 +140,10 @@ export function hitTestCharacter(
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
 ): number | null {
+  if (text.length === 0) {
+    return null;
+  }
+
   const metrics = measureText(text, props, context);
   const { xOffset, yOffset } = calculateTextOffset(
     metrics.width,

@@ -23,6 +23,26 @@ export interface CharacterBoundsAdapterOptions {
   context?: RenderContext;
 }
 
+export interface CharacterBoundsUpdateResult {
+  changedBlockIds: string[];
+  selectableTextBlockIds: string[];
+}
+
+interface TextBlockDescriptor {
+  blockId: string;
+  text: string;
+  props: TextProps;
+  transformWorld: Matrix2D;
+  layoutSignature: string;
+  worldSignature: string;
+}
+
+interface TextBoundsCacheEntry {
+  descriptor: TextBlockDescriptor;
+  boundsLocal?: CharacterBounds[];
+  boundsWorld?: CharacterBounds[];
+}
+
 function applyPropsTransform(matrixParent: Matrix2D, props: Record<string, unknown>): Matrix2D {
   let matrix = matrixParent;
 
@@ -83,6 +103,202 @@ function createFallbackRenderContext(): RenderContext | undefined {
   return new Canvas2DContext(ctx);
 }
 
+function signaturePart(value: unknown): string {
+  if (value === undefined) {
+    return 'u';
+  }
+  if (value === null) {
+    return 'n';
+  }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      return 'nan';
+    }
+    return String(value);
+  }
+  return String(value);
+}
+
+function buildTextLayoutSignature(props: TextProps): string {
+  return [
+    props.text,
+    props.font,
+    props.fontSize,
+    props.align,
+    props.baseline,
+    props.dx,
+    props.dy,
+    props.lineHeight
+  ].map(signaturePart).join('|');
+}
+
+function buildWorldTransformSignature(transform: Matrix2D): string {
+  return [
+    transform.a,
+    transform.b,
+    transform.c,
+    transform.d,
+    transform.e,
+    transform.f
+  ].map(signaturePart).join('|');
+}
+
+function toTextDescriptor(block: Block, transformWorld: Matrix2D): TextBlockDescriptor | null {
+  if (
+    block.type !== BlockType.Text
+    || typeof block.props.id !== 'string'
+    || block.props.id.length === 0
+  ) {
+    return null;
+  }
+
+  const props = block.props as TextProps;
+  const blockId = block.props.id;
+  return {
+    blockId,
+    text: props.text,
+    props,
+    transformWorld,
+    layoutSignature: buildTextLayoutSignature(props),
+    worldSignature: buildWorldTransformSignature(transformWorld)
+  };
+}
+
+function transformBoundsCollection(boundsLocal: CharacterBounds[], transform: Matrix2D): CharacterBounds[] {
+  return boundsLocal.map((bounds) => transformBounds(bounds, transform));
+}
+
+export class CharacterBoundsAdapter {
+  private context: RenderContext | undefined;
+  private cacheByBlockId: Map<string, TextBoundsCacheEntry> = new Map();
+  private selectableTextBlockIds: string[] = [];
+
+  constructor(options: CharacterBoundsAdapterOptions = {}) {
+    this.context = options.context ?? createFallbackRenderContext();
+  }
+
+  private getLocalBounds(entry: TextBoundsCacheEntry): CharacterBounds[] {
+    if (entry.boundsLocal) {
+      return entry.boundsLocal;
+    }
+    entry.boundsLocal = layoutTextCharacterBounds(
+      entry.descriptor.text,
+      entry.descriptor.props,
+      this.context
+    );
+    return entry.boundsLocal;
+  }
+
+  private getWorldBounds(entry: TextBoundsCacheEntry): CharacterBounds[] {
+    if (entry.boundsWorld) {
+      return entry.boundsWorld;
+    }
+    const boundsLocal = this.getLocalBounds(entry);
+    entry.boundsWorld = transformBoundsCollection(boundsLocal, entry.descriptor.transformWorld);
+    return entry.boundsWorld;
+  }
+
+  private buildDescriptorMap(root: Block): Map<string, TextBlockDescriptor> {
+    const descriptorsByBlockId = new Map<string, TextBlockDescriptor>();
+    const stack: Array<{ block: Block; transform: Matrix2D }> = [{ block: root, transform: Matrix2D.identity() }];
+
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) {
+        continue;
+      }
+
+      const { block, transform: transformParent } = current;
+      const transformWorld = applyPropsTransform(transformParent, block.props as Record<string, unknown>);
+      const descriptor = toTextDescriptor(block, transformWorld);
+      if (descriptor) {
+        descriptorsByBlockId.set(descriptor.blockId, descriptor);
+      }
+
+      const children = block.children;
+      if (!children) {
+        continue;
+      }
+
+      for (let i = children.length - 1; i >= 0; i--) {
+        const child = children[i];
+        if (!child) {
+          continue;
+        }
+        stack.push({ block: child, transform: transformWorld });
+      }
+    }
+
+    return descriptorsByBlockId;
+  }
+
+  updateFromBlockTree(root: Block): CharacterBoundsUpdateResult {
+    const descriptorsByBlockId = this.buildDescriptorMap(root);
+    const nextCacheByBlockId = new Map<string, TextBoundsCacheEntry>();
+    const changedBlockIds = new Set<string>();
+    const selectableTextBlockIds = Array.from(descriptorsByBlockId.keys());
+
+    for (const [blockId, descriptor] of descriptorsByBlockId.entries()) {
+      const previous = this.cacheByBlockId.get(blockId);
+      if (!previous) {
+        nextCacheByBlockId.set(blockId, { descriptor });
+        changedBlockIds.add(blockId);
+        continue;
+      }
+
+      const layoutChanged = previous.descriptor.layoutSignature !== descriptor.layoutSignature;
+      const worldChanged = previous.descriptor.worldSignature !== descriptor.worldSignature;
+      if (layoutChanged || worldChanged) {
+        changedBlockIds.add(blockId);
+      }
+
+      nextCacheByBlockId.set(blockId, {
+        descriptor,
+        boundsLocal: layoutChanged ? undefined : previous.boundsLocal,
+        boundsWorld: layoutChanged || worldChanged ? undefined : previous.boundsWorld
+      });
+    }
+
+    for (const blockId of this.cacheByBlockId.keys()) {
+      if (!nextCacheByBlockId.has(blockId)) {
+        changedBlockIds.add(blockId);
+      }
+    }
+
+    this.cacheByBlockId = nextCacheByBlockId;
+    this.selectableTextBlockIds = selectableTextBlockIds;
+
+    return {
+      changedBlockIds: Array.from(changedBlockIds),
+      selectableTextBlockIds: [...this.selectableTextBlockIds]
+    };
+  }
+
+  getSelectableTextBlockIds(): string[] {
+    return [...this.selectableTextBlockIds];
+  }
+
+  getProvider(): CharacterBoundsProvider {
+    return (blockId: string, charIndex: number): CharacterBounds | null => {
+      if (charIndex < 0) {
+        return null;
+      }
+      const entry = this.cacheByBlockId.get(blockId);
+      if (!entry) {
+        return null;
+      }
+      const boundsWorld = this.getWorldBounds(entry);
+      return boundsWorld[charIndex] ?? null;
+    };
+  }
+}
+
+export function createCharacterBoundsAdapter(
+  options: CharacterBoundsAdapterOptions = {}
+): CharacterBoundsAdapter {
+  return new CharacterBoundsAdapter(options);
+}
+
 /**
  * Build a CharacterBoundsProvider from a rendered block tree.
  * The provider uses the same text metrics/wrap/alignment conventions as Vitrine's renderer.
@@ -91,53 +307,7 @@ export function createCharacterBoundsProviderFromBlockTree(
   root: Block,
   options: CharacterBoundsAdapterOptions = {}
 ): CharacterBoundsProvider {
-  const context = options.context ?? createFallbackRenderContext();
-  const mpBoundsByBlockId = new Map<string, CharacterBounds[]>();
-  const stack: Array<{ block: Block; transform: Matrix2D }> = [{ block: root, transform: Matrix2D.identity() }];
-
-  while (stack.length > 0) {
-    const current = stack.pop();
-    if (!current) {
-      continue;
-    }
-
-    const { block, transform: transformParent } = current;
-    const transformWorld = applyPropsTransform(transformParent, block.props as Record<string, unknown>);
-
-    if (
-      block.type === BlockType.Text
-      && typeof block.props.id === 'string'
-      && block.props.id.length > 0
-    ) {
-      const boundsLocal = layoutTextCharacterBounds(block.props.text, block.props as TextProps, context);
-      mpBoundsByBlockId.set(
-        block.props.id,
-        boundsLocal.map((bounds) => transformBounds(bounds, transformWorld))
-      );
-    }
-
-    const children = block.children;
-    if (!children) {
-      continue;
-    }
-
-    for (let i = children.length - 1; i >= 0; i--) {
-      const child = children[i];
-      if (!child) {
-        continue;
-      }
-      stack.push({ block: child, transform: transformWorld });
-    }
-  }
-
-  return (blockId: string, charIndex: number): CharacterBounds | null => {
-    if (charIndex < 0) {
-      return null;
-    }
-    const blockBounds = mpBoundsByBlockId.get(blockId);
-    if (!blockBounds) {
-      return null;
-    }
-    return blockBounds[charIndex] ?? null;
-  };
+  const adapter = createCharacterBoundsAdapter(options);
+  adapter.updateFromBlockTree(root);
+  return adapter.getProvider();
 }

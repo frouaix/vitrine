@@ -5,13 +5,14 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { BlockType, ImmediateRenderer, group, Canvas2DContext } from 'vitrine';
+import { ImmediateRenderer, group, Canvas2DContext } from 'vitrine';
 import type { RendererConfig, RenderContext } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
 import { TextSelectionManager } from './selection/TextSelectionManager.ts';
 import type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
-import { createCharacterBoundsProviderFromBlockTree } from './selection/character-bounds-adapter.ts';
+import { createCharacterBoundsAdapter } from './selection/character-bounds-adapter.ts';
+import type { CharacterBoundsAdapter } from './selection/character-bounds-adapter.ts';
 
 /** Function that returns a GUI control tree each frame. */
 export type GUIControlBuilder = () => GUIControl;
@@ -59,6 +60,7 @@ export class VitrineComponent {
   private fDirty: boolean = false;
   private selectionManager: TextSelectionManager | null = null;
   private selectionMeasureContext: RenderContext | undefined;
+  private selectionBoundsAdapter: CharacterBoundsAdapter | null = null;
   private selectableTextBlockIds: string[] = [];
   private boundInteractionHandlers: {
     pointerdown: (e: PointerEvent) => void;
@@ -129,6 +131,10 @@ export class VitrineComponent {
       const canvasMeasure = document.createElement('canvas');
       const canvasContext = canvasMeasure.getContext('2d');
       this.selectionMeasureContext = canvasContext ? new Canvas2DContext(canvasContext) : undefined;
+      this.selectionBoundsAdapter = createCharacterBoundsAdapter({
+        context: this.selectionMeasureContext
+      });
+      this.selectionManager.setCharacterBoundsProvider(this.selectionBoundsAdapter.getProvider());
     }
 
     this.mounted = true;
@@ -147,6 +153,7 @@ export class VitrineComponent {
     this.hasExplicitAnimationControl = false;
     this.selectionManager = null;
     this.selectionMeasureContext = undefined;
+    this.selectionBoundsAdapter = null;
 
     if (this.renderer) {
       this.renderer.destroy();
@@ -411,15 +418,16 @@ export class VitrineComponent {
     const contentBlock = this.mode === 'gui'
       ? transformGUIControl((this.renderFn as GUIControlBuilder)(), { theme: this.theme })
       : (this.renderFn as BlockBuilder)();
-    this.selectableTextBlockIds = this.collectSelectableTextBlockIds(contentBlock);
 
     // If selection manager is active, wrap content with selection overlay
-    if (this.selectionManager && this.selectionManager.isRenderingEnabled()) {
-      this.selectionManager.setCharacterBoundsProvider(
-        createCharacterBoundsProviderFromBlockTree(contentBlock, {
-          context: this.selectionMeasureContext
-        })
-      );
+    if (
+      this.selectionManager
+      && this.selectionBoundsAdapter
+      && this.selectionManager.isRenderingEnabled()
+    ) {
+      const updateResult = this.selectionBoundsAdapter.updateFromBlockTree(contentBlock);
+      this.selectableTextBlockIds = updateResult.selectableTextBlockIds;
+      this.selectionManager.invalidateInsertionGeometry(updateResult.changedBlockIds);
       const selectionOverlay = this.selectionManager.buildSelectionOverlays();
       if (selectionOverlay) {
         return group({}, [contentBlock, selectionOverlay]);
@@ -427,34 +435,5 @@ export class VitrineComponent {
     }
 
     return contentBlock;
-  }
-
-  private collectSelectableTextBlockIds(root: Block): string[] {
-    const ids: string[] = [];
-    const stack: Block[] = [root];
-
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!current) continue;
-
-      if (
-        (current.type === BlockType.Text || current.type === BlockType.Texta) &&
-        typeof current.props.id === 'string' &&
-        current.props.id.length > 0
-      ) {
-        ids.push(current.props.id);
-      }
-
-      if (current.children) {
-        for (let i = current.children.length - 1; i >= 0; i--) {
-          const child = current.children[i];
-          if (child) {
-            stack.push(child);
-          }
-        }
-      }
-    }
-
-    return ids;
   }
 }
