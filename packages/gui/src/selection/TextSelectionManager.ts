@@ -534,26 +534,6 @@ export class TextSelectionManager {
   }
 
   /**
-   * Hit-test to find character at given coordinates.
-   * Uses CharacterBoundsProvider to find the closest character.
-   * Returns { blockId, charIndex } or null if no hit.
-   */
-  hitTestCharacter(x: number, y: number): { blockId: string; charIndex: number } | null {
-    if (!this.characterBoundsProvider) {
-      return null;
-    }
-
-    // Try to find which character this position belongs to
-    // We iterate through possible character indices and use CharacterBoundsProvider
-    // This is a brute-force approach; production could optimize with spatial indexing
-    
-    // For now, we need to know which block to test
-    // Since we don't have block geometry here, we rely on the caller to provide blockId
-    // This method should typically be called per-block
-    return null;
-  }
-
-  /**
    * Hit-test within a specific block.
    * blockId: the text block to test
    * x, y: screen coordinates
