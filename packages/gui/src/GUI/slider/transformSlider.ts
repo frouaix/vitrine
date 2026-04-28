@@ -186,7 +186,7 @@ export function transformSlider(
       x: fVertical ? duCrossCenter : duThumbAxis,
       y: fVertical ? duThumbAxis : duCrossCenter,
       radius: rlThumb,
-      disableCulling: true,
+      fDisableCulling: true,
       fill: colThumbFill,
       stroke: colThumbStroke,
       strokeWidth: SLIDER_DEFAULTS.duThumbStroke,
@@ -201,7 +201,7 @@ export function transformSlider(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id,
       onHover
     },

@@ -91,8 +91,8 @@ export interface EventHandlers {
 
 export interface BaseBlockProps extends Transform, EventHandlers {
   opacity?: number;
-  visible?: boolean;
-  disableCulling?: boolean;
+  fVisible?: boolean;
+  fDisableCulling?: boolean;
   shadow?: ShadowProps;
   filter?: string;
   id?: string;
@@ -160,7 +160,7 @@ export type BlockPropsByType = {
 export type BlockForType<T extends BlockType = BlockType> = {
   type: T;
   props: BlockPropsByType[T];
-  children?: Block[];
+  rgblChildren?: Block[];
 };
 
 export type Block = {
@@ -201,7 +201,7 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   /** When set (with dx), clip text vertically at this height. */
   dy?: number;
   /** Line spacing in pixels. Defaults to fontSize * 1.4. */
-  lineHeight?: number;
+  dyLineHeight?: number;
 }
 
 export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {

@@ -30,7 +30,7 @@ export class PerformanceOptimizer {
     worldTransform: Matrix2D = Matrix2D.identity()
   ): boolean {
     const { props } = block;
-    const { visible, disableCulling } = props;
+    const { fVisible: visible, fDisableCulling: disableCulling } = props;
     if (visible === false) return false;
 
     if (disableCulling) {

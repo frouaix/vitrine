@@ -10,7 +10,8 @@ import type {
   BaseBlockProps,
   Block,
   Rc,
-  CustomBlockHandlers
+  CustomBlockHandlers,
+  TextMetrics
 } from 'vitrine';
 
 export const stBlockTypeTexta = 'texta';
@@ -88,7 +89,7 @@ function getLineHeight(style: StyleEntryLike, styleDefault: StyleEntryLike, line
 function measureSegment(
   segment: Segment,
   styleDefault: StyleEntryLike,
-  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => { width: number; ascent: number; descent: number; height: number },
+  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMetrics,
   defaults: Pick<TextaBlockProps, 'font' | 'fontSize' | 'lineHeight'>
 ): SegmentMetrics {
   const fontSize = getFontSize(segment.style, styleDefault, defaults.fontSize);
@@ -130,7 +131,7 @@ function splitRunLines(props: TextaBlockProps): Segment[][] {
 
 function computeLineMetrics(
   props: TextaBlockProps,
-  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => { width: number; ascent: number; descent: number; height: number }
+  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMetrics
 ): { lineMetrics: SegmentMetrics[][]; lineWidths: number[]; lineHeights: number[]; lineAscents: number[]; styleDefault: StyleEntryLike } {
   const styleDefault = getDefaultStyle(props);
   const lineSegments = splitRunLines(props);
@@ -320,7 +321,7 @@ function createTextaHandlers(): CustomBlockHandlers {
       }
     },
     hitTestShape: (block, xl, yl, { layoutCache }): boolean => {
-      const cachedBounds = layoutCache?.boundsByBlock.get(block as unknown as Block);
+      const cachedBounds = layoutCache?.mpbl_rc.get(block as unknown as Block);
       if (cachedBounds) {
         return xl >= cachedBounds.x
           && xl <= cachedBounds.x + cachedBounds.width

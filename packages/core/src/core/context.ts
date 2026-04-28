@@ -2,16 +2,17 @@
 
 // Rendering context abstraction
 import { Matrix2D, TransformStack } from '../transform.ts';
-import type { Block, BaseBlockProps, Rc, FillStyle } from './types.ts';
+import type { FillStyle } from './types.ts';
+import type { TextMetrics } from './selection-types.ts';
 
 export interface RenderContext {
   transformStack: TransformStack;
   opacity: number;
-  visible: boolean;
+  fVisible: boolean;
   
   save(): void;
   restore(): void;
-  applyTransform(matrix: Matrix2D): void;
+  applyTransform(xf: Matrix2D): void;
   setOpacity(opacity: number): void;
   
   // Drawing primitives - to be implemented by concrete renderers
@@ -24,16 +25,16 @@ export interface RenderContext {
   drawText(text: string, xl: number, yl: number, props: any): void;
   drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void;
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void;
-  measureText?(text: string, props: any): { width: number; height: number; ascent: number; descent: number };
+  measureText?(text: string, props: any): TextMetrics;
 }
 
 export class Canvas2DContext implements RenderContext {
   transformStack: TransformStack;
   opacity: number = 1;
-  visible: boolean = true;
+  fVisible: boolean = true;
   
   private ctx: CanvasRenderingContext2D;
-  private opacityStack: number[] = [];
+  private rgOpacity: number[] = [];
 
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
@@ -78,13 +79,13 @@ export class Canvas2DContext implements RenderContext {
   save(): void {
     this.ctx.save();
     this.transformStack.save();
-    this.opacityStack.push(this.opacity);
+    this.rgOpacity.push(this.opacity);
   }
 
   restore(): void {
     this.ctx.restore();
     this.transformStack.restore();
-    const prevOpacity = this.opacityStack.pop();
+    const prevOpacity = this.rgOpacity.pop();
     if (prevOpacity !== undefined) this.opacity = prevOpacity;
   }
 
@@ -207,25 +208,27 @@ export class Canvas2DContext implements RenderContext {
   }
 
   /** Word-wrap text into lines that fit within maxWidth pixels. */
-  private wrapText(text: string, dxMax: number): string[] {
-    const words = text.split(/\s+/);
-    if (words.length === 0) return [''];
-    const lines: string[] = [];
-    let currentLine = words[0];
-    for (let i = 1; i < words.length; i++) {
-      const testLine = currentLine + ' ' + words[i];
-      if (this.ctx.measureText(testLine).width > dxMax) {
-        lines.push(currentLine);
-        currentLine = words[i];
+  // TODO: this is a very naive implementation  that only breaks on whitespace and doesn't consider breaking long words. 
+  // It also doesn't cache results, which could be expensive for large blocks of text or frequent re-rendering.
+  private rgtextWrapped(text: string, dxMax: number): string[] {
+    const rgwords = text.split(/\s+/);
+    if (rgwords.length === 0) return [''];
+    const rglines: string[] = [];
+    let lineCur = rgwords[0];
+    for (let i = 1; i < rgwords.length; i++) {
+      const lineCandidate = lineCur + ' ' + rgwords[i];
+      if (this.ctx.measureText(lineCandidate).width > dxMax) {
+        rglines.push(lineCur);
+        lineCur = rgwords[i];
       } else {
-        currentLine = testLine;
+        lineCur = lineCandidate;
       }
     }
-    lines.push(currentLine);
-    return lines;
+    rglines.push(lineCur);
+    return rglines;
   }
 
-  measureText(text: string, props: any): { width: number; height: number; ascent: number; descent: number } {
+  measureText(text: string, props: any): TextMetrics {
     const { font, fontSize, dx: dxMax, lineHeight: lineHeightProp } = props;
     const duFont = fontSize ?? 16;
     // Apply font settings
@@ -241,7 +244,7 @@ export class Canvas2DContext implements RenderContext {
       ?? duFont * 0.2;
 
     if (dxMax !== undefined) {
-      const lines = this.wrapText(text, dxMax);
+      const lines = this.rgtextWrapped(text, dxMax);
       const duLineHeight = lineHeightProp ?? duFont * 1.4;
       const maxLineWidth = Math.min(dxMax, Math.max(...lines.map(l => this.ctx.measureText(l).width)));
       const totalHeight = lines.length * duLineHeight;
@@ -277,7 +280,7 @@ export class Canvas2DContext implements RenderContext {
     }
 
     // Multi-line wrapping
-    const lines = this.wrapText(text, dxMax);
+    const lines = this.rgtextWrapped(text, dxMax);
     const duLineHeight = lineHeightProp ?? (fontSize ?? 16) * 1.4;
 
     // Clip vertically when dy is set

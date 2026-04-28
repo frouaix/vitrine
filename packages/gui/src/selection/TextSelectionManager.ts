@@ -492,7 +492,7 @@ export class TextSelectionManager {
 
     return portal(
       {
-        visible: true
+        fVisible: true
       },
       overlayChildren.length === 1
         ? [overlayChildren[0]!]

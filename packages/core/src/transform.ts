@@ -103,29 +103,29 @@ export class Matrix2D {
 }
 
 export class TransformStack {
-  private stack: Matrix2D[] = [];
-  private current: Matrix2D;
+  private rgxf: Matrix2D[] = [];
+  private xfCur: Matrix2D;
 
   constructor() {
-    this.current = Matrix2D.identity();
+    this.xfCur = Matrix2D.identity();
   }
 
   save(): void {
-    this.stack.push(this.current.clone());
+    this.rgxf.push(this.xfCur.clone());
   }
 
   restore(): void {
-    const m = this.stack.pop();
-    if (m) this.current = m;
+    const m = this.rgxf.pop();
+    if (m) this.xfCur = m;
   }
 
   reset(): void {
-    this.stack = [];
-    this.current = Matrix2D.identity();
+    this.rgxf = [];
+    this.xfCur = Matrix2D.identity();
   }
 
   getCurrent(): Matrix2D {
-    return this.current;
+    return this.xfCur;
   }
 
   apply(transform: {
@@ -138,19 +138,19 @@ export class TransformStack {
     skewY?: number;
   }): void {
     if (transform.x !== undefined || transform.y !== undefined) {
-      this.current = this.current.translate(transform.x ?? 0, transform.y ?? 0);
+      this.xfCur = this.xfCur.translate(transform.x ?? 0, transform.y ?? 0);
     }
     if (transform.rotation !== undefined) {
-      this.current = this.current.rotate(transform.rotation);
+      this.xfCur = this.xfCur.rotate(transform.rotation);
     }
     if (transform.scaleX !== undefined || transform.scaleY !== undefined) {
-      this.current = this.current.scaleXY(
+      this.xfCur = this.xfCur.scaleXY(
         transform.scaleX ?? 1,
         transform.scaleY ?? 1
       );
     }
     if (transform.skewX !== undefined || transform.skewY !== undefined) {
-      this.current = this.current.skewXY(
+      this.xfCur = this.xfCur.skewXY(
         transform.skewX ?? 0,
         transform.skewY ?? 0
       );

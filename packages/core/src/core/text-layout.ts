@@ -189,7 +189,7 @@ export function layoutTextCharacterBounds(
 
   const fontSize = props.fontSize ?? 16;
   const metrics = measureText(text, props, context);
-  const lineHeight = props.lineHeight ?? fontSize * 1.4;
+  const lineHeight = props.dyLineHeight ?? fontSize * 1.4;
   const propsUnwrapped: Partial<TextProps> & { font?: string } = {
     ...props,
     dx: undefined,

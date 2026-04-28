@@ -128,7 +128,7 @@ function buildTextLayoutSignature(props: TextProps): string {
     props.baseline,
     props.dx,
     props.dy,
-    props.lineHeight
+    props.dyLineHeight
   ].map(signaturePart).join('|');
 }
 
@@ -215,13 +215,13 @@ export class CharacterBoundsAdapter {
         descriptorsByBlockId.set(descriptor.blockId, descriptor);
       }
 
-      const children = block.children;
-      if (!children) {
+      const rgblChildren = block.rgblChildren;
+      if (!rgblChildren) {
         continue;
       }
 
-      for (let i = children.length - 1; i >= 0; i--) {
-        const child = children[i];
+      for (let i = rgblChildren.length - 1; i >= 0; i--) {
+        const child = rgblChildren[i];
         if (!child) {
           continue;
         }

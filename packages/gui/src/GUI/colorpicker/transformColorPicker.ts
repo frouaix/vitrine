@@ -642,7 +642,7 @@ export function transformColorPicker(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id,
       onHover
     },

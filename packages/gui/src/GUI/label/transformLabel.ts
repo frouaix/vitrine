@@ -45,7 +45,7 @@ export function transformLabel(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id
     },
     [

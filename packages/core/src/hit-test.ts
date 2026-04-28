@@ -21,32 +21,32 @@ export interface HitTestResult {
 }
 
 export interface HitTestLayoutCache {
-  boundsByBlock: WeakMap<Block, Rc>;
+  mpbl_rc: WeakMap<Block, Rc>;
 }
 
 export class HitTester {
   // Test if a point hits a block, considering its transform
   static hitTest(
-    block: Block,
-    worldX: number,
-    worldY: number,
-    worldTransform: Matrix2D = Matrix2D.identity(),
-    ancestors: Block[] = [],
+    bl: Block,
+    xs: number,
+    ys: number,
+    xfWorld: Matrix2D = Matrix2D.identity(),
+    rgblAncestors: Block[] = [],
     layoutCache?: HitTestLayoutCache
   ): HitTestResult | null {
-    const { props, children } = block;
-    const { visible } = props;
+    const { props, rgblChildren: children } = bl;
+    const { fVisible: visible } = props;
     if (visible === false) return null;
 
     // Calculate this block's world transform
-    const blockTransform = this.getBlockTransform(props);
-    const currentTransform = worldTransform.multiply(blockTransform);
+    const xfBlock = this.getBlockTransform(props);
+    const xfCur = xfWorld.multiply(xfBlock);
 
     // Transform world coordinates to local space
-    const inverse = currentTransform.invert();
+    const inverse = xfCur.invert();
     if (!inverse) return null;
 
-    const local = inverse.transformPoint(worldX, worldY);
+    const local = inverse.transformPoint(xs, ys);
 
     // Reject points outside clip region
     const { clip, dx: dxClip, dy: dyClip } = props as any;
@@ -58,29 +58,29 @@ export class HitTester {
 
     // Test children first (reverse order for top-to-bottom)
     if (children) {
-      const childAncestors = [...ancestors, block];
+      const rgblAncestorsChild = [...rgblAncestors, bl];
       for (let i = children.length - 1; i >= 0; i--) {
-        const childHit = this.hitTest(
+        const blChildHit = this.hitTest(
           children[i],
-          worldX,
-          worldY,
-          currentTransform,
-          childAncestors,
+          xs,
+          ys,
+          xfCur,
+          rgblAncestorsChild,
           layoutCache
         );
-        if (childHit) return childHit;
+        if (blChildHit) return blChildHit;
       }
     }
 
     // Test this block
-    if (this.hitTestShape(block, local.x, local.y, layoutCache)) {
+    if (this.hitTestShape(bl, local.x, local.y, layoutCache)) {
       return {
-        block,
-        ancestors,
+        block: bl,
+        ancestors: rgblAncestors,
         xl: local.x,
         yl: local.y,
-        xs: worldX,
-        ys: worldY
+        xs: xs,
+        ys: ys
       };
     }
 
@@ -88,31 +88,31 @@ export class HitTester {
   }
 
   private static getBlockTransform(props: any): Matrix2D {
-    let transform = Matrix2D.identity();
+    let xf = Matrix2D.identity();
     const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
     if (x !== undefined || y !== undefined) {
-      transform = transform.translate(x ?? 0, y ?? 0);
+      xf = xf.translate(x ?? 0, y ?? 0);
     }
     if (rotation !== undefined) {
-      transform = transform.rotate(rotation);
+      xf = xf.rotate(rotation);
     }
     if (scaleX !== undefined || scaleY !== undefined) {
-      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
+      xf = xf.scaleXY(scaleX ?? 1, scaleY ?? 1);
     }
     if (skewX !== undefined || skewY !== undefined) {
-      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
+      xf = xf.skewXY(skewX ?? 0, skewY ?? 0);
     }
 
-    return transform;
+    return xf;
   }
 
-  private static hitTestShape(block: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
+  private static hitTestShape(bl: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
     const xl = x;
     const yl = y;
-    const { props } = block as { props: any };
+    const { props } = bl as { props: any };
 
-    switch (block.type) {
+    switch (bl.type) {
       case BlockType.Rectangle: {
         const { dx, dy } = props;
         return this.hitTestRectangle(xl, yl, dx, dy);
@@ -134,7 +134,7 @@ export class HitTester {
       }
 
       case BlockType.Text: {
-        const cachedBounds = layoutCache?.boundsByBlock.get(block);
+        const cachedBounds = layoutCache?.mpbl_rc.get(bl);
         if (cachedBounds) {
           return this.hitTestRectangle(
             xl - cachedBounds.x,
@@ -198,7 +198,7 @@ export class HitTester {
       case BlockType.Portal:
       case BlockType.ContentSized:
         {
-          const cachedBounds = layoutCache?.boundsByBlock.get(block);
+          const cachedBounds = layoutCache?.mpbl_rc.get(bl);
           if (cachedBounds) {
             return this.hitTestRectangle(
               xl - cachedBounds.x,
@@ -213,10 +213,10 @@ export class HitTester {
         return false;
 
       default: {
-        const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
-        const handlers = getBlockTypeHandlers(blockCustom.type);
+        const blCustom = bl as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+        const handlers = getBlockTypeHandlers(blCustom.type);
         if (handlers?.hitTestShape) {
-          return handlers.hitTestShape(blockCustom, xl, yl, { layoutCache });
+          return handlers.hitTestShape(blCustom, xl, yl, { layoutCache });
         }
         return false;
       }

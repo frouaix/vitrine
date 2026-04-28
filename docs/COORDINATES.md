@@ -53,6 +53,8 @@ immediately visible:
 | `dx`, `dy` | A size / dimension (delta) | `dxRect`, `dyClip` |
 | `du` | A generic distance (dimensionless units) | `duRadius` |
 | `pt` | A point object `{ xc, yc }` | `ptcDragStart` |
+| `xf` | A `Matrix2D` transform | `xfBlock`, `xfCur`, `xfWorld` |
+| `bl` | A `Block` | `blHit`, `blChild` |
 
 Coordinate-space suffixes are appended to the prefix:
 

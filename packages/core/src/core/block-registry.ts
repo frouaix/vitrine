@@ -6,11 +6,11 @@ import type { Block, Rc } from './types.ts';
 export interface CustomBlockDescriptor {
   type: string;
   props: Record<string, unknown>;
-  children?: Block[];
+  rgblChildren?: Block[];
 }
 
 export interface BlockLayoutCache {
-  boundsByBlock: WeakMap<Block, Rc>;
+  mpbl_rc: WeakMap<Block, Rc>;
 }
 
 export interface CustomBlockRenderApi {

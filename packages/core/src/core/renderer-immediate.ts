@@ -57,7 +57,7 @@ export class ImmediateRenderer {
   private cameraY: number = 0;
   private cameraZoom: number = 1;
   private portalBlocks: Array<{ block: Block; transform: Matrix2D }> = [];
-  private hitTestLayoutCache: HitTestLayoutCache = { boundsByBlock: new WeakMap() };
+  private hitTestLayoutCache: HitTestLayoutCache = { mpbl_rc: new WeakMap() };
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
@@ -213,7 +213,7 @@ export class ImmediateRenderer {
     const startTime = performance.now();
 
     // Layout cache is valid for exactly one rendered frame.
-    this.hitTestLayoutCache = { boundsByBlock: new WeakMap() };
+    this.hitTestLayoutCache = { mpbl_rc: new WeakMap() };
 
     // Clear portal collection
     this.portalBlocks = [];
@@ -296,8 +296,8 @@ export class ImmediateRenderer {
   }
 
   private renderBlock(block: Block): void {
-    const { props, children } = block;
-    const { visible, opacity: fOpacity = 1, shadow } = props;
+    const { props, rgblChildren: children } = block;
+    const { fVisible: visible, opacity: fOpacity = 1, shadow } = props;
     if (visible === false) return;
 
     // Frustum culling
@@ -429,7 +429,7 @@ export class ImmediateRenderer {
           context: this.context,
           layoutCache: this.hitTestLayoutCache,
           setLayoutBounds: (bounds) => {
-            this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
+            this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
           }
         });
         break;
@@ -493,7 +493,7 @@ export class ImmediateRenderer {
   }
 
   private renderContentSized(block: BlockOfType<BlockType.ContentSized>): void {
-    const { props, children } = block;
+    const { props, rgblChildren: children } = block;
     if (!children || children.length === 0) {
       return;
     }
@@ -504,7 +504,7 @@ export class ImmediateRenderer {
 
     const localBoundsChildren = children
       .map((child) => {
-        const childBoundsLocal = this.hitTestLayoutCache.boundsByBlock.get(child);
+        const childBoundsLocal = this.hitTestLayoutCache.mpbl_rc.get(child);
         if (!childBoundsLocal) {
           return null;
         }
@@ -533,7 +533,7 @@ export class ImmediateRenderer {
       height: yMax - yMin + paddingY * 2
     };
 
-    this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
+    this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
 
     if (props.fill || props.stroke) {
       this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, {
@@ -648,7 +648,7 @@ export class ImmediateRenderer {
     const { props } = block;
     const { text } = props;
     const bounds = getTextBlockBounds(text, props, this.context);
-    this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
+    this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
 
     this.context.drawText(text, 0, 0, props);
   }
@@ -688,7 +688,7 @@ export class ImmediateRenderer {
 
     // Render portals in collection order (first collected = bottom, last = top)
     for (const { block, transform } of this.portalBlocks) {
-      if (!block.children) continue;
+      if (!block.rgblChildren) continue;
       
       this.context.save();
       this.context.transformStack.save();
@@ -713,7 +713,7 @@ export class ImmediateRenderer {
       }
       
       // Now render portal children - they will apply their own transforms relative to this
-      for (const child of block.children) {
+      for (const child of block.rgblChildren) {
         this.renderBlock(child);
       }
       
