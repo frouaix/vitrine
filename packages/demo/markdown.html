@@ -280,9 +280,9 @@ The table below is rendered through vitrine-tables + adapter.
 
     const renderer = new ImmediateRenderer({
       canvas,
-      width: dxCanvas,
-      height: dyCanvas,
-      enableCameraControls: true
+      dx: dxCanvas,
+      dy: dyCanvas,
+      fEnableCameraControls: true
     });
 
     const tableEngine = new ReferenceTableLayoutEngine();

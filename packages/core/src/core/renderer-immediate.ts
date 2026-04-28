@@ -30,43 +30,44 @@ const TOOLTIP_DEFAULTS = {
 
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
-  width?: number;
-  height?: number;
+  dx?: number;
+  dy?: number;
   pixelRatio?: number;
-  enableEvents?: boolean;
-  enableCulling?: boolean;
-  debugHoverOutline?: boolean;
-  enableCameraControls?: boolean;
+  fEnableEvents?: boolean;
+  fEnableCulling?: boolean;
+  fDebugHoverOutline?: boolean;
+  fEnableCameraControls?: boolean;
 }
 
 export class ImmediateRenderer {
   private canvas: HTMLCanvasElement;
-  private context: RenderContext;
-  private imageCache: Map<string, HTMLImageElement> = new Map();
   private dxc: number;
   private dyc: number;
   private pixelRatio: number;
+  private fEnableCulling: boolean;
+  private fDebugHoverOutline: boolean;
+  private fEnableCameraControls: boolean;
+
+  private context: RenderContext;
+  private imageCache: Map<string, HTMLImageElement> = new Map();
   private eventManager: EventManager | null = null;
-  private enableCulling: boolean;
-  private debugHoverOutline: boolean;
   private debugHoveredBlock: Block | null = null;
   private viewport: Viewport;
   private perfMonitor: PerformanceMonitor;
-  private enableCameraControls: boolean;
-  private cameraX: number = 0;
-  private cameraY: number = 0;
-  private cameraZoom: number = 1;
+  private xsCamera: number = 0;
+  private ysCamera: number = 0;
+  private sfCamera: number = 1;
   private portalBlocks: Array<{ block: Block; transform: Matrix2D }> = [];
   private hitTestLayoutCache: HitTestLayoutCache = { mpbl_rc: new WeakMap() };
 
   constructor(config: RendererConfig = {}) {
     this.canvas = config.canvas || document.createElement('canvas');
-    this.dxc = config.width || 800;
-    this.dyc = config.height || 600;
+    this.dxc = config.dx || 800;
+    this.dyc = config.dy || 600;
     this.pixelRatio = config.pixelRatio || window.devicePixelRatio || 1;
-    this.enableCulling = config.enableCulling ?? true;
-    this.debugHoverOutline = config.debugHoverOutline ?? false;
-    this.enableCameraControls = config.enableCameraControls ?? false;
+    this.fEnableCulling = config.fEnableCulling ?? true;
+    this.fDebugHoverOutline = config.fDebugHoverOutline ?? false;
+    this.fEnableCameraControls = config.fEnableCameraControls ?? false;
 
     this.viewport = {
       x: 0,
@@ -85,12 +86,12 @@ export class ImmediateRenderer {
     this.context = new Canvas2DContext(ctx);
 
     // Enable event handling by default
-    if (config.enableEvents !== false) {
+    if (config.fEnableEvents !== false) {
       this.eventManager = new EventManager(this.canvas);
       this.eventManager.setPixelRatio(this.pixelRatio);
       
       // Setup camera controls if enabled
-      if (this.enableCameraControls) {
+      if (this.fEnableCameraControls) {
         this.setupCameraControls();
       }
     }
@@ -118,11 +119,11 @@ export class ImmediateRenderer {
   }
 
   setDebugHoverOutline(enabled: boolean): void {
-    this.debugHoverOutline = enabled;
+    this.fDebugHoverOutline = enabled;
   }
 
   getDebugHoverOutline(): boolean {
-    return this.debugHoverOutline;
+    return this.fDebugHoverOutline;
   }
 
   private setupCameraControls(): void {
@@ -135,7 +136,7 @@ export class ImmediateRenderer {
       if (e.ctrlKey) {
         // Ctrl+MouseWheel: zoom in/out towards mouse pointer
         const zoomDelta = -e.deltaY * zoomSpeed;
-        const newZoom = Math.max(0.1, Math.min(10, this.cameraZoom + zoomDelta));
+        const newZoom = Math.max(0.1, Math.min(10, this.sfCamera + zoomDelta));
         
         // Convert mouse position from CSS pixels to logical canvas coordinates
         const rect = this.canvas.getBoundingClientRect();
@@ -149,21 +150,21 @@ export class ImmediateRenderer {
         // Camera group uses Translate × Scale convention:
         // screen = world * zoom + translate
         // world = (screen - translate) / zoom
-        const worldX = (logicalX - this.cameraX) / this.cameraZoom;
-        const worldY = (logicalY - this.cameraY) / this.cameraZoom;
+        const worldX = (logicalX - this.xsCamera) / this.sfCamera;
+        const worldY = (logicalY - this.ysCamera) / this.sfCamera;
         
         // Keep world point under mouse after zoom change:
         // logicalX = worldX * newZoom + newTranslateX
         // newTranslateX = logicalX - worldX * newZoom
-        this.cameraX = logicalX - worldX * newZoom;
-        this.cameraY = logicalY - worldY * newZoom;
-        this.cameraZoom = newZoom;
+        this.xsCamera = logicalX - worldX * newZoom;
+        this.ysCamera = logicalY - worldY * newZoom;
+        this.sfCamera = newZoom;
       } else if (e.shiftKey) {
         // Shift+MouseWheel: scroll horizontally (translate is in screen units)
-        this.cameraX -= e.deltaY * panSpeed;
+        this.xsCamera -= e.deltaY * panSpeed;
       } else {
         // MouseWheel: scroll vertically (translate is in screen units)
-        this.cameraY -= e.deltaY * panSpeed;
+        this.ysCamera -= e.deltaY * panSpeed;
       }
     };
     
@@ -172,16 +173,16 @@ export class ImmediateRenderer {
 
   getCameraTransform(): { x: number; y: number; zoom: number } {
     return {
-      x: this.cameraX,
-      y: this.cameraY,
-      zoom: this.cameraZoom
+      x: this.xsCamera,
+      y: this.ysCamera,
+      zoom: this.sfCamera
     };
   }
 
   setCameraTransform(x: number, y: number, zoom: number): void {
-    this.cameraX = x;
-    this.cameraY = y;
-    this.cameraZoom = zoom;
+    this.xsCamera = x;
+    this.ysCamera = y;
+    this.sfCamera = zoom;
   }
 
   /**
@@ -192,8 +193,8 @@ export class ImmediateRenderer {
   camera(children: Block[]): Block {
     // Build the camera transform matrix (Translate × Scale) and sync to EventManager
     const cameraTransform = Matrix2D.identity()
-      .translate(this.cameraX, this.cameraY)
-      .scaleXY(this.cameraZoom, this.cameraZoom);
+      .translate(this.xsCamera, this.ysCamera)
+      .scaleXY(this.sfCamera, this.sfCamera);
     const fullTransform = Matrix2D.identity()
       .scaleXY(this.pixelRatio, this.pixelRatio)
       .multiply(cameraTransform);
@@ -202,10 +203,10 @@ export class ImmediateRenderer {
     }
 
     return group({
-      x: this.cameraX,
-      y: this.cameraY,
-      scaleX: this.cameraZoom,
-      scaleY: this.cameraZoom
+      x: this.xsCamera,
+      y: this.ysCamera,
+      scaleX: this.sfCamera,
+      scaleY: this.sfCamera
     }, children);
   }
 
@@ -219,7 +220,7 @@ export class ImmediateRenderer {
     this.portalBlocks = [];
 
     this.debugHoveredBlock = null;
-    if (this.debugHoverOutline && this.eventManager) {
+    if (this.fDebugHoverOutline && this.eventManager) {
       const ptcLastPointer = this.eventManager.getLastPointerCanvasPosition();
       if (ptcLastPointer) {
         // Convert canvas buffer coordinates to logical coordinates (remove pixelRatio).
@@ -271,7 +272,7 @@ export class ImmediateRenderer {
       
       // Camera transform is synced to EventManager via camera() method.
       // For non-camera scenes, still account for pixelRatio.
-      if (!this.enableCameraControls && this.pixelRatio !== 1) {
+      if (!this.fEnableCameraControls && this.pixelRatio !== 1) {
         const pixelRatioTransform = Matrix2D.identity()
           .scaleXY(this.pixelRatio, this.pixelRatio);
         this.eventManager.setCameraTransform(pixelRatioTransform);
@@ -301,7 +302,7 @@ export class ImmediateRenderer {
     if (visible === false) return;
 
     // Frustum culling
-    if (this.enableCulling) {
+    if (this.fEnableCulling) {
       const inView = PerformanceOptimizer.cullBlocks(
         block,
         this.viewport,
@@ -443,7 +444,7 @@ export class ImmediateRenderer {
       }
     }
 
-    if (this.debugHoverOutline && block === this.debugHoveredBlock) {
+    if (this.fDebugHoverOutline && block === this.debugHoveredBlock) {
       this.renderDebugHoverOutline(block);
     }
 

@@ -2,6 +2,8 @@
 
 // Text selection and layout types
 
+import type { TextMetrics } from './types.ts';
+
 /** Represents a single text selection or caret position. */
 export interface Selection {
   /** ID of the text/texta block this selection applies to. */
@@ -14,18 +16,6 @@ export interface Selection {
   userId?: string;
   /** Optional color for rendering this selection (useful for multi-user scenarios). */
   color?: string;
-}
-
-/** Text measurement metrics. */
-export interface TextMetrics {
-  /** Width of the text in pixels. */
-  width: number;
-  /** Total height in pixels (ascent + descent). */
-  height: number;
-  /** Ascent (distance from baseline to top) in pixels. */
-  ascent: number;
-  /** Descent (distance from baseline to bottom) in pixels. */
-  descent: number;
 }
 
 /** Bounding box for a character at a specific index. */

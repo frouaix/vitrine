@@ -169,9 +169,15 @@ export type Block = {
 
 export type BlockOfType<T extends BlockType> = Extract<Block, { type: T }>;
 
+export type LineStyleProps = Pick<StrokeProps, 'lineCap' | 'lineJoin' | 'lineDash' | 'lineDashOffset'>;
+export type StrokeStyleProps = Pick<StrokeProps, 'stroke' | 'strokeWidth'> & LineStyleProps;
+export type FillStrokeStyleProps = FillProps & StrokeStyleProps;
+
 export interface RectangleProps extends BaseBlockProps, StrokeProps, FillProps, Rs {
   cornerRadius?: number;
 }
+
+export type DrawRectStyleProps = Partial<Pick<RectangleProps, 'cornerRadius'>> & FillStrokeStyleProps;
 
 export interface CircleProps extends BaseBlockProps, StrokeProps, FillProps {
   radius: number;
@@ -182,6 +188,17 @@ export interface EllipseProps extends BaseBlockProps, StrokeProps, FillProps {
   radiusY: number;
 }
 
+export type FillRuleStyleProps = Partial<Pick<PathProps, 'fillRule'>>;
+export type DrawCircleStyleProps = FillRuleStyleProps & FillStrokeStyleProps;
+
+export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
+  pathData: string; // SVG path format
+  closed?: boolean;
+  fillRule?: FillRule;
+}
+
+export type DrawPathStyleProps = FillRuleStyleProps & FillStrokeStyleProps;
+
 export interface LineProps extends BaseBlockProps, StrokeProps {
   x1: number;
   y1: number;
@@ -189,6 +206,8 @@ export interface LineProps extends BaseBlockProps, StrokeProps {
   y2: number;
   stroke: FillStyle;
 }
+
+export type DrawLineStyleProps = Omit<StrokeStyleProps, 'stroke'> & Pick<LineProps, 'stroke'>;
 
 export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   text: string;
@@ -204,18 +223,20 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
   dyLineHeight?: number;
 }
 
-export interface PathProps extends BaseBlockProps, StrokeProps, FillProps {
-  pathData: string; // SVG path format
-  closed?: boolean;
-  fillRule?: FillRule;
+/** Text measurement metrics. */
+export interface TextMetrics {
+  /** Width of the text in pixels. */
+  width: number;
+  /** Total height in pixels (ascent + descent). */
+  height: number;
+  /** Ascent (distance from baseline to top) in pixels. */
+  ascent: number;
+  /** Descent (distance from baseline to bottom) in pixels. */
+  descent: number;
 }
 
-export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
-  radius: number;
-  startAngle: number;
-  endAngle: number;
-  fillRule?: FillRule;
-}
+export type TextMeasureProps = Partial<Pick<TextProps, 'font' | 'fontSize' | 'dx' | 'dyLineHeight'>>;
+export type DrawTextStyleProps = Omit<TextProps, 'text'>;
 
 export interface ImageProps extends BaseBlockProps, Rs {
   src: string | HTMLImageElement;
@@ -225,6 +246,17 @@ export interface ImageProps extends BaseBlockProps, Rs {
   sw?: number;
   sh?: number;
 }
+
+export type DrawImageStyleProps = Partial<Pick<ImageProps, 'sx' | 'sy' | 'sw' | 'sh'>>;
+
+export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
+  radius: number;
+  startAngle: number;
+  endAngle: number;
+  fillRule?: FillRule;
+}
+
+export type DrawArcStyleProps = DrawPathStyleProps;
 
 export interface GroupProps extends BaseBlockProps {
   clip?: boolean;

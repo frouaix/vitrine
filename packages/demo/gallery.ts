@@ -206,11 +206,11 @@ function loadDemo(demo: GalleryDemo): void {
   const size = demo.size || { width: 800, height: 600 };
   renderer = new ImmediateRenderer({
     canvas,
-    width: size.width,
-    height: size.height,
-    enableCulling: demo.enableCulling !== false,
-    enableCameraControls: true,
-    debugHoverOutline
+    dx: size.width,
+    dy: size.height,
+    fEnableCulling: demo.enableCulling !== false,
+    fEnableCameraControls: true,
+    fDebugHoverOutline: debugHoverOutline
   });
 
   syncDebugHoverButton();

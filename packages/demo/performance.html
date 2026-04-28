@@ -167,9 +167,9 @@
     const canvas = document.getElementById('canvas');
     let renderer = new ImmediateRenderer({ 
       canvas, 
-      width: 900, 
-      height: 600,
-      enableCulling: true
+      dx: 900, 
+      dy: 600,
+      fEnableCulling: true
     });
 
     let config = {
@@ -284,9 +284,9 @@
       renderer.destroy();
       renderer = new ImmediateRenderer({ 
         canvas, 
-        width: 900, 
-        height: 600,
-        enableCulling: config.culling
+        dx: 900, 
+        dy: 600,
+        fEnableCulling: config.culling
       });
     });
 

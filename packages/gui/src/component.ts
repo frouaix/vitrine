@@ -118,10 +118,10 @@ export class VitrineComponent {
 
     this.renderer = new ImmediateRenderer({
       canvas: this.canvas,
-      width,
-      height,
+      dx: width,
+      dy: height,
       pixelRatio: this.config.pixelRatio,
-      enableEvents: true,
+      fEnableEvents: true,
       ...this.config.rendererConfig
     });
 

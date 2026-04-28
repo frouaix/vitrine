@@ -3,9 +3,9 @@
 // Text layout utilities extracted from renderer for reuse in selection management.
 // These functions are used by both the renderer (for display) and selection system (for hit-testing).
 
-import type { TextProps } from './types.ts';
+import type { TextMetrics, TextProps } from './types.ts';
 import type { RenderContext } from './context.ts';
-import type { TextMetrics, CharacterBounds } from './selection-types.ts';
+import type { CharacterBounds } from './selection-types.ts';
 
 /**
  * Measure text metrics using the provided render context.

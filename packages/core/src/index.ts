@@ -25,7 +25,7 @@ export { HitTester } from './hit-test.ts';
 export type { HitTestResult } from './hit-test.ts';
 
 // Selection system
-export type { Selection, TextMetrics, CharacterBounds, TextLayout, TextLine } from './core/selection-types.ts';
+export type { Selection, CharacterBounds, TextLayout, TextLine } from './core/selection-types.ts';
 export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter, layoutTextCharacterBounds, getTextBlockBounds } from './core/text-layout.ts';
 export {
   registerBlockType,

@@ -110,26 +110,25 @@ export class HitTester {
   private static hitTestShape(bl: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
     const xl = x;
     const yl = y;
-    const { props } = bl as { props: any };
 
     switch (bl.type) {
       case BlockType.Rectangle: {
-        const { dx, dy } = props;
+        const { dx, dy } = bl.props;
         return this.hitTestRectangle(xl, yl, dx, dy);
       }
 
       case BlockType.Circle: {
-        const { radius } = props;
+        const { radius } = bl.props;
         return this.hitTestCircle(xl, yl, radius);
       }
 
       case BlockType.Ellipse: {
-        const { radiusX, radiusY } = props;
+        const { radiusX, radiusY } = bl.props;
         return this.hitTestEllipse(xl, yl, radiusX, radiusY);
       }
 
       case BlockType.Line: {
-        const { x1, y1, x2, y2, strokeWidth } = props;
+        const { x1, y1, x2, y2, strokeWidth } = bl.props;
         return this.hitTestLine(xl, yl, x1, y1, x2, y2, strokeWidth ?? 1);
       }
 
@@ -145,9 +144,9 @@ export class HitTester {
         }
 
         // Calculate text bounds accounting for baseline and alignment
-        const { fontSize: duFont, text: stText, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
+        const { fontSize: duFont, text: stText, align, baseline, dx: dxMax, dyLineHeight } = bl.props;
         const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+        const duLineHeight = dyLineHeight ?? fontSize * 1.4;
 
         let textWidth: number;
         let height: number;
@@ -189,7 +188,7 @@ export class HitTester {
       }
 
       case BlockType.Arc: {
-        const { radius, startAngle, endAngle } = props;
+        const { radius, startAngle, endAngle } = bl.props;
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
       }
 
@@ -319,16 +318,14 @@ export class HitTester {
   }
 
   private static getLocalBounds(block: Block): Rc | null {
-    const { props } = block as { props: any };
-
     switch (block.type) {
       case BlockType.Rectangle: {
-        const { dx, dy } = props;
+        const { dx, dy } = block.props;
         return { x: 0, y: 0, width: dx, height: dy };
       }
 
       case BlockType.Circle: {
-        const { radius } = props;
+        const { radius } = block.props;
         return {
           x: -radius,
           y: -radius,
@@ -338,7 +335,7 @@ export class HitTester {
       }
 
       case BlockType.Ellipse: {
-        const { radiusX, radiusY } = props;
+        const { radiusX, radiusY } = block.props;
         return {
           x: -radiusX,
           y: -radiusY,
@@ -348,7 +345,7 @@ export class HitTester {
       }
 
       case BlockType.Line: {
-        const { x1, x2, y1, y2 } = props;
+        const { x1, x2, y1, y2 } = block.props;
         const xlMin = Math.min(x1, x2);
         const xlMax = Math.max(x1, x2);
         const ylMin = Math.min(y1, y2);
@@ -357,9 +354,9 @@ export class HitTester {
       }
 
       case BlockType.Text: {
-        const { fontSize: duFont, text: stText, dx: dxMax, lineHeight: lineHeightProp } = props;
+        const { fontSize: duFont, text: stText, dx: dxMax, dyLineHeight } = block.props;
         const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
+        const duLineHeight = dyLineHeight ?? fontSize * 1.4;
         const singleLineWidth = stText.length * fontSize * 0.6;
         if (dxMax !== undefined) {
           const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));

@@ -2,8 +2,24 @@
 
 // Rendering context abstraction
 import { Matrix2D, TransformStack } from '../transform.ts';
-import type { FillStyle } from './types.ts';
-import type { TextMetrics } from './selection-types.ts';
+import type {
+  DrawArcStyleProps,
+  DrawCircleStyleProps,
+  DrawImageStyleProps,
+  DrawLineStyleProps,
+  DrawPathStyleProps,
+  DrawRectStyleProps,
+  DrawTextStyleProps,
+  FillStyle,
+  LineStyleProps,
+  TextMeasureProps,
+  TextMetrics
+} from './types.ts';
+
+const DU_FONTSIZE_DEFAULT = 16;
+const SF_TEXT_ASCENT_DEFAULT = 0.8;
+const SF_TEXT_DESCENT_DEFAULT = 0.2;
+const SF_TEXT_LINE_HEIGHT_DEFAULT = 1.4;
 
 export interface RenderContext {
   transformStack: TransformStack;
@@ -17,15 +33,15 @@ export interface RenderContext {
   
   // Drawing primitives - to be implemented by concrete renderers
   clear(): void;
-  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: any): void;
-  drawCircle(xl: number, yl: number, rl: number, props: any): void;
-  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void;
-  drawPath(pathData: string, props: any): void;
-  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: any): void;
-  drawText(text: string, xl: number, yl: number, props: any): void;
-  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void;
-  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void;
-  measureText?(text: string, props: any): TextMetrics;
+  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: DrawRectStyleProps): void;
+  drawCircle(xl: number, yl: number, rl: number, props: DrawCircleStyleProps): void;
+  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: DrawCircleStyleProps): void;
+  drawPath(pathData: string, props: DrawPathStyleProps): void;
+  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: DrawLineStyleProps): void;
+  drawText(text: string, xl: number, yl: number, props: DrawTextStyleProps): void;
+  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: DrawImageStyleProps): void;
+  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: DrawArcStyleProps): void;
+  measureText?(text: string, props: TextMeasureProps): TextMetrics;
 }
 
 export class Canvas2DContext implements RenderContext {
@@ -42,7 +58,7 @@ export class Canvas2DContext implements RenderContext {
   }
 
   /** Apply optional line-style props (lineCap, lineJoin, lineDash, lineDashOffset) to the context. */
-  private applyLineStyle(props: any): void {
+  private applyLineStyle(props: LineStyleProps): void {
     if (props.lineCap) this.ctx.lineCap = props.lineCap;
     if (props.lineJoin) this.ctx.lineJoin = props.lineJoin;
     if (props.lineDash) this.ctx.setLineDash(props.lineDash);
@@ -105,7 +121,7 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.restore();
   }
 
-  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: any): void {
+  drawRectangle(xl: number, yl: number, dxl: number, dyl: number, props: DrawRectStyleProps): void {
     const { cornerRadius: duCornerRadius, fill, stroke, strokeWidth } = props;
     if (duCornerRadius) {
       this.roundRect(xl, yl, dxl, dyl, duCornerRadius, props);
@@ -123,7 +139,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  private roundRect(xl: number, yl: number, dxl: number, dyl: number, rl: number, props: any): void {
+  private roundRect(xl: number, yl: number, dxl: number, dyl: number, rl: number, props: DrawRectStyleProps): void {
     const { fill, stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.moveTo(xl + rl, yl);
@@ -149,7 +165,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawCircle(xl: number, yl: number, rl: number, props: any): void {
+  drawCircle(xl: number, yl: number, rl: number, props: DrawCircleStyleProps): void {
     const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, 0, Math.PI * 2);
@@ -165,7 +181,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: any): void {
+  drawEllipse(xl: number, yl: number, rxl: number, ryl: number, props: DrawCircleStyleProps): void {
     const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.ellipse(xl, yl, rxl, ryl, 0, 0, Math.PI * 2);
@@ -181,7 +197,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawPath(pathData: string, props: any): void {
+  drawPath(pathData: string, props: DrawPathStyleProps): void {
     const { fill, stroke, strokeWidth, fillRule } = props;
     const path = new Path2D(pathData);
     if (fill) {
@@ -196,7 +212,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: any): void {
+  drawLine(xl1: number, yl1: number, xl2: number, yl2: number, props: DrawLineStyleProps): void {
     const { stroke, strokeWidth } = props;
     this.ctx.beginPath();
     this.ctx.moveTo(xl1, yl1);
@@ -228,37 +244,36 @@ export class Canvas2DContext implements RenderContext {
     return rglines;
   }
 
-  measureText(text: string, props: any): TextMetrics {
-    const { font, fontSize, dx: dxMax, lineHeight: lineHeightProp } = props;
-    const duFont = fontSize ?? 16;
+  measureText(text: string, props: TextMeasureProps): TextMetrics {
+    const { font, fontSize = DU_FONTSIZE_DEFAULT, dx: dxMax, dyLineHeight } = props;
     // Apply font settings
     if (font) this.ctx.font = font;
     else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     
-    const metrics = this.ctx.measureText(text);
-    const ascent = metrics.fontBoundingBoxAscent
-      ?? metrics.actualBoundingBoxAscent
-      ?? duFont * 0.8;
-    const descent = metrics.fontBoundingBoxDescent
-      ?? metrics.actualBoundingBoxDescent
-      ?? duFont * 0.2;
+    const tm = this.ctx.measureText(text);
+    const ascent = tm.fontBoundingBoxAscent
+      ?? tm.actualBoundingBoxAscent
+      ?? fontSize * SF_TEXT_ASCENT_DEFAULT;
+    const descent = tm.fontBoundingBoxDescent
+      ?? tm.actualBoundingBoxDescent
+      ?? fontSize * SF_TEXT_DESCENT_DEFAULT;
 
     if (dxMax !== undefined) {
-      const lines = this.rgtextWrapped(text, dxMax);
-      const duLineHeight = lineHeightProp ?? duFont * 1.4;
-      const maxLineWidth = Math.min(dxMax, Math.max(...lines.map(l => this.ctx.measureText(l).width)));
-      const totalHeight = lines.length * duLineHeight;
-      return { width: maxLineWidth, height: totalHeight, ascent, descent };
+      const rglines = this.rgtextWrapped(text, dxMax);
+      const duLineHeight = dyLineHeight ?? fontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
+      const dxLineWidthMax = Math.min(dxMax, Math.max(...rglines.map(l => this.ctx.measureText(l).width)));
+      const dyTotal = rglines.length * duLineHeight;
+      return { width: dxLineWidthMax, height: dyTotal, ascent, descent };
     }
 
-    const width = metrics.width;
+    const width = tm.width;
     const height = ascent + descent;
     return { width, height, ascent, descent };
   }
 
-  drawText(text: string, xl: number, yl: number, props: any): void {
-    const { font, fontSize, align, baseline, fill, stroke, strokeWidth,
-            dx: dxMax, dy: dyMax, lineHeight: lineHeightProp } = props;
+  drawText(text: string, xl: number, yl: number, props: DrawTextStyleProps): void {
+    const { font, fontSize = DU_FONTSIZE_DEFAULT, align, baseline, fill, stroke, strokeWidth,
+            dx: dxMax, dy: dyMax, dyLineHeight } = props;
     if (font) this.ctx.font = font;
     else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
     if (align) this.ctx.textAlign = align;
@@ -280,47 +295,47 @@ export class Canvas2DContext implements RenderContext {
     }
 
     // Multi-line wrapping
-    const lines = this.rgtextWrapped(text, dxMax);
-    const duLineHeight = lineHeightProp ?? (fontSize ?? 16) * 1.4;
+    const rglines = this.rgtextWrapped(text, dxMax);
+    const duLineHeight = dyLineHeight ?? fontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
 
     // Clip vertically when dy is set
-    const shouldClip = dyMax !== undefined;
-    if (shouldClip) {
+    const fShouldClip = dyMax !== undefined;
+    if (fShouldClip) {
       this.ctx.save();
       this.ctx.beginPath();
       // Clip region depends on alignment
-      let clipX = xl;
-      if (align === 'center') clipX = xl - dxMax / 2;
-      else if (align === 'right' || align === 'end') clipX = xl - dxMax;
+      let xClip = xl;
+      if (align === 'center') xClip = xl - dxMax / 2;
+      else if (align === 'right' || align === 'end') xClip = xl - dxMax;
       // Clip region depends on baseline
-      let clipY = yl;
-      if (baseline === 'alphabetic' || !baseline) clipY = yl - (fontSize ?? 16);
-      else if (baseline === 'middle') clipY = yl - duLineHeight / 2;
-      else if (baseline === 'bottom') clipY = yl - dyMax;
-      this.ctx.rect(clipX, clipY, dxMax, dyMax);
+      let yClip = yl;
+      if (baseline === 'alphabetic' || !baseline) yClip = yl - fontSize;
+      else if (baseline === 'middle') yClip = yl - duLineHeight / 2;
+      else if (baseline === 'bottom') yClip = yl - dyMax;
+      this.ctx.rect(xClip, yClip, dxMax, dyMax);
       this.ctx.clip();
     }
 
-    for (let i = 0; i < lines.length; i++) {
-      const lineY = yl + i * duLineHeight;
+    for (let i = 0; i < rglines.length; i++) {
+      const yLine = yl + i * duLineHeight;
       if (fill) {
         this.ctx.fillStyle = this.resolveFillStyle(fill);
-        this.ctx.fillText(lines[i], xl, lineY);
+        this.ctx.fillText(rglines[i], xl, yLine);
       }
       if (stroke) {
         this.applyLineStyle(props);
         this.ctx.strokeStyle = this.resolveFillStyle(stroke);
         this.ctx.lineWidth = strokeWidth ?? 1;
-        this.ctx.strokeText(lines[i], xl, lineY);
+        this.ctx.strokeText(rglines[i], xl, yLine);
       }
     }
 
-    if (shouldClip) {
+    if (fShouldClip) {
       this.ctx.restore();
     }
   }
 
-  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: any): void {
+  drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: DrawImageStyleProps): void {
     const { sx, sy, sw, sh } = props;
     if (sx !== undefined && sy !== undefined && sw !== undefined && sh !== undefined) {
       this.ctx.drawImage(image, sx, sy, sw, sh, xl, yl, dxl, dyl);
@@ -329,7 +344,7 @@ export class Canvas2DContext implements RenderContext {
     }
   }
 
-  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: any): void {
+  drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: DrawArcStyleProps): void {
     const { fill, stroke, strokeWidth, fillRule } = props;
     this.ctx.beginPath();
     this.ctx.arc(xl, yl, rl, startAngle, endAngle);
