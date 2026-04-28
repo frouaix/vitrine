@@ -6,6 +6,7 @@ import type {
   BlockForType,
   BlockPropsByType,
   BlockOfType,
+  BaseBlockProps
 } from './types.ts';
 import { BlockType } from './types.ts';
 
@@ -54,10 +55,6 @@ export function text(props: BlockPropsByType[BlockType.Text], children?: Block[]
   return block(BlockType.Text, props, children);
 }
 
-export function texta(props: BlockPropsByType[BlockType.Texta], children?: Block[]): BlockOfType<BlockType.Texta> {
-  return block(BlockType.Texta, props, children);
-}
-
 export function path(props: BlockPropsByType[BlockType.Path], children?: Block[]): BlockOfType<BlockType.Path> {
   return block(BlockType.Path, props, children);
 }
@@ -84,6 +81,18 @@ export function portal(props: BlockPropsByType[BlockType.Portal], children: Bloc
 
 export function contentSized(props: BlockPropsByType[BlockType.ContentSized], children: Block[]): BlockOfType<BlockType.ContentSized> {
   return block(BlockType.ContentSized, props, children);
+}
+
+export function customBlock<TProps extends BaseBlockProps>(
+  type: string,
+  props: TProps,
+  children?: Block[]
+): Block {
+  return {
+    type,
+    props,
+    children
+  } as unknown as Block;
 }
 
 /** Convenience factory: wraps children in a group that opens `href` in a new tab on click. */

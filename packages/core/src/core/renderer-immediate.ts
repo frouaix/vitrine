@@ -5,13 +5,13 @@ import type { Block, BlockOfType } from './types.ts';
 import { BlockType } from './types.ts';
 import type { RenderContext } from './context.ts';
 import { Canvas2DContext } from './context.ts';
-import { getRgRenderBridgeRun } from 'texta/browser';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestLayoutCache, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D } from '../transform.ts';
-import { calculateTextOffset, measureText, getTextBlockBounds } from './text-layout.ts';
+import { getTextBlockBounds } from './text-layout.ts';
 import { group, rectangle, text, portal } from './blocks.ts';
+import { getBlockTypeHandlers } from './block-registry.ts';
 
 const TOOLTIP_DEFAULTS = {
   colBg: '#1f2937',
@@ -355,6 +355,8 @@ export class ImmediateRenderer {
       }
     }
 
+    const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+
     // Render based on block type
     switch (block.type) {
       case BlockType.Rectangle:
@@ -374,9 +376,6 @@ export class ImmediateRenderer {
         break;
       case BlockType.Text:
         this.renderText(block);
-        break;
-      case BlockType.Texta:
-        this.renderTexta(block);
         break;
       case BlockType.Image:
         this.renderImage(block);
@@ -422,6 +421,17 @@ export class ImmediateRenderer {
             ctx.clip();
           }
         }
+        break;
+      }
+      default: {
+        const handlers = getBlockTypeHandlers(blockCustom.type);
+        handlers?.render?.(blockCustom, {
+          context: this.context,
+          layoutCache: this.hitTestLayoutCache,
+          setLayoutBounds: (bounds) => {
+            this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
+          }
+        });
         break;
       }
     }
@@ -573,14 +583,6 @@ export class ImmediateRenderer {
         this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, propsOutline);
         return;
       }
-      case BlockType.Texta: {
-        const { texta: attributedText, fontSize, align, baseline } = block.props;
-        const textValue = attributedText.strText;
-        const metrics = measureText(textValue, { fontSize, align, baseline }, this.context);
-        const { xOffset, yOffset } = calculateTextOffset(metrics.width, metrics.height, metrics.ascent, align, baseline);
-        this.context.drawRectangle(xOffset, yOffset, metrics.width, metrics.height, propsOutline);
-        return;
-      }
       case BlockType.Image: {
         const { dx, dy } = block.props;
         this.context.drawRectangle(0, 0, dx, dy, propsOutline);
@@ -600,6 +602,14 @@ export class ImmediateRenderer {
       case BlockType.Layer:
       case BlockType.Portal:
       default:
+        {
+          const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+          const handlers = getBlockTypeHandlers(blockCustom.type);
+          const bounds = handlers?.getDebugOutlineBounds?.(blockCustom, { context: this.context });
+          if (bounds) {
+            this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, propsOutline);
+          }
+        }
         return;
     }
   }
@@ -641,253 +651,6 @@ export class ImmediateRenderer {
     this.hitTestLayoutCache.boundsByBlock.set(block, bounds);
 
     this.context.drawText(text, 0, 0, props);
-  }
-
-  private renderTexta(block: BlockOfType<BlockType.Texta>): void {
-    const { props } = block;
-    const {
-      texta: attributedText,
-      align,
-      baseline,
-      fill: fillDefault,
-      stroke: strokeDefault,
-      strokeWidth: duStrokeWidthDefault,
-      font: fontDefault,
-      fontSize: duFontSizeDefault,
-      lineHeight: duLineHeightDefault,
-      dx: duDx
-    } = props;
-
-    const runs = getRgRenderBridgeRun(attributedText);
-    if (runs.length === 0) return;
-
-    type StyleEntryLike = {
-      fontFamily?: string;
-      fontSize?: number;
-      fontWeight?: string;
-      fontStyle?: string;
-      lineHeight?: number;
-      fill?: string;
-      background?: string;
-      stroke?: string;
-      opacity?: number;
-    };
-
-    type Segment = {
-      text: string;
-      style: StyleEntryLike;
-    };
-
-    type SegmentMetrics = {
-      text: string;
-      style: StyleEntryLike;
-      font: string | undefined;
-      width: number;
-      ascent: number;
-      descent: number;
-      fontSize: number;
-      lineHeight: number;
-    };
-
-    const mpStyleById = attributedText.mpId_StyleEntry as Record<number, StyleEntryLike>;
-    const styleDefault = mpStyleById[attributedText.idStyleDefault] ?? {};
-
-    const getFontSize = (style: StyleEntryLike): number => {
-      return style.fontSize ?? duFontSizeDefault ?? styleDefault.fontSize ?? 16;
-    };
-
-    const getLineHeight = (style: StyleEntryLike): number => {
-      const duFont = getFontSize(style);
-      return style.lineHeight ?? duLineHeightDefault ?? styleDefault.lineHeight ?? duFont * 1.4;
-    };
-
-    const getFont = (style: StyleEntryLike): string | undefined => {
-      if (fontDefault && !style.fontFamily && !style.fontWeight && !style.fontStyle && style.fontSize === undefined) {
-        return fontDefault;
-      }
-
-      const fontFamily = style.fontFamily ?? styleDefault.fontFamily;
-      if (!fontFamily) return undefined;
-
-      const fontStyle = style.fontStyle ?? styleDefault.fontStyle ?? 'normal';
-      const fontWeight = style.fontWeight ?? styleDefault.fontWeight ?? 'normal';
-      const fontSize = getFontSize(style);
-      return `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
-    };
-
-    const measureSegment = (segment: Segment): SegmentMetrics => {
-      const fontSize = getFontSize(segment.style);
-      const font = getFont(segment.style);
-      const textMeasureProps = font ? { font } : { fontSize };
-      const metrics = this.context.measureText
-        ? this.context.measureText(segment.text, textMeasureProps)
-        : { width: segment.text.length * fontSize * 0.6, height: fontSize, ascent: fontSize, descent: 0 };
-      return {
-        text: segment.text,
-        style: segment.style,
-        font,
-        width: metrics.width,
-        ascent: metrics.ascent,
-        descent: metrics.descent,
-        fontSize,
-        lineHeight: getLineHeight(segment.style)
-      };
-    };
-
-    // Split runs by explicit newlines while preserving style ids.
-    const lineSegments: Segment[][] = [[]];
-    for (const run of runs) {
-      const style = mpStyleById[run.idStyle] ?? styleDefault;
-      const parts = run.strSlice.split('\n');
-      for (let i = 0; i < parts.length; i++) {
-        if (parts[i].length > 0) {
-          lineSegments[lineSegments.length - 1].push({ text: parts[i], style });
-        }
-        if (i < parts.length - 1) {
-          lineSegments.push([]);
-        }
-      }
-    }
-
-    // Word-wrap logical lines if dx is set.
-    let lineMetrics: SegmentMetrics[][];
-    if (duDx !== undefined) {
-      lineMetrics = [];
-      for (const segs of lineSegments) {
-        // Tokenize each segment into space-delimited atoms (word + trailing space)
-        const atoms: SegmentMetrics[] = [];
-        for (const seg of segs) {
-          const parts = seg.text.split(' ');
-          for (let pi = 0; pi < parts.length; pi++) {
-            const t = pi < parts.length - 1 ? parts[pi] + ' ' : parts[pi];
-            if (t.length > 0) atoms.push(measureSegment({ text: t, style: seg.style }));
-          }
-        }
-        // Greedy pack atoms into visual lines
-        const vLines: SegmentMetrics[][] = [[]];
-        let xCur = 0;
-        for (const atom of atoms) {
-          if (xCur + atom.width > duDx && vLines[vLines.length - 1].length > 0) {
-            vLines.push([]);
-            xCur = 0;
-          }
-          vLines[vLines.length - 1].push(atom);
-          xCur += atom.width;
-        }
-        for (const vl of vLines) lineMetrics.push(vl);
-      }
-    } else {
-      lineMetrics = lineSegments.map((segments) => segments.map(measureSegment));
-    }
-
-    const lineWidths = lineMetrics.map((line) => line.reduce((sum, seg) => sum + seg.width, 0));
-    const lineHeights = lineMetrics.map((line) => {
-      if (line.length === 0) {
-        return duLineHeightDefault ?? duFontSizeDefault ?? styleDefault.fontSize ?? 16;
-      }
-      return Math.max(...line.map((seg) => seg.lineHeight));
-    });
-
-    const lineAscents = lineMetrics.map((line, i) => {
-      if (line.length === 0) {
-        const fontSize = duFontSizeDefault ?? styleDefault.fontSize ?? 16;
-        return fontSize;
-      }
-      return Math.max(...line.map((seg) => seg.ascent), lineHeights[i] * 0.7);
-    });
-
-    const totalHeight = lineHeights.reduce((sum, h) => sum + h, 0);
-    const firstAscent = lineAscents[0] ?? (duFontSizeDefault ?? styleDefault.fontSize ?? 16);
-
-    let yLineBaseline = 0;
-    if (baseline === 'top') {
-      yLineBaseline = firstAscent;
-    } else if (baseline === 'middle') {
-      yLineBaseline = -totalHeight / 2 + firstAscent;
-    } else if (baseline === 'bottom') {
-      yLineBaseline = -totalHeight + firstAscent;
-    } else if (baseline === 'hanging') {
-      yLineBaseline = firstAscent * 0.8;
-    }
-
-    const getLineStartX = (lineWidth: number): number => {
-      if (align === 'center') {
-        return -lineWidth / 2;
-      }
-      if (align === 'right' || align === 'end') {
-        return -lineWidth;
-      }
-      return 0;
-    };
-
-    const yTop = yLineBaseline - firstAscent;
-    let xMin = 0;
-    let xMax = 0;
-    for (let i = 0; i < lineWidths.length; i++) {
-      const lineWidth = lineWidths[i] ?? 0;
-      const xStart = getLineStartX(lineWidth);
-      if (i === 0) {
-        xMin = xStart;
-        xMax = xStart + lineWidth;
-      } else {
-        xMin = Math.min(xMin, xStart);
-        xMax = Math.max(xMax, xStart + lineWidth);
-      }
-    }
-
-    this.hitTestLayoutCache.boundsByBlock.set(block, {
-      x: xMin,
-      y: yTop,
-      width: Math.max(0, xMax - xMin),
-      height: Math.max(0, totalHeight)
-    });
-
-    for (let i = 0; i < lineMetrics.length; i++) {
-      const line = lineMetrics[i];
-      const lineWidth = lineWidths[i] ?? 0;
-
-      let xRun = getLineStartX(lineWidth);
-
-      for (const seg of line) {
-        const { style } = seg;
-        const fill = style.fill
-          ?? (typeof fillDefault === 'string' ? fillDefault : undefined)
-          ?? styleDefault.fill;
-        const background = style.background;
-        const stroke = style.stroke
-          ?? (typeof strokeDefault === 'string' ? strokeDefault : undefined)
-          ?? styleDefault.stroke;
-        const opacity = style.opacity ?? 1;
-
-        if (!fill && !stroke && !background) {
-          xRun += seg.width;
-          continue;
-        }
-
-        this.context.save();
-        this.context.setOpacity(this.context.opacity * opacity);
-
-        if (background) {
-          const bgHeight = seg.ascent + seg.descent;
-          this.context.drawRectangle(xRun, yLineBaseline - seg.ascent, seg.width, bgHeight, { fill: background });
-        }
-
-        this.context.drawText(seg.text, xRun, yLineBaseline, {
-          font: seg.font,
-          fontSize: seg.fontSize,
-          fill,
-          stroke,
-          strokeWidth: duStrokeWidthDefault,
-          align: 'left',
-          baseline: 'alphabetic'
-        });
-        this.context.restore();
-
-        xRun += seg.width;
-      }
-
-      yLineBaseline += lineHeights[i] ?? 0;
-    }
   }
 
   private renderImage(block: BlockOfType<BlockType.Image>): void {

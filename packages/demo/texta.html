@@ -70,15 +70,17 @@
       group,
       line,
       rectangle,
-      text,
-      texta as textaBlock
+      text
     } from 'vitrine';
     import {
       applyStyle,
       detectRgStorageMode,
       getRgCodePointBoundaryUtf16,
-      getRgGraphemeBoundaryUtf16
+      getRgGraphemeBoundaryUtf16,
+      registerTextaBlockType,
+      texta as textaBlock
     } from 'texta/browser';
+    registerTextaBlockType();
 
     function getUnitCount(strText, rgStorageMode) {
       if (rgStorageMode === 'fastCodeUnit') return strText.length;

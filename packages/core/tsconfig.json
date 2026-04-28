@@ -4,11 +4,7 @@
     "declaration": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "noEmit": false,
-    "baseUrl": ".",
-    "paths": {
-      "texta/browser": ["../texta/dist/browser.d.ts"]
-    }
+    "noEmit": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

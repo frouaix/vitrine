@@ -23,6 +23,9 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "vitrine": "workspace:*"
+  },
   "scripts": {
     "build": "tsc",
     "lint": "tsc --noEmit",

@@ -185,10 +185,10 @@
   </nav>
 
   <script type="module">
-    import { ImmediateRenderer, group, rectangle, text, texta as textaBlock } from 'vitrine';
+    import { ImmediateRenderer, group, rectangle, text } from 'vitrine';
     import { parseMarkdown, markdownThemeDefault } from 'texta/markdown';
     import { transformSemanticToRender } from '../texta/src/theming.ts';
-    import { getRgRenderBridgeRun } from 'texta/browser';
+    import { getRgRenderBridgeRun, registerTextaBlockType, texta as textaBlock } from 'texta/browser';
     import { ReferenceTableLayoutEngine } from 'vitrine-tables';
     import {
       buildVitrineBlocksFromTableLayout,
@@ -196,6 +196,8 @@
       createVitrineTableRenderDelegate
     } from 'vitrine-tables-adapter';
     import textaMarkdownDoc from '../texta/docs/TEXTA_MARKDOWN.md?raw';
+
+    registerTextaBlockType();
 
     // ── Sample payloads ──────────────────────────────────────────────────────
 

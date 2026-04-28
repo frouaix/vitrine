@@ -4,6 +4,7 @@
 import type { Block, Rc } from './core/types.ts';
 import { BlockType } from './core/types.ts';
 import { Matrix2D } from './transform.ts';
+import { getBlockTypeHandlers } from './core/block-registry.ts';
 
 export interface HitTestResult {
   block: Block;
@@ -187,48 +188,6 @@ export class HitTester {
         return this.hitTestRectangle(testX, testY, textWidth, height);
       }
 
-      case BlockType.Texta: {
-        const cachedBounds = layoutCache?.boundsByBlock.get(block);
-        if (cachedBounds) {
-          return this.hitTestRectangle(
-            xl - cachedBounds.x,
-            yl - cachedBounds.y,
-            cachedBounds.width,
-            cachedBounds.height
-          );
-        }
-
-        const { fontSize: duFont, texta: attributedText, align, baseline, lineHeight: lineHeightProp } = props;
-        const stText = attributedText.strText;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-
-        const lines = stText.split('\n');
-        const textWidth = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
-        const height = Math.max(lines.length, 1) * duLineHeight;
-        const ascent = fontSize;
-
-        let xOffset = 0;
-        if (align === 'center') {
-          xOffset = -textWidth / 2;
-        } else if (align === 'right' || align === 'end') {
-          xOffset = -textWidth;
-        }
-
-        let yOffset = -ascent;
-        if (baseline === 'top' || baseline === 'hanging') {
-          yOffset = 0;
-        } else if (baseline === 'middle') {
-          yOffset = -height / 2;
-        } else if (baseline === 'bottom') {
-          yOffset = -height;
-        }
-
-        const testX = xl - xOffset;
-        const testY = yl - yOffset;
-        return this.hitTestRectangle(testX, testY, textWidth, height);
-      }
-
       case BlockType.Arc: {
         const { radius, startAngle, endAngle } = props;
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
@@ -253,8 +212,14 @@ export class HitTester {
         // Groups, layers, and portals don't have intrinsic shape, rely on children
         return false;
 
-      default:
+      default: {
+        const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+        const handlers = getBlockTypeHandlers(blockCustom.type);
+        if (handlers?.hitTestShape) {
+          return handlers.hitTestShape(blockCustom, xl, yl, { layoutCache });
+        }
         return false;
+      }
     }
   }
 
@@ -403,19 +368,11 @@ export class HitTester {
         return { x: 0, y: 0, width: singleLineWidth, height: fontSize };
       }
 
-      case BlockType.Texta: {
-        const { fontSize: duFont, texta: attributedText, lineHeight: lineHeightProp } = props;
-        const stText = attributedText.strText;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-        const lines = stText.split('\n');
-        const width = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
-        const height = Math.max(lines.length, 1) * duLineHeight;
-        return { x: 0, y: 0, width, height };
+      default: {
+        const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+        const handlers = getBlockTypeHandlers(blockCustom.type);
+        return handlers?.getLocalBounds?.(blockCustom) ?? null;
       }
-
-      default:
-        return null;
     }
   }
 }

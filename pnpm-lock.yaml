@@ -13,10 +13,6 @@ importers:
         version: 6.3.0
 
   packages/core:
-    dependencies:
-      texta:
-        specifier: workspace:*
-        version: link:../texta
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -82,6 +78,10 @@ importers:
         version: 5.9.3
 
   packages/texta:
+    dependencies:
+      vitrine:
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
