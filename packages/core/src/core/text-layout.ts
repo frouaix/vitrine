@@ -3,35 +3,110 @@
 // Text layout utilities extracted from renderer for reuse in selection management.
 // These functions are used by both the renderer (for display) and selection system (for hit-testing).
 
-import type { TextMetrics, TextProps } from './types.ts';
-import type { RenderContext } from './context.ts';
-import type { CharacterBounds } from './selection-types.ts';
+import type { Rc, TextMeasure, TextProps } from './types.ts';
+import { DU_FONTSIZE_DEFAULT, SF_TEXT_ADVANCE_APPROX_DEFAULT, SF_TEXT_ASCENT_DEFAULT, SF_TEXT_DESCENT_DEFAULT, SF_TEXT_LINE_HEIGHT_DEFAULT, type RenderContext } from './context.ts';
+
+const mpstFont_mpstGlyphWidth = new Map<string, Map<string, number>>();
+const mpstFont_mpstTextPrefixAdvance = new Map<string, Map<string, number[]>>();
+
+function stFontCacheKey(props: Partial<TextProps> & { font?: string }): string {
+  return props.font ?? `${props.fontSize ?? DU_FONTSIZE_DEFAULT}px sans-serif`;
+}
+
+function propsUnwrappedForMeasure(props: Partial<TextProps> & { font?: string }): Partial<TextProps> & { font?: string } {
+  return {
+    ...props,
+    dx: undefined,
+    dy: undefined
+  };
+}
+
+function getCachedGlyphWidth(
+  stGlyph: string,
+  props: Partial<TextProps> & { font?: string },
+  context?: RenderContext
+): number {
+  const stFont = stFontCacheKey(props);
+  let mpstGlyphWidth = mpstFont_mpstGlyphWidth.get(stFont);
+  if (!mpstGlyphWidth) {
+    mpstGlyphWidth = new Map<string, number>();
+    mpstFont_mpstGlyphWidth.set(stFont, mpstGlyphWidth);
+  }
+
+  const widthCached = mpstGlyphWidth.get(stGlyph);
+  if (widthCached !== undefined) {
+    return widthCached;
+  }
+
+  const widthMeasured = measureText(stGlyph, propsUnwrappedForMeasure(props), context).width;
+  mpstGlyphWidth.set(stGlyph, widthMeasured);
+  return widthMeasured;
+}
+
+function getCachedPrefixAdvance(
+  text: string,
+  props: Partial<TextProps> & { font?: string },
+  context?: RenderContext
+): number[] {
+  const stFont = stFontCacheKey(props);
+  let mpstTextPrefixAdvance = mpstFont_mpstTextPrefixAdvance.get(stFont);
+  if (!mpstTextPrefixAdvance) {
+    mpstTextPrefixAdvance = new Map<string, number[]>();
+    mpstFont_mpstTextPrefixAdvance.set(stFont, mpstTextPrefixAdvance);
+  }
+
+  const prefixCached = mpstTextPrefixAdvance.get(text);
+  if (prefixCached) {
+    return prefixCached;
+  }
+
+  const rgdxPrefix = new Array<number>(text.length + 1).fill(0);
+  for (let i = 0; i < text.length; i++) {
+    rgdxPrefix[i + 1] = rgdxPrefix[i] + getCachedGlyphWidth(text[i] ?? '', props, context);
+  }
+
+  mpstTextPrefixAdvance.set(text, rgdxPrefix);
+  return rgdxPrefix;
+}
+
+function getAdvanceScaleFactor(measuredWidth: number, rgdxPrefix: number[]): number {
+  const dxAdvance = rgdxPrefix[rgdxPrefix.length - 1] ?? 0;
+  if (dxAdvance <= 0) {
+    return 1;
+  }
+  return measuredWidth / dxAdvance;
+}
+
+function findCharIndexByAdvance(rgdxPrefix: number[], xAdvance: number): number {
+  let iMin = 0;
+  let iMax = Math.max(0, rgdxPrefix.length - 2);
+  while (iMin < iMax) {
+    const iMid = Math.floor((iMin + iMax) / 2);
+    const xMidEnd = rgdxPrefix[iMid + 1] ?? 0;
+    if (xMidEnd <= xAdvance) {
+      iMin = iMid + 1;
+    } else {
+      iMax = iMid;
+    }
+  }
+  return iMin;
+}
 
 /**
  * Measure text metrics using the provided render context.
  * Falls back to approximation if context doesn't support measureText.
  */
-export function measureText(text: string, props: Partial<TextProps> & { font?: string }, context?: RenderContext): TextMetrics {
-  if (text.length === 0) {
-    const fontSize = props.fontSize ?? 16;
-    return {
-      width: 0,
-      height: fontSize,
-      ascent: fontSize * 0.8,
-      descent: fontSize * 0.2
-    };
-  }
-
-  if (context?.measureText) {
+export function measureText(text: string, props: Partial<TextProps> & { font?: string }, context?: RenderContext): TextMeasure {
+  if (context?.measureText && text.length > 0) {
     return context.measureText(text, props);
   }
 
-  const fontSize = props.fontSize ?? 16;
+  const fontSize = props.fontSize ?? DU_FONTSIZE_DEFAULT;
   return {
-    width: text.length * fontSize * 0.6,
+    width: text.length * fontSize * SF_TEXT_ADVANCE_APPROX_DEFAULT,
     height: fontSize,
-    ascent: fontSize * 0.8,
-    descent: fontSize * 0.2
+    ascent: fontSize * SF_TEXT_ASCENT_DEFAULT,
+    descent: fontSize * SF_TEXT_DESCENT_DEFAULT
   };
 }
 
@@ -39,16 +114,27 @@ export function measureText(text: string, props: Partial<TextProps> & { font?: s
  * Compute a text block's local bounding box for rendering and hit-test caches.
  * The returned bounds are in block-local coordinates and include alignment/baseline offsets.
  */
-export function getTextBlockBounds(
+export function getTextBlockRc(
   text: string,
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
-): CharacterBounds {
-  const metrics = measureText(text, props, context);
+): Rc {
+  const tm = measureText(text, props, context);
+  const duFontSize = props.fontSize ?? DU_FONTSIZE_DEFAULT;
+  const duLineHeight = props.dyLineHeight ?? duFontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
+
+  let dxText = tm.width;
+  let dyText = tm.height;
+  if (props.dx !== undefined) {
+    const lineCount = Math.max(1, Math.ceil(dxText / props.dx));
+    dxText = Math.min(dxText, props.dx);
+    dyText = lineCount * duLineHeight;
+  }
+
   const { xOffset, yOffset } = calculateTextOffset(
-    metrics.width,
-    metrics.height,
-    metrics.ascent,
+    dxText,
+    dyText,
+    tm.ascent,
     props.align,
     props.baseline
   );
@@ -56,8 +142,8 @@ export function getTextBlockBounds(
   return {
     x: xOffset,
     y: yOffset,
-    width: metrics.width,
-    height: metrics.height
+    width: dxText,
+    height: dyText
   };
 }
 
@@ -93,15 +179,14 @@ export function calculateTextOffset(
 /**
  * Get character bounds for a single character in a text string.
  * Returns the bounding box for the character at the given index.
- * For now, uses uniform character width approximation.
- * TODO: Implement actual character-level hit-testing for complex fonts.
+ * Uses cached per-glyph advances for the active font.
  */
 export function getCharacterBounds(
   text: string,
   charIndex: number,
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
-): CharacterBounds | null {
+): Rc | null {
   if (text.length === 0) {
     return null;
   }
@@ -110,22 +195,25 @@ export function getCharacterBounds(
     return null;
   }
 
-  const metrics = measureText(text, props, context);
+  const tm = measureText(text, props, context);
   const { xOffset, yOffset } = calculateTextOffset(
-    metrics.width,
-    metrics.height,
-    metrics.ascent,
+    tm.width,
+    tm.height,
+    tm.ascent,
     props.align,
     props.baseline
   );
 
-  const charWidth = metrics.width / text.length;
+  const rgdxPrefix = getCachedPrefixAdvance(text, props, context);
+  const sfAdvance = getAdvanceScaleFactor(tm.width, rgdxPrefix);
+  const xStart = (rgdxPrefix[charIndex] ?? 0) * sfAdvance;
+  const xEnd = (rgdxPrefix[charIndex + 1] ?? (rgdxPrefix[charIndex] ?? 0)) * sfAdvance;
 
   return {
-    x: xOffset + charIndex * charWidth,
+    x: xOffset + xStart,
     y: yOffset,
-    width: charWidth,
-    height: metrics.height
+    width: Math.max(0, xEnd - xStart),
+    height: tm.height
   };
 }
 
@@ -167,8 +255,10 @@ export function hitTestCharacter(
     return text.length;
   }
 
-  const charWidth = metrics.width / text.length;
-  let charIndex = Math.floor(relativeX / charWidth);
+  const rgdxPrefix = getCachedPrefixAdvance(text, props, context);
+  const sfAdvance = getAdvanceScaleFactor(metrics.width, rgdxPrefix);
+  const xAdvance = sfAdvance > 0 ? relativeX / sfAdvance : relativeX;
+  let charIndex = findCharIndexByAdvance(rgdxPrefix, xAdvance);
   charIndex = Math.max(0, Math.min(charIndex, text.length - 1));
 
   return charIndex;
@@ -182,21 +272,20 @@ export function layoutTextCharacterBounds(
   text: string,
   props: Partial<TextProps> & { font?: string },
   context?: RenderContext
-): CharacterBounds[] {
+): Rc[] {
   if (text.length === 0) {
     return [];
   }
 
-  const fontSize = props.fontSize ?? 16;
+  const fontSize = props.fontSize ?? DU_FONTSIZE_DEFAULT;
   const metrics = measureText(text, props, context);
-  const lineHeight = props.dyLineHeight ?? fontSize * 1.4;
-  const propsUnwrapped: Partial<TextProps> & { font?: string } = {
-    ...props,
-    dx: undefined,
-    dy: undefined
+  const lineHeight = props.dyLineHeight ?? fontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
+  const propsUnwrapped = propsUnwrappedForMeasure(props);
+  const measureAdvanceWidth = (value: string): number => {
+    const rgdxPrefix = getCachedPrefixAdvance(value, propsUnwrapped, context);
+    return rgdxPrefix[rgdxPrefix.length - 1] ?? 0;
   };
-  const measureInlineWidth = (value: string): number => measureText(value, propsUnwrapped, context).width;
-  const bounds: Array<CharacterBounds | null> = new Array(text.length).fill(null);
+  const bounds: Array<Rc | null> = new Array(text.length).fill(null);
 
   const getLineStartX = (lineWidth: number): number => {
     if (props.align === 'center') {
@@ -209,6 +298,8 @@ export function layoutTextCharacterBounds(
   };
 
   if (props.dx === undefined) {
+    const rgdxPrefix = getCachedPrefixAdvance(text, propsUnwrapped, context);
+    const sfAdvance = getAdvanceScaleFactor(metrics.width, rgdxPrefix);
     const { xOffset, yOffset } = calculateTextOffset(
       metrics.width,
       metrics.height,
@@ -217,8 +308,8 @@ export function layoutTextCharacterBounds(
       props.baseline
     );
     for (let i = 0; i < text.length; i++) {
-      const widthBefore = measureInlineWidth(text.slice(0, i));
-      const widthToEnd = measureInlineWidth(text.slice(0, i + 1));
+      const widthBefore = (rgdxPrefix[i] ?? 0) * sfAdvance;
+      const widthToEnd = (rgdxPrefix[i + 1] ?? (rgdxPrefix[i] ?? 0)) * sfAdvance;
       bounds[i] = {
         x: xOffset + widthBefore,
         y: yOffset,
@@ -241,7 +332,7 @@ export function layoutTextCharacterBounds(
     let currentLine = words[0] ?? '';
     for (let i = 1; i < words.length; i++) {
       const candidate = `${currentLine} ${words[i]}`;
-      if (measureInlineWidth(candidate) > dxMax) {
+      if (measureAdvanceWidth(candidate) > dxMax) {
         lines.push(currentLine);
         currentLine = words[i] ?? '';
       } else {
@@ -265,7 +356,8 @@ export function layoutTextCharacterBounds(
     const lineStart = normalizedOffset;
     const lineEnd = lineStart + lineText.length;
     const hasNextLine = lineIndex < lines.length - 1;
-    const lineWidth = measureInlineWidth(lineText);
+    const rgdxPrefixLine = getCachedPrefixAdvance(lineText, propsUnwrapped, context);
+    const lineWidth = rgdxPrefixLine[rgdxPrefixLine.length - 1] ?? 0;
     const xLineStart = getLineStartX(lineWidth);
     const yLine = yOffset + lineIndex * lineHeight;
 
@@ -274,8 +366,8 @@ export function layoutTextCharacterBounds(
       if (charIndex >= text.length) {
         break;
       }
-      const widthBefore = measureInlineWidth(lineText.slice(0, lineCharIndex));
-      const widthToEnd = measureInlineWidth(lineText.slice(0, lineCharIndex + 1));
+      const widthBefore = rgdxPrefixLine[lineCharIndex] ?? 0;
+      const widthToEnd = rgdxPrefixLine[lineCharIndex + 1] ?? (rgdxPrefixLine[lineCharIndex] ?? 0);
       bounds[charIndex] = {
         x: xLineStart + widthBefore,
         y: yLine,
@@ -286,7 +378,7 @@ export function layoutTextCharacterBounds(
 
     if (hasNextLine && lineEnd < text.length) {
       const xAtLineEnd = xLineStart + lineWidth;
-      const widthSpace = measureInlineWidth(' ');
+      const widthSpace = measureAdvanceWidth(' ');
       bounds[lineEnd] = {
         x: xAtLineEnd,
         y: yLine,
@@ -318,5 +410,5 @@ export function layoutTextCharacterBounds(
     };
   }
 
-  return bounds as CharacterBounds[];
+  return bounds as Rc[];
 }

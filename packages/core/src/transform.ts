@@ -6,6 +6,8 @@
 // | b  d  f |
 // | 0  0  1 |
 
+import type { Rc } from './core/types.ts';
+
 export class Matrix2D {
   a: number;
   b: number;
@@ -156,4 +158,25 @@ export class TransformStack {
       );
     }
   }
+}
+
+export function transformRc(rc: Rc, xf: Matrix2D): Rc {
+  const corners = [
+    xf.transformPoint(rc.x, rc.y),
+    xf.transformPoint(rc.x + rc.width, rc.y),
+    xf.transformPoint(rc.x, rc.y + rc.height),
+    xf.transformPoint(rc.x + rc.width, rc.y + rc.height)
+  ];
+
+  const xMin = Math.min(...corners.map((c) => c.x));
+  const xMax = Math.max(...corners.map((c) => c.x));
+  const yMin = Math.min(...corners.map((c) => c.y));
+  const yMax = Math.max(...corners.map((c) => c.y));
+
+  return {
+    x: xMin,
+    y: yMin,
+    width: xMax - xMin,
+    height: yMax - yMin
+  };
 }

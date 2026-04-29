@@ -224,7 +224,7 @@ export interface TextProps extends BaseBlockProps, StrokeProps, FillProps {
 }
 
 /** Text measurement metrics. */
-export interface TextMetrics {
+export interface TextMeasure {
   /** Width of the text in pixels. */
   width: number;
   /** Total height in pixels (ascent + descent). */

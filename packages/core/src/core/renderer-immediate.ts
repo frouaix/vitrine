@@ -1,17 +1,18 @@
 // Copyright (c) 2026 François Rouaix
 
 // Immediate-mode rendering engine
-import type { Block, BlockOfType } from './types.ts';
+import type { Block, BlockOfType, Rc } from './types.ts';
 import { BlockType } from './types.ts';
 import type { RenderContext } from './context.ts';
 import { Canvas2DContext } from './context.ts';
 import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestLayoutCache, type HitTestResult } from '../hit-test.ts';
-import { Matrix2D } from '../transform.ts';
-import { getTextBlockBounds } from './text-layout.ts';
+import { Matrix2D, transformRc } from '../transform.ts';
+import { getBlockBounds } from './bounds.ts';
+import { getTextBlockRc } from './text-layout.ts';
 import { group, rectangle, text, portal } from './blocks.ts';
-import { getBlockTypeHandlers } from './block-registry.ts';
+import { getBlockTypeHandlers, type CustomBlockDescriptor } from './block-registry.ts';
 
 const TOOLTIP_DEFAULTS = {
   colBg: '#1f2937',
@@ -26,6 +27,12 @@ const TOOLTIP_DEFAULTS = {
   duOffsetY: 16,
   duMaxDistance: 120,
   duMaxWidth: 300
+} as const;
+
+const PROPS_OUTLINE_DEBUG_HOVER = {
+  fill: 'transparent',
+  stroke: '#ff00ff',
+  strokeWidth: 2
 } as const;
 
 export interface RendererConfig {
@@ -190,7 +197,7 @@ export class ImmediateRenderer {
    * transform to the EventManager. Wrap your scene children with this method
    * so that camera controls (pan/zoom) are applied as a regular group transform.
    */
-  camera(children: Block[]): Block {
+  camera(rgbl: Block[]): Block {
     // Build the camera transform matrix (Translate × Scale) and sync to EventManager
     const cameraTransform = Matrix2D.identity()
       .translate(this.xsCamera, this.ysCamera)
@@ -207,10 +214,10 @@ export class ImmediateRenderer {
       y: this.ysCamera,
       scaleX: this.sfCamera,
       scaleY: this.sfCamera
-    }, children);
+    }, rgbl);
   }
 
-  render(block: Block): void {
+  render(bl: Block): void {
     const startTime = performance.now();
 
     // Layout cache is valid for exactly one rendered frame.
@@ -238,7 +245,7 @@ export class ImmediateRenderer {
         
         // Fall back to main scene
         if (!hit) {
-          hit = HitTester.hitTest(block, logicalX, logicalY, Matrix2D.identity(), [], this.hitTestLayoutCache);
+          hit = HitTester.hitTest(bl, logicalX, logicalY, Matrix2D.identity(), [], this.hitTestLayoutCache);
         }
         
         this.debugHoveredBlock = hit?.block || null;
@@ -252,7 +259,7 @@ export class ImmediateRenderer {
     // Camera transform is now applied via the camera group block in the scene tree.
     // No special camera transform application here.
     
-    this.renderBlock(block);
+    this.renderBlock(bl);
     this.context.restore();
     
     // Render portals on top
@@ -263,7 +270,7 @@ export class ImmediateRenderer {
 
     // Update event system with current scene
     if (this.eventManager) {
-      this.eventManager.setScene(block);
+      this.eventManager.setScene(bl);
       
       // Pass portal blocks to event manager for layer-aware hit testing
       const portalContainers = this.portalBlocks.map(p => p.block);
@@ -296,15 +303,15 @@ export class ImmediateRenderer {
     this.imageCache.clear();
   }
 
-  private renderBlock(block: Block): void {
-    const { props, rgblChildren: children } = block;
-    const { fVisible: visible, opacity: fOpacity = 1, shadow } = props;
-    if (visible === false) return;
+  private renderBlock(bl: Block): void {
+    const { props, rgblChildren } = bl;
+    const { fVisible, opacity = 1, shadow } = props;
+    if (fVisible === false) return;
 
     // Frustum culling
     if (this.fEnableCulling) {
       const inView = PerformanceOptimizer.cullBlocks(
-        block,
+        bl,
         this.viewport,
         this.context.transformStack.getCurrent()
       );
@@ -321,19 +328,19 @@ export class ImmediateRenderer {
     // Apply transform
     this.context.transformStack.save();
     this.context.transformStack.apply(props);
-    const worldTransform = this.context.transformStack.getCurrent();
+    const xfWorld = this.context.transformStack.getCurrent();
     if (this.pixelRatio !== 1) {
-      const renderTransform = Matrix2D.identity()
+      const xfRender = Matrix2D.identity()
         .scaleXY(this.pixelRatio, this.pixelRatio)
-        .multiply(worldTransform);
-      this.context.applyTransform(renderTransform);
+        .multiply(xfWorld);
+      this.context.applyTransform(xfRender);
     } else {
-      this.context.applyTransform(worldTransform);
+      this.context.applyTransform(xfWorld);
     }
 
     // Apply opacity
-    const parentOpacity = this.context.opacity;
-    this.context.setOpacity(parentOpacity * fOpacity);
+    const opacityParent = this.context.opacity;
+    this.context.setOpacity(opacityParent * opacity);
 
     // Apply shadow if present
     if (shadow) {
@@ -356,53 +363,52 @@ export class ImmediateRenderer {
       }
     }
 
-    const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
 
     // Render based on block type
-    switch (block.type) {
+    switch (bl.type) {
       case BlockType.Rectangle:
-        this.renderRectangle(block);
+        this.renderRectangle(bl);
         break;
       case BlockType.Circle:
-        this.renderCircle(block);
+        this.renderCircle(bl);
         break;
       case BlockType.Ellipse:
-        this.renderEllipse(block);
+        this.renderEllipse(bl);
         break;
       case BlockType.Path:
-        this.renderPath(block);
+        this.renderPath(bl);
         break;
       case BlockType.Line:
-        this.renderLine(block);
+        this.renderLine(bl);
         break;
       case BlockType.Text:
-        this.renderText(block);
+        this.renderText(bl);
         break;
       case BlockType.Image:
-        this.renderImage(block);
+        this.renderImage(bl);
         break;
       case BlockType.Arc:
-        this.renderArc(block);
+        this.renderArc(bl);
         break;
       case BlockType.Portal:
         // Collect portal instead of rendering inline
         this.portalBlocks.push({
-          block,
-          transform: worldTransform.clone()
+          block: bl,
+          transform: xfWorld.clone()
         });
         // Don't render children here - they'll be rendered in portal pass
         this.context.transformStack.restore();
         this.context.restore();
         return;
       case BlockType.ContentSized:
-        this.renderContentSized(block as BlockOfType<BlockType.ContentSized>);
+        this.renderContentSized(bl as BlockOfType<BlockType.ContentSized>);
         this.context.transformStack.restore();
         this.context.restore();
         return;
       case BlockType.Group:
       case BlockType.Layer: {
         // Apply blend mode for Layer blocks
-        if (block.type === BlockType.Layer) {
+        if (bl.type === BlockType.Layer) {
           const { blendMode } = props as any;
           if (blendMode) {
             const ctx = (this.context as any).ctx as CanvasRenderingContext2D;
@@ -425,12 +431,13 @@ export class ImmediateRenderer {
         break;
       }
       default: {
+        const blockCustom = bl as unknown as CustomBlockDescriptor;
         const handlers = getBlockTypeHandlers(blockCustom.type);
         handlers?.render?.(blockCustom, {
           context: this.context,
           layoutCache: this.hitTestLayoutCache,
           setLayoutBounds: (bounds) => {
-            this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
+            this.hitTestLayoutCache.mpbl_rc.set(bl, bounds);
           }
         });
         break;
@@ -438,224 +445,187 @@ export class ImmediateRenderer {
     }
 
     // Render children if any
-    if (children) {
-      for (const child of children) {
-        this.renderBlock(child);
+    if (rgblChildren) {
+      for (const blChild of rgblChildren) {
+        this.renderBlock(blChild);
       }
     }
 
-    if (this.fDebugHoverOutline && block === this.debugHoveredBlock) {
-      this.renderDebugHoverOutline(block);
+    if (this.fDebugHoverOutline && bl === this.debugHoveredBlock) {
+      this.renderDebugHoverOutline(bl);
     }
 
     this.context.transformStack.restore();
     this.context.restore();
   }
 
-  private getLocalTransformFromProps(props: any): Matrix2D {
-    let transform = Matrix2D.identity();
+  private xfLocalFromProps(props: any): Matrix2D {
+    let xf = Matrix2D.identity();
     const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
     if (x !== undefined || y !== undefined) {
-      transform = transform.translate(x ?? 0, y ?? 0);
+      xf = xf.translate(x ?? 0, y ?? 0);
     }
     if (rotation !== undefined) {
-      transform = transform.rotate(rotation);
+      xf = xf.rotate(rotation);
     }
     if (scaleX !== undefined || scaleY !== undefined) {
-      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
+      xf = xf.scaleXY(scaleX ?? 1, scaleY ?? 1);
     }
     if (skewX !== undefined || skewY !== undefined) {
-      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
+      xf = xf.skewXY(skewX ?? 0, skewY ?? 0);
     }
 
-    return transform;
+    return xf;
   }
 
-  private transformBounds(bounds: { x: number; y: number; width: number; height: number }, transform: Matrix2D): { x: number; y: number; width: number; height: number } {
-    const corners = [
-      transform.transformPoint(bounds.x, bounds.y),
-      transform.transformPoint(bounds.x + bounds.width, bounds.y),
-      transform.transformPoint(bounds.x, bounds.y + bounds.height),
-      transform.transformPoint(bounds.x + bounds.width, bounds.y + bounds.height)
-    ];
-
-    const xMin = Math.min(...corners.map((c) => c.x));
-    const xMax = Math.max(...corners.map((c) => c.x));
-    const yMin = Math.min(...corners.map((c) => c.y));
-    const yMax = Math.max(...corners.map((c) => c.y));
-
-    return {
-      x: xMin,
-      y: yMin,
-      width: xMax - xMin,
-      height: yMax - yMin
-    };
-  }
-
-  private renderContentSized(block: BlockOfType<BlockType.ContentSized>): void {
-    const { props, rgblChildren: children } = block;
-    if (!children || children.length === 0) {
+  private renderContentSized(bl: BlockOfType<BlockType.ContentSized>): void {
+    const { props, rgblChildren } = bl;
+    if (!rgblChildren || rgblChildren.length === 0) {
       return;
     }
 
-    for (const child of children) {
-      this.renderBlock(child);
+    for (const blChild of rgblChildren) {
+      this.renderBlock(blChild);
     }
 
-    const localBoundsChildren = children
-      .map((child) => {
-        const childBoundsLocal = this.hitTestLayoutCache.mpbl_rc.get(child);
-        if (!childBoundsLocal) {
+    const rgrclChildren = rgblChildren
+      .map((blChild) => {
+        const rclChild = this.hitTestLayoutCache.mpbl_rc.get(blChild);
+        if (!rclChild) {
           return null;
         }
-        const childTransform = this.getLocalTransformFromProps(child.props);
-        return this.transformBounds(childBoundsLocal, childTransform);
+        const xfChild = this.xfLocalFromProps(blChild.props);
+        return transformRc(rclChild, xfChild);
       })
-      .filter((bounds): bounds is { x: number; y: number; width: number; height: number } => bounds !== null);
+      .filter((rc): rc is Rc => rc !== null);
 
-    if (localBoundsChildren.length === 0) {
+    if (rgrclChildren.length === 0) {
       return;
     }
 
-    const xMin = Math.min(...localBoundsChildren.map((b) => b.x));
-    const yMin = Math.min(...localBoundsChildren.map((b) => b.y));
-    const xMax = Math.max(...localBoundsChildren.map((b) => b.x + b.width));
-    const yMax = Math.max(...localBoundsChildren.map((b) => b.y + b.height));
+    const xMin = Math.min(...rgrclChildren.map((b) => b.x));
+    const yMin = Math.min(...rgrclChildren.map((b) => b.y));
+    const xMax = Math.max(...rgrclChildren.map((b) => b.x + b.width));
+    const yMax = Math.max(...rgrclChildren.map((b) => b.y + b.height));
 
     const padding = props.padding ?? 0;
     const paddingX = props.paddingX ?? padding;
     const paddingY = props.paddingY ?? padding;
 
-    const bounds = {
+    const rc = {
       x: xMin - paddingX,
       y: yMin - paddingY,
       width: xMax - xMin + paddingX * 2,
       height: yMax - yMin + paddingY * 2
     };
 
-    this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
+    this.hitTestLayoutCache.mpbl_rc.set(bl, rc);
 
     if (props.fill || props.stroke) {
-      this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, {
-        fill: props.fill,
-        stroke: props.stroke,
-        strokeWidth: props.strokeWidth,
-        lineCap: props.lineCap,
-        lineJoin: props.lineJoin,
-        lineDash: props.lineDash,
-        lineDashOffset: props.lineDashOffset,
-        cornerRadius: props.cornerRadius
-      });
+      this.context.drawRectangle(rc.x, rc.y, rc.width, rc.height, props);
     }
   }
-
-  private renderDebugHoverOutline(block: Block): void {
-    const propsOutline = {
-      fill: 'transparent',
-      stroke: '#ff00ff',
-      strokeWidth: 2
-    };
-
-    switch (block.type) {
+  
+  private renderDebugHoverOutline(bl: Block): void {
+    switch (bl.type) {
       case BlockType.Rectangle: {
-        const { dx, dy } = block.props;
-        this.context.drawRectangle(0, 0, dx, dy, propsOutline);
+        const { dx, dy } = bl.props;
+        this.context.drawRectangle(0, 0, dx, dy, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Circle: {
-        const { radius } = block.props;
-        this.context.drawCircle(0, 0, radius, propsOutline);
+        const { radius } = bl.props;
+        this.context.drawCircle(0, 0, radius, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Ellipse: {
-        const { radiusX, radiusY } = block.props;
-        this.context.drawEllipse(0, 0, radiusX, radiusY, propsOutline);
+        const { radiusX, radiusY } = bl.props;
+        this.context.drawEllipse(0, 0, radiusX, radiusY, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Line: {
-        const { x1, y1, x2, y2 } = block.props;
-        this.context.drawLine(x1, y1, x2, y2, { stroke: '#ff00ff', strokeWidth: 3 });
+        const { x1, y1, x2, y2 } = bl.props;
+        this.context.drawLine(x1, y1, x2, y2, { stroke: PROPS_OUTLINE_DEBUG_HOVER.stroke, strokeWidth: PROPS_OUTLINE_DEBUG_HOVER.strokeWidth });
         return;
       }
       case BlockType.Text: {
-        const { text, fontSize, align, baseline } = block.props;
-        const bounds = getTextBlockBounds(text, { ...block.props, align, baseline, fontSize }, this.context);
-        this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, propsOutline);
+        const { text, fontSize, align, baseline } = bl.props;
+        const rc = getTextBlockRc(text, { ...bl.props, align, baseline, fontSize }, this.context);
+        this.context.drawRectangle(rc.x, rc.y, rc.width, rc.height, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Image: {
-        const { dx, dy } = block.props;
-        this.context.drawRectangle(0, 0, dx, dy, propsOutline);
+        const { dx, dy } = bl.props;
+        this.context.drawRectangle(0, 0, dx, dy, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Arc: {
-        const { radius, startAngle, endAngle } = block.props;
-        this.context.drawArc(0, 0, radius, startAngle, endAngle, { stroke: '#ff00ff', strokeWidth: 3 });
+        const { radius, startAngle, endAngle } = bl.props;
+        this.context.drawArc(0, 0, radius, startAngle, endAngle, { stroke: PROPS_OUTLINE_DEBUG_HOVER.stroke, strokeWidth: PROPS_OUTLINE_DEBUG_HOVER.strokeWidth });
         return;
       }
       case BlockType.Path: {
-        const { pathData } = block.props;
-        this.context.drawPath(pathData, propsOutline);
+        const { pathData } = bl.props;
+        this.context.drawPath(pathData, PROPS_OUTLINE_DEBUG_HOVER);
         return;
       }
       case BlockType.Group:
       case BlockType.Layer:
       case BlockType.Portal:
-      default:
-        {
-          const blockCustom = block as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
-          const handlers = getBlockTypeHandlers(blockCustom.type);
-          const bounds = handlers?.getDebugOutlineBounds?.(blockCustom, { context: this.context });
-          if (bounds) {
-            this.context.drawRectangle(bounds.x, bounds.y, bounds.width, bounds.height, propsOutline);
-          }
-        }
         return;
+      default: {
+        const blockCustom = bl as unknown as CustomBlockDescriptor;
+        const handlers = getBlockTypeHandlers(blockCustom.type);
+        const rc = handlers?.getDebugOutlineBounds?.(blockCustom, { context: this.context });
+        if (rc) {
+          this.context.drawRectangle(rc.x, rc.y, rc.width, rc.height, PROPS_OUTLINE_DEBUG_HOVER);
+        }
+      }
     }
   }
 
-  private renderRectangle(block: BlockOfType<BlockType.Rectangle>): void {
-    const { props } = block;
+  private renderRectangle(bl: BlockOfType<BlockType.Rectangle>): void {
+    const { props } = bl;
     const { dx, dy } = props;
     this.context.drawRectangle(0, 0, dx, dy, props);
   }
 
-  private renderCircle(block: BlockOfType<BlockType.Circle>): void {
-    const { props } = block;
+  private renderCircle(bl: BlockOfType<BlockType.Circle>): void {
+    const { props } = bl;
     const { radius } = props;
     this.context.drawCircle(0, 0, radius, props);
   }
 
-  private renderEllipse(block: BlockOfType<BlockType.Ellipse>): void {
-    const { props } = block;
+  private renderEllipse(bl: BlockOfType<BlockType.Ellipse>): void {
+    const { props } = bl;
     const { radiusX, radiusY } = props;
     this.context.drawEllipse(0, 0, radiusX, radiusY, props);
   }
 
-  private renderPath(block: BlockOfType<BlockType.Path>): void {
-    const { props } = block;
+  private renderPath(bl: BlockOfType<BlockType.Path>): void {
+    const { props } = bl;
     const { pathData } = props;
     this.context.drawPath(pathData, props);
   }
 
-  private renderLine(block: BlockOfType<BlockType.Line>): void {
-    const { props } = block;
+  private renderLine(bl: BlockOfType<BlockType.Line>): void {
+    const { props } = bl;
     const { x1, y1, x2, y2 } = props;
     this.context.drawLine(x1, y1, x2, y2, props);
   }
 
-  private renderText(block: BlockOfType<BlockType.Text>): void {
-    const { props } = block;
+  private renderText(bl: BlockOfType<BlockType.Text>): void {
+    const { props } = bl;
     const { text } = props;
-    const bounds = getTextBlockBounds(text, props, this.context);
-    this.hitTestLayoutCache.mpbl_rc.set(block, bounds);
+    const rc = getTextBlockRc(text, props, this.context);
+    this.hitTestLayoutCache.mpbl_rc.set(bl, rc);
 
     this.context.drawText(text, 0, 0, props);
   }
 
-  private renderImage(block: BlockOfType<BlockType.Image>): void {
-    const { props } = block;
+  private renderImage(bl: BlockOfType<BlockType.Image>): void {
+    const { props } = bl;
     const { src, dx, dy } = props;
     const img = typeof src === 'string' ? this.getCachedImage(src) : src;
 
@@ -678,8 +648,8 @@ export class ImmediateRenderer {
     return img;
   }
 
-  private renderArc(block: BlockOfType<BlockType.Arc>): void {
-    const { props } = block;
+  private renderArc(bl: BlockOfType<BlockType.Arc>): void {
+    const { props } = bl;
     const { radius, startAngle, endAngle } = props;
     this.context.drawArc(0, 0, radius, startAngle, endAngle, props);
   }
@@ -705,17 +675,17 @@ export class ImmediateRenderer {
       
       // Apply to canvas context (with pixelRatio)
       if (this.pixelRatio !== 1) {
-        const renderTransform = Matrix2D.identity()
+        const xfRender = Matrix2D.identity()
           .scaleXY(this.pixelRatio, this.pixelRatio)
           .multiply(transform);
-        this.context.applyTransform(renderTransform);
+        this.context.applyTransform(xfRender);
       } else {
         this.context.applyTransform(transform);
       }
       
       // Now render portal children - they will apply their own transforms relative to this
-      for (const child of block.rgblChildren) {
-        this.renderBlock(child);
+      for (const blChild of block.rgblChildren) {
+        this.renderBlock(blChild);
       }
       
       this.context.transformStack.restore();
@@ -735,44 +705,45 @@ export class ImmediateRenderer {
     const { duPadding, duPaddingX, fontSize, fontFamily, colBg, colBorder, colText,
             borderWidth, borderRadius, duOffsetY, duMaxDistance, duMaxWidth } = TOOLTIP_DEFAULTS;
 
-    // Normalize: convert string content to a text block
-    const lineHeight = fontSize * 1.4;
     let contentBlock: Block;
     let dxContent: number;
     let dyContent: number;
-
+            
     if (typeof content === 'string') {
-      const lines = content.split('\n');
-      const textProps = { fontSize, font: `${fontSize}px ${fontFamily}` };
+      // Normalize: convert string content to a text block
+      const rgtextLines = content.split('\n');
+      const textProps = {
+        fill: colText,
+        fontSize,
+        font: `${fontSize}px ${fontFamily}`,
+        baseline: 'top' as const
+      };
+      const rgrcLines = rgtextLines.map((line) => getTextBlockRc(line, textProps, this.context));
+      let yCursor = 0;
+      const rgblLines = rgtextLines.map((line, i) => {
+        const rcLine = rgrcLines[i]!;
+        const blLine = text({
+          text: line,
+          y: yCursor,
+          ...textProps
+        });
+        yCursor += rcLine.height;
+        return blLine;
+      });
 
-      // Measure each line using the canvas context for exact widths
-      const lineWidths = lines.map(line =>
-        this.context.measureText
-          ? this.context.measureText(line, textProps).width
-          : line.length * fontSize * 0.6
-      );
       dxContent = Math.min(
         duMaxWidth - duPaddingX * 2,
-        Math.max(...lineWidths)
+        Math.max(...rgrcLines.map((rcLine) => rcLine.width))
       );
-      dyContent = lines.length * lineHeight;
+      dyContent = yCursor;
 
-      contentBlock = group({}, lines.map((line, i) =>
-        text({
-          text: line,
-          y: i * lineHeight,
-          fill: colText,
-          fontSize,
-          font: `${fontSize}px ${fontFamily}`,
-          baseline: 'top' as const
-        })
-      ));
+      contentBlock = group({}, rgblLines);
     } else {
       contentBlock = content;
       // Estimate block content size via bounding box or fallback
-      const bounds = HitTester.getBounds(content);
-      dxContent = bounds ? bounds.width : duMaxWidth - duPaddingX * 2;
-      dyContent = bounds ? bounds.height : 40;
+      const rc = getBlockBounds(content);
+      dxContent = rc ? rc.width : duMaxWidth - duPaddingX * 2;
+      dyContent = rc ? rc.height : 40;
     }
 
     // Compute tooltip frame dimensions

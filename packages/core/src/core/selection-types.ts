@@ -2,7 +2,7 @@
 
 // Text selection and layout types
 
-import type { TextMetrics } from './types.ts';
+import type { Rc } from './types.ts';
 
 /** Represents a single text selection or caret position. */
 export interface Selection {
@@ -18,29 +18,12 @@ export interface Selection {
   color?: string;
 }
 
-/** Bounding box for a character at a specific index. */
-export interface CharacterBounds {
-  /** Left edge in pixels. */
-  x: number;
-  /** Top edge in pixels. */
-  y: number;
-  /** Width in pixels. */
-  width: number;
-  /** Height in pixels. */
-  height: number;
-}
-
 /** Layout information for a text block. */
 export interface TextLayout {
   /** Character-indexed positions for hit testing. */
-  characterBounds: CharacterBounds[];
+  rgrcCharacterBounds: Rc[];
   /** Overall bounding box. */
-  bounds: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+  rcCharacterBounds: Rc;
   /** Line information (for multi-line text). */
   lines: TextLine[];
 }

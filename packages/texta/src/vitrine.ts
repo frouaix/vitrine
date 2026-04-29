@@ -4,14 +4,15 @@ import {
   customBlock,
   registerBlockType,
   measureText,
-  calculateTextOffset
+  calculateTextOffset,
+  SF_TEXT_ADVANCE_APPROX_DEFAULT
 } from 'vitrine';
 import type {
   BaseBlockProps,
   Block,
   Rc,
   CustomBlockHandlers,
-  TextMetrics
+  TextMeasure
 } from 'vitrine';
 
 export const stBlockTypeTexta = 'texta';
@@ -89,7 +90,7 @@ function getLineHeight(style: StyleEntryLike, styleDefault: StyleEntryLike, line
 function measureSegment(
   segment: Segment,
   styleDefault: StyleEntryLike,
-  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMetrics,
+  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure,
   defaults: Pick<TextaBlockProps, 'font' | 'fontSize' | 'lineHeight'>
 ): SegmentMetrics {
   const fontSize = getFontSize(segment.style, styleDefault, defaults.fontSize);
@@ -131,7 +132,7 @@ function splitRunLines(props: TextaBlockProps): Segment[][] {
 
 function computeLineMetrics(
   props: TextaBlockProps,
-  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMetrics
+  contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure
 ): { lineMetrics: SegmentMetrics[][]; lineWidths: number[]; lineHeights: number[]; lineAscents: number[]; styleDefault: StyleEntryLike } {
   const styleDefault = getDefaultStyle(props);
   const lineSegments = splitRunLines(props);
@@ -224,7 +225,7 @@ function createTextaHandlers(): CustomBlockHandlers {
             return api.context.measureText(text, metricsProps);
           }
           const fontSize = metricsProps.fontSize ?? props.fontSize ?? 16;
-          return { width: text.length * fontSize * 0.6, height: fontSize, ascent: fontSize, descent: 0 };
+          return { width: text.length * fontSize * SF_TEXT_ADVANCE_APPROX_DEFAULT, height: fontSize, ascent: fontSize, descent: 0 };
         }
       );
       if (lineMetrics.length === 0) {
@@ -334,7 +335,7 @@ function createTextaHandlers(): CustomBlockHandlers {
         && yl >= bounds.y
         && yl <= bounds.y + bounds.height;
     },
-    getLocalBounds: (block): Rc => estimateBounds(block.props as unknown as TextaBlockProps),
+    rcl: (block): Rc => estimateBounds(block.props as unknown as TextaBlockProps),
     getDebugOutlineBounds: (block): Rc => estimateBounds(block.props as unknown as TextaBlockProps)
   };
 }

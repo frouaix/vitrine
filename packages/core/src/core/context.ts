@@ -12,14 +12,15 @@ import type {
   DrawTextStyleProps,
   FillStyle,
   LineStyleProps,
+  TextMeasure,
   TextMeasureProps,
-  TextMetrics
 } from './types.ts';
 
-const DU_FONTSIZE_DEFAULT = 16;
-const SF_TEXT_ASCENT_DEFAULT = 0.8;
-const SF_TEXT_DESCENT_DEFAULT = 0.2;
-const SF_TEXT_LINE_HEIGHT_DEFAULT = 1.4;
+export const DU_FONTSIZE_DEFAULT = 16;
+export const SF_TEXT_ASCENT_DEFAULT = 0.8;
+export const SF_TEXT_DESCENT_DEFAULT = 0.2;
+export const SF_TEXT_ADVANCE_APPROX_DEFAULT = 0.6;
+export const SF_TEXT_LINE_HEIGHT_DEFAULT = 1.4;
 
 export interface RenderContext {
   transformStack: TransformStack;
@@ -41,7 +42,7 @@ export interface RenderContext {
   drawText(text: string, xl: number, yl: number, props: DrawTextStyleProps): void;
   drawImage(image: HTMLImageElement, xl: number, yl: number, dxl: number, dyl: number, props: DrawImageStyleProps): void;
   drawArc(xl: number, yl: number, rl: number, startAngle: number, endAngle: number, props: DrawArcStyleProps): void;
-  measureText?(text: string, props: TextMeasureProps): TextMetrics;
+  measureText?(text: string, props: TextMeasureProps): TextMeasure;
 }
 
 export class Canvas2DContext implements RenderContext {
@@ -223,7 +224,7 @@ export class Canvas2DContext implements RenderContext {
     this.ctx.stroke();
   }
 
-  /** Word-wrap text into lines that fit within maxWidth pixels. */
+  /** Word-wrap text into lines that fit within dxMax pixels. */
   // TODO: this is a very naive implementation  that only breaks on whitespace and doesn't consider breaking long words. 
   // It also doesn't cache results, which could be expensive for large blocks of text or frequent re-rendering.
   private rgtextWrapped(text: string, dxMax: number): string[] {
@@ -244,30 +245,47 @@ export class Canvas2DContext implements RenderContext {
     return rglines;
   }
 
-  measureText(text: string, props: TextMeasureProps): TextMetrics {
+  measureText(text: string, props: TextMeasureProps): TextMeasure {
     const { font, fontSize = DU_FONTSIZE_DEFAULT, dx: dxMax, dyLineHeight } = props;
-    // Apply font settings
+    if (text.length === 0) {
+      return {
+        width: 0,
+        height: fontSize,
+        ascent: fontSize * SF_TEXT_ASCENT_DEFAULT,
+        descent: fontSize * SF_TEXT_DESCENT_DEFAULT
+      };
+    }
+
+    // Apply font settings for ctx.measureText
     if (font) this.ctx.font = font;
     else if (fontSize) this.ctx.font = `${fontSize}px sans-serif`;
-    
-    const tm = this.ctx.measureText(text);
+
+    let tm: TextMetrics;
+    let width: number, height: number;
+
+
+    if (dxMax === undefined) {
+      tm = this.ctx.measureText(text);
+      width = tm.width;
+    } else {
+      const rglines = this.rgtextWrapped(text, dxMax);
+      const duLineHeight = dyLineHeight ?? fontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
+      const rgtm = rglines.map(l => this.ctx.measureText(l));
+      const dxLineWidthMax = Math.min(dxMax, Math.max(...rgtm.map(tm => tm.width)));
+      const dyTotal = rglines.length * duLineHeight;
+      // Extract ascent/descent from first line measurement
+      tm = rgtm[0] ?? { fontBoundingBoxAscent: 0, fontBoundingBoxDescent: 0, actualBoundingBoxAscent: 0, actualBoundingBoxDescent: 0 };
+      width = dxLineWidthMax;
+      height = dyTotal;
+    }
+
     const ascent = tm.fontBoundingBoxAscent
       ?? tm.actualBoundingBoxAscent
       ?? fontSize * SF_TEXT_ASCENT_DEFAULT;
     const descent = tm.fontBoundingBoxDescent
       ?? tm.actualBoundingBoxDescent
       ?? fontSize * SF_TEXT_DESCENT_DEFAULT;
-
-    if (dxMax !== undefined) {
-      const rglines = this.rgtextWrapped(text, dxMax);
-      const duLineHeight = dyLineHeight ?? fontSize * SF_TEXT_LINE_HEIGHT_DEFAULT;
-      const dxLineWidthMax = Math.min(dxMax, Math.max(...rglines.map(l => this.ctx.measureText(l).width)));
-      const dyTotal = rglines.length * duLineHeight;
-      return { width: dxLineWidthMax, height: dyTotal, ascent, descent };
-    }
-
-    const width = tm.width;
-    const height = ascent + descent;
+    height ??= ascent + descent;
     return { width, height, ascent, descent };
   }
 

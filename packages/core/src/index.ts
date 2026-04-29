@@ -7,7 +7,14 @@ export * from './core/types.ts';
 export { Matrix2D, TransformStack } from './transform.ts';
 
 // Rendering context
-export { Canvas2DContext } from './core/context.ts';
+export {
+  Canvas2DContext,
+  DU_FONTSIZE_DEFAULT,
+  SF_TEXT_ASCENT_DEFAULT,
+  SF_TEXT_DESCENT_DEFAULT,
+  SF_TEXT_ADVANCE_APPROX_DEFAULT,
+  SF_TEXT_LINE_HEIGHT_DEFAULT
+} from './core/context.ts';
 export type { RenderContext } from './core/context.ts';
 
 // Immediate renderer
@@ -25,8 +32,8 @@ export { HitTester } from './hit-test.ts';
 export type { HitTestResult } from './hit-test.ts';
 
 // Selection system
-export type { Selection, CharacterBounds, TextLayout, TextLine } from './core/selection-types.ts';
-export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter, layoutTextCharacterBounds, getTextBlockBounds } from './core/text-layout.ts';
+export type { Selection, TextLayout, TextLine } from './core/selection-types.ts';
+export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter, layoutTextCharacterBounds, getTextBlockRc as getTextBlockBounds } from './core/text-layout.ts';
 export {
   registerBlockType,
   unregisterBlockType,

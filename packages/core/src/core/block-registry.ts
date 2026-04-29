@@ -30,7 +30,7 @@ export interface CustomBlockDebugApi {
 export interface CustomBlockHandlers {
   render?: (block: CustomBlockDescriptor, api: CustomBlockRenderApi) => void;
   hitTestShape?: (block: CustomBlockDescriptor, xl: number, yl: number, api: CustomBlockHitTestApi) => boolean;
-  getLocalBounds?: (block: CustomBlockDescriptor) => Rc | null;
+  rcl?: (block: CustomBlockDescriptor) => Rc | null;
   getDebugOutlineBounds?: (block: CustomBlockDescriptor, api: CustomBlockDebugApi) => Rc | null;
 }
 

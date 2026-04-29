@@ -8,7 +8,7 @@ import {
 } from 'vitrine';
 import type {
   Block,
-  CharacterBounds,
+  Rc,
   RenderContext,
   TextProps
 } from 'vitrine';
@@ -39,8 +39,8 @@ interface TextBlockDescriptor {
 
 interface TextBoundsCacheEntry {
   descriptor: TextBlockDescriptor;
-  boundsLocal?: CharacterBounds[];
-  boundsWorld?: CharacterBounds[];
+  boundsLocal?: Rc[];
+  boundsWorld?: Rc[];
 }
 
 function applyPropsTransform(matrixParent: Matrix2D, props: Record<string, unknown>): Matrix2D {
@@ -71,7 +71,7 @@ function applyPropsTransform(matrixParent: Matrix2D, props: Record<string, unkno
   return matrix;
 }
 
-function transformBounds(boundsLocal: CharacterBounds, transform: Matrix2D): CharacterBounds {
+function transformBounds(boundsLocal: Rc, transform: Matrix2D): Rc {
   const cornerTopLeft = transform.transformPoint(boundsLocal.x, boundsLocal.y);
   const cornerTopRight = transform.transformPoint(boundsLocal.x + boundsLocal.width, boundsLocal.y);
   const cornerBottomLeft = transform.transformPoint(boundsLocal.x, boundsLocal.y + boundsLocal.height);
@@ -164,7 +164,7 @@ function toTextDescriptor(block: Block, transformWorld: Matrix2D): TextBlockDesc
   };
 }
 
-function transformBoundsCollection(boundsLocal: CharacterBounds[], transform: Matrix2D): CharacterBounds[] {
+function transformBoundsCollection(boundsLocal: Rc[], transform: Matrix2D): Rc[] {
   return boundsLocal.map((bounds) => transformBounds(bounds, transform));
 }
 
@@ -177,7 +177,7 @@ export class CharacterBoundsAdapter {
     this.context = options.context ?? createFallbackRenderContext();
   }
 
-  private getLocalBounds(entry: TextBoundsCacheEntry): CharacterBounds[] {
+  private getLocalBounds(entry: TextBoundsCacheEntry): Rc[] {
     if (entry.boundsLocal) {
       return entry.boundsLocal;
     }
@@ -189,7 +189,7 @@ export class CharacterBoundsAdapter {
     return entry.boundsLocal;
   }
 
-  private getWorldBounds(entry: TextBoundsCacheEntry): CharacterBounds[] {
+  private getWorldBounds(entry: TextBoundsCacheEntry): Rc[] {
     if (entry.boundsWorld) {
       return entry.boundsWorld;
     }
@@ -279,7 +279,7 @@ export class CharacterBoundsAdapter {
   }
 
   getProvider(): CharacterBoundsProvider {
-    return (blockId: string, charIndex: number): CharacterBounds | null => {
+    return (blockId: string, charIndex: number): Rc | null => {
       if (charIndex < 0) {
         return null;
       }

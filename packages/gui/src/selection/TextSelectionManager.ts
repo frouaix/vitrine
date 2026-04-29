@@ -5,7 +5,7 @@
 
 import type { Selection, Block } from 'vitrine';
 import { rectangle, portal, group } from 'vitrine';
-import type { CharacterBounds } from 'vitrine';
+import type { Rc } from 'vitrine';
 
 /** Configuration for selection rendering. */
 export interface SelectionRenderConfig {
@@ -31,7 +31,7 @@ export interface SelectionRenderConfig {
  * - Returned bounds must use the same coordinate space as rendered block positions.
  * - Return `null` when the index is out of range for the block.
  */
-export type CharacterBoundsProvider = (blockId: string, charIndex: number) => CharacterBounds | null;
+export type CharacterBoundsProvider = (blockId: string, charIndex: number) => Rc | null;
 
 interface InsertionPoint {
   index: number;
@@ -188,7 +188,7 @@ export class TextSelectionManager {
     }
   }
 
-  private queryInsertionBounds(blockId: string, index: number): CharacterBounds | null {
+  private queryInsertionBounds(blockId: string, index: number): Rc | null {
     if (!this.characterBoundsProvider) {
       return null;
     }
@@ -253,7 +253,7 @@ export class TextSelectionManager {
     return nextGeometry;
   }
 
-  private getInsertionBounds(blockId: string, index: number): CharacterBounds | null {
+  private getInsertionBounds(blockId: string, index: number): Rc | null {
     const point = this.getInsertionPoint(blockId, index);
     if (!point) {
       return null;
@@ -266,7 +266,7 @@ export class TextSelectionManager {
     };
   }
 
-  private toInsertionPoint(index: number, bounds: CharacterBounds): InsertionPoint {
+  private toInsertionPoint(index: number, bounds: Rc): InsertionPoint {
     return {
       index,
       x: bounds.x,

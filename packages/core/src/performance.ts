@@ -2,7 +2,7 @@
 
 // Performance optimization utilities
 import type { Block, Rc } from './core/types.ts';
-import { HitTester } from './hit-test.ts';
+import { getBlockBounds } from './core/bounds.ts';
 import { Matrix2D } from './transform.ts';
 
 export interface Viewport {
@@ -38,7 +38,7 @@ export class PerformanceOptimizer {
     }
 
     // Get world bounds (getBounds will apply the block's transform)
-    const boundsWorld = HitTester.getBounds(block, worldTransform);
+    const boundsWorld = getBlockBounds(block, worldTransform);
     if (!boundsWorld) {
       // If we can't calculate bounds, assume visible
       return true;
