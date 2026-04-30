@@ -4,7 +4,7 @@
 export * from './core/types.ts';
 
 // Transform system
-export { Matrix2D, TransformStack } from './transform.ts';
+export { Matrix2D, TransformStack, transformRc } from './transform.ts';
 
 // Rendering context
 export {
@@ -34,6 +34,7 @@ export type { HitTestResult } from './hit-test.ts';
 // Selection system
 export type { Selection, TextLayout, TextLine } from './core/selection-types.ts';
 export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter, layoutTextCharacterBounds, getTextBlockRc as getTextBlockBounds } from './core/text-layout.ts';
+export { getBlockTransform, getBlockBounds } from './core/bounds.ts';
 export {
   registerBlockType,
   unregisterBlockType,

@@ -48,26 +48,6 @@ export class PerformanceOptimizer {
     return this.isInViewport(boundsWorld, viewport);
   }
 
-  private static getBlockTransform(props: any): Matrix2D {
-    let transform = Matrix2D.identity();
-    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
-
-    if (x !== undefined || y !== undefined) {
-      transform = transform.translate(x ?? 0, y ?? 0);
-    }
-    if (rotation !== undefined) {
-      transform = transform.rotate(rotation);
-    }
-    if (scaleX !== undefined || scaleY !== undefined) {
-      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
-    }
-    if (skewX !== undefined || skewY !== undefined) {
-      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
-    }
-
-    return transform;
-  }
-
   // Object pooling for frequently allocated objects
   private static transformPool: Matrix2D[] = [];
   private static pointPool: { xc: number; yc: number }[] = [];

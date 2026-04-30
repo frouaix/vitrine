@@ -6,6 +6,7 @@ import { BlockType } from './core/types.ts';
 import { Matrix2D } from './transform.ts';
 import { getBlockTypeHandlers } from './core/block-registry.ts';
 import { getTextBlockRc } from './core/text-layout.ts';
+import { getBlockTransform } from './core/bounds.ts';
 
 export interface HitTestResult {
   block: Block;
@@ -35,34 +36,34 @@ export class HitTester {
     rgblAncestors: Block[] = [],
     layoutCache?: HitTestLayoutCache
   ): HitTestResult | null {
-    const { props, rgblChildren: children } = bl;
-    const { fVisible: visible } = props;
-    if (visible === false) return null;
+    const { props, rgblChildren } = bl;
+    const { fVisible } = props;
+    if (fVisible === false) return null;
 
     // Calculate this block's world transform
-    const xfBlock = this.getBlockTransform(props);
+    const xfBlock = getBlockTransform(props);
     const xfCur = xfWorld.multiply(xfBlock);
 
     // Transform world coordinates to local space
     const inverse = xfCur.invert();
     if (!inverse) return null;
 
-    const local = inverse.transformPoint(xs, ys);
+    const ptl = inverse.transformPoint(xs, ys);
 
     // Reject points outside clip region
-    const { clip, dx: dxClip, dy: dyClip } = props as any;
+    const { clip, dx: dxClip, dy: dyClip } = props as { clip?: boolean; dx?: number; dy?: number };
     if (clip && dxClip !== undefined && dyClip !== undefined) {
-      if (local.x < 0 || local.x > dxClip || local.y < 0 || local.y > dyClip) {
+      if (ptl.x < 0 || ptl.x > dxClip || ptl.y < 0 || ptl.y > dyClip) {
         return null;
       }
     }
 
     // Test children first (reverse order for top-to-bottom)
-    if (children) {
+    if (rgblChildren) {
       const rgblAncestorsChild = [...rgblAncestors, bl];
-      for (let i = children.length - 1; i >= 0; i--) {
+      for (let i = rgblChildren.length - 1; i >= 0; i--) {
         const blChildHit = this.hitTest(
-          children[i],
+          rgblChildren[i],
           xs,
           ys,
           xfCur,
@@ -74,12 +75,12 @@ export class HitTester {
     }
 
     // Test this block
-    if (this.hitTestShape(bl, local.x, local.y, layoutCache)) {
+    if (this.hitTestShape(bl, ptl.x, ptl.y, layoutCache)) {
       return {
         block: bl,
         ancestors: rgblAncestors,
-        xl: local.x,
-        yl: local.y,
+        xl: ptl.x,
+        yl: ptl.y,
         xs: xs,
         ys: ys
       };
@@ -88,30 +89,7 @@ export class HitTester {
     return null;
   }
 
-  private static getBlockTransform(props: any): Matrix2D {
-    let xf = Matrix2D.identity();
-    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
-
-    if (x !== undefined || y !== undefined) {
-      xf = xf.translate(x ?? 0, y ?? 0);
-    }
-    if (rotation !== undefined) {
-      xf = xf.rotate(rotation);
-    }
-    if (scaleX !== undefined || scaleY !== undefined) {
-      xf = xf.scaleXY(scaleX ?? 1, scaleY ?? 1);
-    }
-    if (skewX !== undefined || skewY !== undefined) {
-      xf = xf.skewXY(skewX ?? 0, skewY ?? 0);
-    }
-
-    return xf;
-  }
-
-  private static hitTestShape(bl: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
-    const xl = x;
-    const yl = y;
-
+  private static hitTestShape(bl: Block, xl: number, yl: number, layoutCache?: HitTestLayoutCache): boolean {
     switch (bl.type) {
       case BlockType.Rectangle: {
         const { dx, dy } = bl.props;

@@ -66,7 +66,7 @@ export class VitrineComponent {
     pointerdown: (e: PointerEvent) => void;
     pointerup: (e: PointerEvent) => void;
     pointermove: (e: PointerEvent) => void;
-    click: (e: PointerEvent) => void;
+    click: (e: MouseEvent) => void;
     pointerleave: () => void;
     wheel: (e: WheelEvent) => void;
     keydown: (e: KeyboardEvent) => void;
@@ -308,27 +308,27 @@ export class VitrineComponent {
 
   private setupInteractionInvalidation(): void {
     if (!this.canvas) return;
-    this.canvas.addEventListener('pointerdown', this.boundInteractionHandlers.pointerdown as any);
-    this.canvas.addEventListener('pointerup', this.boundInteractionHandlers.pointerup as any);
-    this.canvas.addEventListener('pointermove', this.boundInteractionHandlers.pointermove as any);
-    this.canvas.addEventListener('click', this.boundInteractionHandlers.click as any);
+    this.canvas.addEventListener('pointerdown', this.boundInteractionHandlers.pointerdown);
+    this.canvas.addEventListener('pointerup', this.boundInteractionHandlers.pointerup);
+    this.canvas.addEventListener('pointermove', this.boundInteractionHandlers.pointermove);
+    this.canvas.addEventListener('click', this.boundInteractionHandlers.click);
     this.canvas.addEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
-    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel as any, { passive: true });
-    
+    this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel, { passive: true });
+
     // Make canvas focusable for keyboard events
     this.canvas.tabIndex = 0;
-    this.canvas.addEventListener('keydown', this.boundInteractionHandlers.keydown as any);
+    this.canvas.addEventListener('keydown', this.boundInteractionHandlers.keydown);
   }
 
   private removeInteractionInvalidation(): void {
     if (!this.canvas) return;
-    this.canvas.removeEventListener('pointerdown', this.boundInteractionHandlers.pointerdown as any);
-    this.canvas.removeEventListener('pointerup', this.boundInteractionHandlers.pointerup as any);
-    this.canvas.removeEventListener('pointermove', this.boundInteractionHandlers.pointermove as any);
-    this.canvas.removeEventListener('click', this.boundInteractionHandlers.click as any);
+    this.canvas.removeEventListener('pointerdown', this.boundInteractionHandlers.pointerdown);
+    this.canvas.removeEventListener('pointerup', this.boundInteractionHandlers.pointerup);
+    this.canvas.removeEventListener('pointermove', this.boundInteractionHandlers.pointermove);
+    this.canvas.removeEventListener('click', this.boundInteractionHandlers.click);
     this.canvas.removeEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
-    this.canvas.removeEventListener('wheel', this.boundInteractionHandlers.wheel as any);
-    this.canvas.removeEventListener('keydown', this.boundInteractionHandlers.keydown as any);
+    this.canvas.removeEventListener('wheel', this.boundInteractionHandlers.wheel);
+    this.canvas.removeEventListener('keydown', this.boundInteractionHandlers.keydown);
   }
 
   private handleSimpleInvalidate(): void {

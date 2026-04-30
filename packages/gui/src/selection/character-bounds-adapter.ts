@@ -4,7 +4,9 @@ import {
   BlockType,
   Matrix2D,
   Canvas2DContext,
-  layoutTextCharacterBounds
+  layoutTextCharacterBounds,
+  getBlockTransform,
+  transformRc
 } from 'vitrine';
 import type {
   Block,
@@ -37,58 +39,11 @@ interface TextBlockDescriptor {
   worldSignature: string;
 }
 
+/** Cache bounds per character for text block, keyed by id+hash of text/props/transform */
 interface TextBoundsCacheEntry {
   descriptor: TextBlockDescriptor;
-  boundsLocal?: Rc[];
-  boundsWorld?: Rc[];
-}
-
-function applyPropsTransform(matrixParent: Matrix2D, props: Record<string, unknown>): Matrix2D {
-  let matrix = matrixParent;
-
-  const x = typeof props.x === 'number' ? props.x : 0;
-  const y = typeof props.y === 'number' ? props.y : 0;
-  if (x !== 0 || y !== 0) {
-    matrix = matrix.translate(x, y);
-  }
-
-  if (typeof props.rotation === 'number') {
-    matrix = matrix.rotate(props.rotation);
-  }
-
-  const scaleX = typeof props.scaleX === 'number' ? props.scaleX : 1;
-  const scaleY = typeof props.scaleY === 'number' ? props.scaleY : 1;
-  if (scaleX !== 1 || scaleY !== 1) {
-    matrix = matrix.scaleXY(scaleX, scaleY);
-  }
-
-  const skewX = typeof props.skewX === 'number' ? props.skewX : 0;
-  const skewY = typeof props.skewY === 'number' ? props.skewY : 0;
-  if (skewX !== 0 || skewY !== 0) {
-    matrix = matrix.skewXY(skewX, skewY);
-  }
-
-  return matrix;
-}
-
-function transformBounds(boundsLocal: Rc, transform: Matrix2D): Rc {
-  const cornerTopLeft = transform.transformPoint(boundsLocal.x, boundsLocal.y);
-  const cornerTopRight = transform.transformPoint(boundsLocal.x + boundsLocal.width, boundsLocal.y);
-  const cornerBottomLeft = transform.transformPoint(boundsLocal.x, boundsLocal.y + boundsLocal.height);
-  const cornerBottomRight = transform.transformPoint(boundsLocal.x + boundsLocal.width, boundsLocal.y + boundsLocal.height);
-  const xs = [cornerTopLeft.x, cornerTopRight.x, cornerBottomLeft.x, cornerBottomRight.x];
-  const ys = [cornerTopLeft.y, cornerTopRight.y, cornerBottomLeft.y, cornerBottomRight.y];
-  const xMin = Math.min(...xs);
-  const xMax = Math.max(...xs);
-  const yMin = Math.min(...ys);
-  const yMax = Math.max(...ys);
-
-  return {
-    x: xMin,
-    y: yMin,
-    width: Math.max(0, xMax - xMin),
-    height: Math.max(0, yMax - yMin)
-  };
+  rgrcl?: Rc[];
+  rgrcs?: Rc[];
 }
 
 function createFallbackRenderContext(): RenderContext | undefined {
@@ -143,10 +98,9 @@ function buildWorldTransformSignature(transform: Matrix2D): string {
   ].map(signaturePart).join('|');
 }
 
-function toTextDescriptor(block: Block, transformWorld: Matrix2D): TextBlockDescriptor | null {
+function toTextDescriptor(block: Block, xfCur: Matrix2D): TextBlockDescriptor | null {
   if (
-    block.type !== BlockType.Text
-    || typeof block.props.id !== 'string'
+    typeof block.props.id !== 'string'
     || block.props.id.length === 0
   ) {
     return null;
@@ -158,14 +112,14 @@ function toTextDescriptor(block: Block, transformWorld: Matrix2D): TextBlockDesc
     blockId,
     text: props.text,
     props,
-    transformWorld,
+    transformWorld: xfCur,
     layoutSignature: buildTextLayoutSignature(props),
-    worldSignature: buildWorldTransformSignature(transformWorld)
+    worldSignature: buildWorldTransformSignature(xfCur)
   };
 }
 
-function transformBoundsCollection(boundsLocal: Rc[], transform: Matrix2D): Rc[] {
-  return boundsLocal.map((bounds) => transformBounds(bounds, transform));
+function transformBoundsCollection(rgrcl: Rc[], xf: Matrix2D): Rc[] {
+  return rgrcl.map((rc) => transformRc(rc, xf));
 }
 
 export class CharacterBoundsAdapter {
@@ -177,30 +131,27 @@ export class CharacterBoundsAdapter {
     this.context = options.context ?? createFallbackRenderContext();
   }
 
-  private getLocalBounds(entry: TextBoundsCacheEntry): Rc[] {
-    if (entry.boundsLocal) {
-      return entry.boundsLocal;
+  private EnsureRgrcl(entry: TextBoundsCacheEntry): Rc[] {
+    if (!entry.rgrcl) {
+      entry.rgrcl = layoutTextCharacterBounds(
+        entry.descriptor.text,
+        entry.descriptor.props,
+        this.context
+      );
     }
-    entry.boundsLocal = layoutTextCharacterBounds(
-      entry.descriptor.text,
-      entry.descriptor.props,
-      this.context
-    );
-    return entry.boundsLocal;
+    return entry.rgrcl;
   }
 
-  private getWorldBounds(entry: TextBoundsCacheEntry): Rc[] {
-    if (entry.boundsWorld) {
-      return entry.boundsWorld;
+  private EnsureRgrcs(entry: TextBoundsCacheEntry): Rc[] {
+    if (!entry.rgrcs) {
+      entry.rgrcs = transformBoundsCollection(this.EnsureRgrcl(entry), entry.descriptor.transformWorld);
     }
-    const boundsLocal = this.getLocalBounds(entry);
-    entry.boundsWorld = transformBoundsCollection(boundsLocal, entry.descriptor.transformWorld);
-    return entry.boundsWorld;
+    return entry.rgrcs;
   }
 
-  private buildDescriptorMap(root: Block): Map<string, TextBlockDescriptor> {
+  private buildDescriptorMap(blRoot: Block): Map<string, TextBlockDescriptor> {
     const descriptorsByBlockId = new Map<string, TextBlockDescriptor>();
-    const stack: Array<{ block: Block; transform: Matrix2D }> = [{ block: root, transform: Matrix2D.identity() }];
+    const stack: Array<{ block: Block; transform: Matrix2D }> = [{ block: blRoot, transform: Matrix2D.identity() }];
 
     while (stack.length > 0) {
       const current = stack.pop();
@@ -209,10 +160,12 @@ export class CharacterBoundsAdapter {
       }
 
       const { block, transform: transformParent } = current;
-      const transformWorld = applyPropsTransform(transformParent, block.props as Record<string, unknown>);
-      const descriptor = toTextDescriptor(block, transformWorld);
-      if (descriptor) {
-        descriptorsByBlockId.set(descriptor.blockId, descriptor);
+      const transformWorld = transformParent.multiply(getBlockTransform(block.props));
+      if (block.type === BlockType.Text) {
+        const descriptor = toTextDescriptor(block, transformWorld);
+        if (descriptor) {
+          descriptorsByBlockId.set(descriptor.blockId, descriptor);
+        }
       }
 
       const rgblChildren = block.rgblChildren;
@@ -232,8 +185,8 @@ export class CharacterBoundsAdapter {
     return descriptorsByBlockId;
   }
 
-  updateFromBlockTree(root: Block): CharacterBoundsUpdateResult {
-    const descriptorsByBlockId = this.buildDescriptorMap(root);
+  updateFromBlockTree(blRoot: Block): CharacterBoundsUpdateResult {
+    const descriptorsByBlockId = this.buildDescriptorMap(blRoot);
     const nextCacheByBlockId = new Map<string, TextBoundsCacheEntry>();
     const changedBlockIds = new Set<string>();
     const selectableTextBlockIds = Array.from(descriptorsByBlockId.keys());
@@ -254,8 +207,8 @@ export class CharacterBoundsAdapter {
 
       nextCacheByBlockId.set(blockId, {
         descriptor,
-        boundsLocal: layoutChanged ? undefined : previous.boundsLocal,
-        boundsWorld: layoutChanged || worldChanged ? undefined : previous.boundsWorld
+        rgrcl: layoutChanged ? undefined : previous.rgrcl,
+        rgrcs: layoutChanged || worldChanged ? undefined : previous.rgrcs
       });
     }
 
@@ -287,7 +240,7 @@ export class CharacterBoundsAdapter {
       if (!entry) {
         return null;
       }
-      const boundsWorld = this.getWorldBounds(entry);
+      const boundsWorld = this.EnsureRgrcs(entry);
       return boundsWorld[charIndex] ?? null;
     };
   }

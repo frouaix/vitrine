@@ -6,7 +6,7 @@ import { Matrix2D, transformRc } from '../transform.ts';
 import { getBlockTypeHandlers } from './block-registry.ts';
 import { getTextBlockRc } from './text-layout.ts';
 
-function getBlockTransform(props: Transform): Matrix2D {
+export function getBlockTransform(props: Transform): Matrix2D {
   let xf = Matrix2D.identity();
   const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
 
