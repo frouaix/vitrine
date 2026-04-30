@@ -22,14 +22,18 @@ Explore 12+ interactive examples including data visualization, productivity apps
 
 ## Packages
 
-Vitrine is organized as a monorepo with two publishable packages:
+Vitrine is organized as a pnpm workspace monorepo with several publishable packages, plus a private demo package:
 
-| Package | npm name | Description |
-|---------|----------|-------------|
-| `packages/core` | `vitrine` | Block tree, rendering, events, hit-testing, frustum culling — zero GUI dependencies |
-| `packages/gui` | `vitrine-gui` | High-level GUI controls, theming, layout, and `VitrineComponent` |
+| Package | Directory | npm name | Description |
+|---------|-----------|----------|-------------|
+| Core | `packages/core` | `vitrine` | Block tree, rendering, events, hit-testing, frustum culling — zero GUI dependencies |
+| GUI | `packages/gui` | `vitrine-gui` | High-level GUI controls, theming, layout, and `VitrineComponent` |
+| Tables | `packages/tables` | `vitrine-tables` | Table layout model and extension contracts |
+| Tables Adapter | `packages/tables-vitrine` | `vitrine-tables-adapter` | Vitrine adapter for table rendering |
+| Texta | `packages/texta` | `texta` | Attributed text engine for semantic and render transformations |
+| Demo | `packages/demo` | *(private)* | Gallery of interactive demos; not published to npm |
 
-Use `vitrine` alone if you only need the core rendering primitives. Add `vitrine-gui` when you want ready-made interactive controls (buttons, sliders, calendars, …).
+**Typical usage**: Use `vitrine` for core rendering. Add `vitrine-gui` for interactive controls (buttons, sliders, calendars, …). The table and texta packages are specialized extensions for complex layouts and rich text.
 
 ## Architecture
 
@@ -178,6 +182,8 @@ All blocks support event handlers:
 
 ### Performance
 
+#### Frustum Culling
+
 ```typescript
 const renderer = new ImmediateRenderer({
   enableCulling: true  // Frustum culling (default: true)
@@ -187,6 +193,39 @@ const renderer = new ImmediateRenderer({
 const stats = renderer.getPerformanceStats();
 console.log(stats.fps, stats.blocksRendered, stats.blocksCulled);
 ```
+
+#### Render Scheduling (VitrineComponent)
+
+`VitrineComponent` supports configurable render scheduling to reduce idle CPU usage:
+
+```typescript
+import { VitrineComponent } from 'vitrine-gui';
+
+// Continuous rendering (default, backward-compatible)
+const c1 = VitrineComponent.gui(() => /* ... */, {
+  renderMode: 'continuous'  // Always run RAF (typical for animated scenes)
+});
+
+// On-demand rendering (update only when state changes)
+const c2 = VitrineComponent.gui(() => /* ... */, {
+  renderMode: 'onDemand'  // Render only when invalidated
+});
+
+// Auto mode (continuous by default; explicit control if needed)
+const c3 = VitrineComponent.gui(() => /* ... */, {
+  renderMode: 'auto'  // Starts continuous; with beginAnimation()/endAnimation(), RAF stops when idle
+});
+
+// Explicit animation lifecycle (for power users)
+c3.beginAnimation();
+// ...update animation state...
+c3.endAnimation();  // Stops RAF when animation count reaches zero
+
+// Manual invalidation for state changes
+c3.invalidate();
+```
+
+See [docs/BLOCK_DSL.md § 9.4](docs/BLOCK_DSL.md#94-render-modes) for render mode details.
 
 ## Examples
 
