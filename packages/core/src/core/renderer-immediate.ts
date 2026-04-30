@@ -657,7 +657,7 @@ export class ImmediateRenderer {
       // We need to set this as the current transform for rendering children
       
       // Directly set the transform stack's current to the stored transform
-      (this.context.transformStack as any).current = transform.clone();
+      this.context.transformStack.setCurrent(transform.clone());
       
       // Apply to canvas context (with pixelRatio)
       if (this.pixelRatio !== 1) {
