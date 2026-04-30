@@ -1030,3 +1030,5 @@ circle({ x: cx, y: cy, radius: 30, fill: '#ff6b6b',
 ```
 
 Supported CSS filter functions include: `blur`, `brightness`, `contrast`, `grayscale`, `hue-rotate`, `invert`, `opacity`, `saturate`, `sepia`, `drop-shadow`.
+
+> **Browser compatibility**: `CanvasRenderingContext2D.filter` is not yet supported in stable Safari (macOS/iOS/iPadOS). Vitrine ships a built-in pixel-manipulation polyfill that activates automatically on unsupported browsers, so all filter functions listed above work consistently across Chrome, Firefox, Edge, and Safari.

@@ -357,12 +357,8 @@ export class ImmediateRenderer {
     // Apply CSS filter if present
     const { filter } = props as any;
     if (filter) {
-      const ctx = (this.context as any).ctx;
-      if (ctx) {
-        ctx.filter = filter;
-      }
+      this.context.setFilter(filter);
     }
-
 
     // Render based on block type
     switch (bl.type) {
