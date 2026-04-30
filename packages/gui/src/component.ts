@@ -356,7 +356,8 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    for (const blockId of this.selectableTextBlockIds) {
+    for (let i = this.selectableTextBlockIds.length - 1; i >= 0; i--) {
+      const blockId = this.selectableTextBlockIds[i];
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
       if (charIndex !== null) {
         this.selectionManager.handlePointerDown(blockId, charIndex);
@@ -381,7 +382,8 @@ export class VitrineComponent {
     const coords = this.getCanvasCoordinates(e);
     if (!coords) return;
     
-    for (const blockId of this.selectableTextBlockIds) {
+    for (let i = this.selectableTextBlockIds.length - 1; i >= 0; i--) {
+      const blockId = this.selectableTextBlockIds[i];
       const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
       if (charIndex !== null) {
         this.selectionManager.handlePointerMove(charIndex);

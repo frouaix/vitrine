@@ -9,7 +9,7 @@ import { EventManager } from '../events.ts';
 import { PerformanceOptimizer, PerformanceMonitor, type Viewport } from '../performance.ts';
 import { HitTester, type HitTestLayoutCache, type HitTestResult } from '../hit-test.ts';
 import { Matrix2D, transformRc } from '../transform.ts';
-import { getBlockBounds } from './bounds.ts';
+import { getBlockBounds, getBlockTransform } from './bounds.ts';
 import { getTextBlockRc } from './text-layout.ts';
 import { group, rectangle, text, portal } from './blocks.ts';
 import { getBlockTypeHandlers, type CustomBlockDescriptor } from './block-registry.ts';
@@ -459,26 +459,6 @@ export class ImmediateRenderer {
     this.context.restore();
   }
 
-  private xfLocalFromProps(props: any): Matrix2D {
-    let xf = Matrix2D.identity();
-    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
-
-    if (x !== undefined || y !== undefined) {
-      xf = xf.translate(x ?? 0, y ?? 0);
-    }
-    if (rotation !== undefined) {
-      xf = xf.rotate(rotation);
-    }
-    if (scaleX !== undefined || scaleY !== undefined) {
-      xf = xf.scaleXY(scaleX ?? 1, scaleY ?? 1);
-    }
-    if (skewX !== undefined || skewY !== undefined) {
-      xf = xf.skewXY(skewX ?? 0, skewY ?? 0);
-    }
-
-    return xf;
-  }
-
   private renderContentSized(bl: BlockOfType<BlockType.ContentSized>): void {
     const { props, rgblChildren } = bl;
     if (!rgblChildren || rgblChildren.length === 0) {
@@ -495,7 +475,7 @@ export class ImmediateRenderer {
         if (!rclChild) {
           return null;
         }
-        const xfChild = this.xfLocalFromProps(blChild.props);
+        const xfChild = getBlockTransform(blChild.props);
         return transformRc(rclChild, xfChild);
       })
       .filter((rc): rc is Rc => rc !== null);
@@ -573,7 +553,13 @@ export class ImmediateRenderer {
       case BlockType.Group:
       case BlockType.Layer:
       case BlockType.Portal:
+      case BlockType.ContentSized: {
+        const cachedRc = this.hitTestLayoutCache.mpbl_rc.get(bl);
+        if (cachedRc) {
+          this.context.drawRectangle(cachedRc.x, cachedRc.y, cachedRc.width, cachedRc.height, PROPS_OUTLINE_DEBUG_HOVER);
+        }
         return;
+      }
       default: {
         const blockCustom = bl as unknown as CustomBlockDescriptor;
         const handlers = getBlockTypeHandlers(blockCustom.type);

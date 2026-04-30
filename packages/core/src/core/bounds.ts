@@ -4,6 +4,7 @@ import type { Block, Rc, Transform } from './types.ts';
 import { BlockType } from './types.ts';
 import { Matrix2D, transformRc } from '../transform.ts';
 import { getBlockTypeHandlers } from './block-registry.ts';
+import type { CustomBlockDescriptor } from './block-registry.ts';
 import { getTextBlockRc } from './text-layout.ts';
 
 export function getBlockTransform(props: Transform): Matrix2D {
@@ -66,8 +67,26 @@ export function rcl(bl: Block): Rc | null {
       return getTextBlockRc(bl.props.text, bl.props);
     }
 
+    case BlockType.Arc: {
+      const { radius } = bl.props;
+      return { x: -radius, y: -radius, width: radius * 2, height: radius * 2 };
+    }
+
+    case BlockType.Image: {
+      const { dx, dy } = bl.props;
+      return { x: 0, y: 0, width: dx, height: dy };
+    }
+
+    case BlockType.Path:
+    case BlockType.Group:
+    case BlockType.Layer:
+    case BlockType.Portal:
+    case BlockType.ContentSized:
+      // No intrinsic bounds — depends on children or path data
+      return null;
+
     default: {
-      const blockCustom = bl as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+      const blockCustom = bl as CustomBlockDescriptor;
       const handlers = getBlockTypeHandlers(blockCustom.type);
       return handlers?.rcl?.(blockCustom) ?? null;
     }

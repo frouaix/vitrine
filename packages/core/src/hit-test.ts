@@ -5,6 +5,7 @@ import type { Block, Rc } from './core/types.ts';
 import { BlockType } from './core/types.ts';
 import { Matrix2D } from './transform.ts';
 import { getBlockTypeHandlers } from './core/block-registry.ts';
+import type { CustomBlockDescriptor } from './core/block-registry.ts';
 import { getTextBlockRc } from './core/text-layout.ts';
 import { getBlockTransform } from './core/bounds.ts';
 
@@ -131,6 +132,12 @@ export class HitTester {
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
       }
 
+      case BlockType.Image: {
+        const { dx, dy } = bl.props;
+        return this.hitTestRectangle(xl, yl, dx, dy);
+      }
+
+      case BlockType.Path:
       case BlockType.Group:
       case BlockType.Layer:
       case BlockType.Portal:
@@ -151,7 +158,7 @@ export class HitTester {
         return false;
 
       default: {
-        const blCustom = bl as unknown as { type: string; props: Record<string, unknown>; children?: Block[] };
+        const blCustom = bl as CustomBlockDescriptor;
         const handlers = getBlockTypeHandlers(blCustom.type);
         if (handlers?.hitTestShape) {
           return handlers.hitTestShape(blCustom, xl, yl, { layoutCache });
