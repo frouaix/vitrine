@@ -170,9 +170,9 @@ const tableBlock = buildVitrineBlocksFromTableLayout(
 
     const renderer = new ImmediateRenderer({
       canvas,
-      width: dxCanvas,
-      height: dyCanvas,
-      enableCameraControls: true
+      dx: dxCanvas,
+      dy: dyCanvas,
+      fEnableCameraControls: true
     });
 
     const engine = new ReferenceTableLayoutEngine();

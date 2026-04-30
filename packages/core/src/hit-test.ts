@@ -4,6 +4,10 @@
 import type { Block, Rc } from './core/types.ts';
 import { BlockType } from './core/types.ts';
 import { Matrix2D } from './transform.ts';
+import { getBlockTypeHandlers } from './core/block-registry.ts';
+import type { CustomBlockDescriptor } from './core/block-registry.ts';
+import { getTextBlockRc } from './core/text-layout.ts';
+import { getBlockTransform } from './core/bounds.ts';
 
 export interface HitTestResult {
   block: Block;
@@ -20,120 +24,96 @@ export interface HitTestResult {
 }
 
 export interface HitTestLayoutCache {
-  boundsByBlock: WeakMap<Block, Rc>;
+  mpbl_rc: WeakMap<Block, Rc>;
 }
 
 export class HitTester {
   // Test if a point hits a block, considering its transform
   static hitTest(
-    block: Block,
-    worldX: number,
-    worldY: number,
-    worldTransform: Matrix2D = Matrix2D.identity(),
-    ancestors: Block[] = [],
+    bl: Block,
+    xs: number,
+    ys: number,
+    xfWorld: Matrix2D = Matrix2D.identity(),
+    rgblAncestors: Block[] = [],
     layoutCache?: HitTestLayoutCache
   ): HitTestResult | null {
-    const { props, children } = block;
-    const { visible } = props;
-    if (visible === false) return null;
+    const { props, rgblChildren } = bl;
+    const { fVisible } = props;
+    if (fVisible === false) return null;
 
     // Calculate this block's world transform
-    const blockTransform = this.getBlockTransform(props);
-    const currentTransform = worldTransform.multiply(blockTransform);
+    const xfBlock = getBlockTransform(props);
+    const xfCur = xfWorld.multiply(xfBlock);
 
     // Transform world coordinates to local space
-    const inverse = currentTransform.invert();
+    const inverse = xfCur.invert();
     if (!inverse) return null;
 
-    const local = inverse.transformPoint(worldX, worldY);
+    const ptl = inverse.transformPoint(xs, ys);
 
     // Reject points outside clip region
-    const { clip, dx: dxClip, dy: dyClip } = props as any;
+    const { clip, dx: dxClip, dy: dyClip } = props as { clip?: boolean; dx?: number; dy?: number };
     if (clip && dxClip !== undefined && dyClip !== undefined) {
-      if (local.x < 0 || local.x > dxClip || local.y < 0 || local.y > dyClip) {
+      if (ptl.x < 0 || ptl.x > dxClip || ptl.y < 0 || ptl.y > dyClip) {
         return null;
       }
     }
 
     // Test children first (reverse order for top-to-bottom)
-    if (children) {
-      const childAncestors = [...ancestors, block];
-      for (let i = children.length - 1; i >= 0; i--) {
-        const childHit = this.hitTest(
-          children[i],
-          worldX,
-          worldY,
-          currentTransform,
-          childAncestors,
+    if (rgblChildren) {
+      const rgblAncestorsChild = [...rgblAncestors, bl];
+      for (let i = rgblChildren.length - 1; i >= 0; i--) {
+        const blChildHit = this.hitTest(
+          rgblChildren[i],
+          xs,
+          ys,
+          xfCur,
+          rgblAncestorsChild,
           layoutCache
         );
-        if (childHit) return childHit;
+        if (blChildHit) return blChildHit;
       }
     }
 
     // Test this block
-    if (this.hitTestShape(block, local.x, local.y, layoutCache)) {
+    if (this.hitTestShape(bl, ptl.x, ptl.y, layoutCache)) {
       return {
-        block,
-        ancestors,
-        xl: local.x,
-        yl: local.y,
-        xs: worldX,
-        ys: worldY
+        block: bl,
+        ancestors: rgblAncestors,
+        xl: ptl.x,
+        yl: ptl.y,
+        xs: xs,
+        ys: ys
       };
     }
 
     return null;
   }
 
-  private static getBlockTransform(props: any): Matrix2D {
-    let transform = Matrix2D.identity();
-    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
-
-    if (x !== undefined || y !== undefined) {
-      transform = transform.translate(x ?? 0, y ?? 0);
-    }
-    if (rotation !== undefined) {
-      transform = transform.rotate(rotation);
-    }
-    if (scaleX !== undefined || scaleY !== undefined) {
-      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
-    }
-    if (skewX !== undefined || skewY !== undefined) {
-      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
-    }
-
-    return transform;
-  }
-
-  private static hitTestShape(block: Block, x: number, y: number, layoutCache?: HitTestLayoutCache): boolean {
-    const xl = x;
-    const yl = y;
-    const { props } = block as { props: any };
-
-    switch (block.type) {
+  private static hitTestShape(bl: Block, xl: number, yl: number, layoutCache?: HitTestLayoutCache): boolean {
+    switch (bl.type) {
       case BlockType.Rectangle: {
-        const { dx, dy } = props;
+        const { dx, dy } = bl.props;
         return this.hitTestRectangle(xl, yl, dx, dy);
       }
 
       case BlockType.Circle: {
-        const { radius } = props;
+        const { radius } = bl.props;
         return this.hitTestCircle(xl, yl, radius);
       }
 
       case BlockType.Ellipse: {
-        const { radiusX, radiusY } = props;
+        const { radiusX, radiusY } = bl.props;
         return this.hitTestEllipse(xl, yl, radiusX, radiusY);
       }
 
       case BlockType.Line: {
-        const { x1, y1, x2, y2, strokeWidth } = props;
+        const { x1, y1, x2, y2, strokeWidth } = bl.props;
         return this.hitTestLine(xl, yl, x1, y1, x2, y2, strokeWidth ?? 1);
       }
 
       case BlockType.Text: {
-        const cachedBounds = layoutCache?.boundsByBlock.get(block);
+        const cachedBounds = layoutCache?.mpbl_rc.get(bl);
         if (cachedBounds) {
           return this.hitTestRectangle(
             xl - cachedBounds.x,
@@ -143,103 +123,27 @@ export class HitTester {
           );
         }
 
-        // Calculate text bounds accounting for baseline and alignment
-        const { fontSize: duFont, text: stText, align, baseline, dx: dxMax, lineHeight: lineHeightProp } = props;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-
-        let textWidth: number;
-        let height: number;
-        if (dxMax !== undefined) {
-          // Approximate wrapped line count
-          const singleLineWidth = stText.length * fontSize * 0.6;
-          const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
-          textWidth = Math.min(singleLineWidth, dxMax);
-          height = lineCount * duLineHeight;
-        } else {
-          textWidth = stText.length * fontSize * 0.6; // rough estimate
-          height = fontSize;
-        }
-
-        const ascent = fontSize; // approximate
-        
-        // Calculate x offset based on alignment
-        let xOffset = 0;
-        if (align === 'center') {
-          xOffset = -textWidth / 2;
-        } else if (align === 'right' || align === 'end') {
-          xOffset = -textWidth;
-        }
-        
-        // Calculate y offset based on baseline
-        let yOffset = -ascent; // Default for 'alphabetic' baseline
-        if (baseline === 'top' || baseline === 'hanging') {
-          yOffset = 0;
-        } else if (baseline === 'middle') {
-          yOffset = -height / 2;
-        } else if (baseline === 'bottom') {
-          yOffset = -height;
-        }
-        
-        // Translate hit point to text box space
-        const testX = xl - xOffset;
-        const testY = yl - yOffset;
-        return this.hitTestRectangle(testX, testY, textWidth, height);
-      }
-
-      case BlockType.Texta: {
-        const cachedBounds = layoutCache?.boundsByBlock.get(block);
-        if (cachedBounds) {
-          return this.hitTestRectangle(
-            xl - cachedBounds.x,
-            yl - cachedBounds.y,
-            cachedBounds.width,
-            cachedBounds.height
-          );
-        }
-
-        const { fontSize: duFont, texta: attributedText, align, baseline, lineHeight: lineHeightProp } = props;
-        const stText = attributedText.strText;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-
-        const lines = stText.split('\n');
-        const textWidth = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
-        const height = Math.max(lines.length, 1) * duLineHeight;
-        const ascent = fontSize;
-
-        let xOffset = 0;
-        if (align === 'center') {
-          xOffset = -textWidth / 2;
-        } else if (align === 'right' || align === 'end') {
-          xOffset = -textWidth;
-        }
-
-        let yOffset = -ascent;
-        if (baseline === 'top' || baseline === 'hanging') {
-          yOffset = 0;
-        } else if (baseline === 'middle') {
-          yOffset = -height / 2;
-        } else if (baseline === 'bottom') {
-          yOffset = -height;
-        }
-
-        const testX = xl - xOffset;
-        const testY = yl - yOffset;
-        return this.hitTestRectangle(testX, testY, textWidth, height);
+        const rc = getTextBlockRc(bl.props.text, bl.props);
+        return this.hitTestRectangle(xl - rc.x, yl - rc.y, rc.width, rc.height);
       }
 
       case BlockType.Arc: {
-        const { radius, startAngle, endAngle } = props;
+        const { radius, startAngle, endAngle } = bl.props;
         return this.hitTestArc(xl, yl, radius, startAngle, endAngle);
       }
 
+      case BlockType.Image: {
+        const { dx, dy } = bl.props;
+        return this.hitTestRectangle(xl, yl, dx, dy);
+      }
+
+      case BlockType.Path:
       case BlockType.Group:
       case BlockType.Layer:
       case BlockType.Portal:
       case BlockType.ContentSized:
         {
-          const cachedBounds = layoutCache?.boundsByBlock.get(block);
+          const cachedBounds = layoutCache?.mpbl_rc.get(bl);
           if (cachedBounds) {
             return this.hitTestRectangle(
               xl - cachedBounds.x,
@@ -253,8 +157,14 @@ export class HitTester {
         // Groups, layers, and portals don't have intrinsic shape, rely on children
         return false;
 
-      default:
+      default: {
+        const blCustom = bl as CustomBlockDescriptor;
+        const handlers = getBlockTypeHandlers(blCustom.type);
+        if (handlers?.hitTestShape) {
+          return handlers.hitTestShape(blCustom, xl, yl, { layoutCache });
+        }
         return false;
+      }
     }
   }
 
@@ -324,98 +234,4 @@ export class HitTester {
     return normalizedAngle >= normalizedStart && normalizedAngle <= normalizedEnd;
   }
 
-  // Get bounding box for a block in world coordinates
-  static getBounds(block: Block, worldTransform: Matrix2D = Matrix2D.identity()): Rc | null {
-    const blockTransform = this.getBlockTransform(block.props);
-    const currentTransform = worldTransform.multiply(blockTransform);
-
-    const localBounds = this.getLocalBounds(block);
-    if (!localBounds) return null;
-
-    // Transform all four corners to world space
-    const corners = [
-      currentTransform.transformPoint(localBounds.x, localBounds.y),
-      currentTransform.transformPoint(localBounds.x + localBounds.width, localBounds.y),
-      currentTransform.transformPoint(localBounds.x, localBounds.y + localBounds.height),
-      currentTransform.transformPoint(localBounds.x + localBounds.width, localBounds.y + localBounds.height)
-    ];
-
-    const xcMin = Math.min(...corners.map(c => c.x));
-    const xcMax = Math.max(...corners.map(c => c.x));
-    const ycMin = Math.min(...corners.map(c => c.y));
-    const ycMax = Math.max(...corners.map(c => c.y));
-
-    return {
-      x: xcMin,
-      y: ycMin,
-      width: xcMax - xcMin,
-      height: ycMax - ycMin
-    };
-  }
-
-  private static getLocalBounds(block: Block): Rc | null {
-    const { props } = block as { props: any };
-
-    switch (block.type) {
-      case BlockType.Rectangle: {
-        const { dx, dy } = props;
-        return { x: 0, y: 0, width: dx, height: dy };
-      }
-
-      case BlockType.Circle: {
-        const { radius } = props;
-        return {
-          x: -radius,
-          y: -radius,
-          width: radius * 2,
-          height: radius * 2
-        };
-      }
-
-      case BlockType.Ellipse: {
-        const { radiusX, radiusY } = props;
-        return {
-          x: -radiusX,
-          y: -radiusY,
-          width: radiusX * 2,
-          height: radiusY * 2
-        };
-      }
-
-      case BlockType.Line: {
-        const { x1, x2, y1, y2 } = props;
-        const xlMin = Math.min(x1, x2);
-        const xlMax = Math.max(x1, x2);
-        const ylMin = Math.min(y1, y2);
-        const ylMax = Math.max(y1, y2);
-        return { x: xlMin, y: ylMin, width: xlMax - xlMin, height: ylMax - ylMin };
-      }
-
-      case BlockType.Text: {
-        const { fontSize: duFont, text: stText, dx: dxMax, lineHeight: lineHeightProp } = props;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-        const singleLineWidth = stText.length * fontSize * 0.6;
-        if (dxMax !== undefined) {
-          const lineCount = Math.max(1, Math.ceil(singleLineWidth / dxMax));
-          return { x: 0, y: 0, width: Math.min(singleLineWidth, dxMax), height: lineCount * duLineHeight };
-        }
-        return { x: 0, y: 0, width: singleLineWidth, height: fontSize };
-      }
-
-      case BlockType.Texta: {
-        const { fontSize: duFont, texta: attributedText, lineHeight: lineHeightProp } = props;
-        const stText = attributedText.strText;
-        const fontSize = duFont ?? 16;
-        const duLineHeight = lineHeightProp ?? fontSize * 1.4;
-        const lines = stText.split('\n');
-        const width = Math.max(...lines.map((line: string) => line.length * fontSize * 0.6), 0);
-        const height = Math.max(lines.length, 1) * duLineHeight;
-        return { x: 0, y: 0, width, height };
-      }
-
-      default:
-        return null;
-    }
-  }
 }

@@ -98,7 +98,7 @@ export function transformButton(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id,
       onClick: fEnabled !== false && onClick ? (_event: VitrinePointerEvent) => onClick() : undefined,
       onHover

@@ -77,3 +77,10 @@ export {
   type RenderDecorationKind,
   type RenderBridgeDecorationRange
 } from "./render-bridges.ts";
+
+export {
+  registerTextaBlockType,
+  texta,
+  stBlockTypeTexta,
+  type TextaBlockProps
+} from "./vitrine.ts";

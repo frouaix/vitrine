@@ -573,7 +573,7 @@ export class WebGLRenderer extends Renderer {
       fill,
       stroke,
       dx: dxMax,
-      lineHeight: lineHeightProp
+      dyLineHeight: lineHeightProp
     } = props;
     const font = fontProp || `${duFont ?? 16}px sans-serif`;
     const align = alignProp || 'left';
@@ -719,8 +719,8 @@ export class WebGLRenderer extends Renderer {
   }
 
   private renderBlock(block: Block, parentTransform: Matrix2D, parentOpacity: number): void {
-    const { props, type, children } = block;
-    const { visible, opacity = 1 } = props;
+    const { props, type, rgblChildren: children } = block;
+    const { fVisible: visible, opacity = 1 } = props;
     if (visible === false) return;
 
     if (this.enableCulling) {

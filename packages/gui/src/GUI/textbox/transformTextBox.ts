@@ -92,7 +92,7 @@ export function transformTextBox(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id
     },
     children

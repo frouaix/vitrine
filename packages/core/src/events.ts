@@ -8,7 +8,7 @@ import { Matrix2D } from './transform.ts';
 const EMPTY_SCENE: Block = {
   type: BlockType.Group,
   props: {},
-  children: []
+  rgblChildren: []
 };
 
 export interface PointerEventData {

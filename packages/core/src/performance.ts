@@ -2,8 +2,21 @@
 
 // Performance optimization utilities
 import type { Block, Rc } from './core/types.ts';
-import { HitTester } from './hit-test.ts';
+import { getBlockBounds } from './core/bounds.ts';
+import { getTextLayoutCacheStats } from './core/text-layout.ts';
 import { Matrix2D } from './transform.ts';
+
+export type PerformanceHookMetrics = Record<string, number | string | boolean | null>;
+export type PerformanceStatsHook = () => PerformanceHookMetrics;
+
+export interface PerformanceStatsSnapshot {
+  blocksRendered: number;
+  blocksCulled: number;
+  renderTime: number;
+  fps: number;
+  averageFPS: number;
+  hooks: Record<string, PerformanceHookMetrics>;
+}
 
 export interface Viewport {
   x: number;
@@ -30,7 +43,7 @@ export class PerformanceOptimizer {
     worldTransform: Matrix2D = Matrix2D.identity()
   ): boolean {
     const { props } = block;
-    const { visible, disableCulling } = props;
+    const { fVisible: visible, fDisableCulling: disableCulling } = props;
     if (visible === false) return false;
 
     if (disableCulling) {
@@ -38,7 +51,7 @@ export class PerformanceOptimizer {
     }
 
     // Get world bounds (getBounds will apply the block's transform)
-    const boundsWorld = HitTester.getBounds(block, worldTransform);
+    const boundsWorld = getBlockBounds(block, worldTransform);
     if (!boundsWorld) {
       // If we can't calculate bounds, assume visible
       return true;
@@ -46,26 +59,6 @@ export class PerformanceOptimizer {
 
     // Check if in viewport
     return this.isInViewport(boundsWorld, viewport);
-  }
-
-  private static getBlockTransform(props: any): Matrix2D {
-    let transform = Matrix2D.identity();
-    const { x, y, rotation, scaleX, scaleY, skewX, skewY } = props;
-
-    if (x !== undefined || y !== undefined) {
-      transform = transform.translate(x ?? 0, y ?? 0);
-    }
-    if (rotation !== undefined) {
-      transform = transform.rotate(rotation);
-    }
-    if (scaleX !== undefined || scaleY !== undefined) {
-      transform = transform.scaleXY(scaleX ?? 1, scaleY ?? 1);
-    }
-    if (skewX !== undefined || skewY !== undefined) {
-      transform = transform.skewXY(skewX ?? 0, skewY ?? 0);
-    }
-
-    return transform;
   }
 
   // Object pooling for frequently allocated objects
@@ -107,9 +100,21 @@ export class PerformanceOptimizer {
 }
 
 export class PerformanceMonitor {
+  private static mpstHook_mpfnStats = new Map<string, PerformanceStatsHook>([
+    ['textLayoutCache', () => getTextLayoutCacheStats()]
+  ]);
+
   private frameCount = 0;
   private lastTime = performance.now();
   private fpsHistory: number[] = [];
+
+  static registerStatsHook(stName: string, fnStats: PerformanceStatsHook): void {
+    this.mpstHook_mpfnStats.set(stName, fnStats);
+  }
+
+  static unregisterStatsHook(stName: string): void {
+    this.mpstHook_mpfnStats.delete(stName);
+  }
 
   update(): void {
     this.frameCount++;
@@ -134,10 +139,22 @@ export class PerformanceMonitor {
     return Math.round(sum / this.fpsHistory.length);
   }
 
-  getStats() {
+  getStats(): PerformanceStatsSnapshot {
+    const mpstHookMetrics: Record<string, PerformanceHookMetrics> = {};
+    for (const [stName, fnStats] of PerformanceMonitor.mpstHook_mpfnStats.entries()) {
+      try {
+        mpstHookMetrics[stName] = fnStats();
+      } catch {
+        mpstHookMetrics[stName] = {
+          fError: true
+        };
+      }
+    }
+
     return {
       ...PerformanceOptimizer.stats,
-      averageFPS: this.getAverageFPS()
+      averageFPS: this.getAverageFPS(),
+      hooks: mpstHookMetrics
     };
   }
 }

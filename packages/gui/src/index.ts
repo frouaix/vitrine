@@ -68,3 +68,9 @@ export {
 // Component system
 export { VitrineComponent } from './component.ts';
 export type { VitrineComponentConfig, GUIControlBuilder, BlockBuilder, RenderFunction, RenderMode } from './component.ts';
+
+// Text selection system
+export { TextSelectionManager } from './selection/TextSelectionManager.ts';
+export type { SelectionRenderConfig, CharacterBoundsProvider } from './selection/TextSelectionManager.ts';
+export { createCharacterBoundsProviderFromBlockTree } from './selection/character-bounds-adapter.ts';
+export type { CharacterBoundsAdapterOptions } from './selection/character-bounds-adapter.ts';

@@ -6,6 +6,7 @@ import type {
   BlockForType,
   BlockPropsByType,
   BlockOfType,
+  BaseBlockProps
 } from './types.ts';
 import { BlockType } from './types.ts';
 
@@ -15,79 +16,87 @@ type LeafBlockType = Exclude<BlockType, ContainerBlockType>;
 export function block<T extends ContainerBlockType>(
   type: T,
   props: BlockPropsByType[T],
-  children: Block[]
+  rgblChildren: Block[]
 ): BlockForType<T>;
 export function block<T extends LeafBlockType>(
   type: T,
   props: BlockPropsByType[T],
-  children?: Block[]
+  rgblChildren?: Block[]
 ): BlockForType<T>;
 export function block<T extends BlockType>(
   type: T,
   props: BlockPropsByType[T],
-  children?: Block[]
+  rgblChildren?: Block[]
 ): BlockForType<T> {
   return {
     type,
     props,
-    children
+    rgblChildren
   };
 }
 
-export function rectangle(props: BlockPropsByType[BlockType.Rectangle], children?: Block[]): BlockOfType<BlockType.Rectangle> {
-  return block(BlockType.Rectangle, props, children);
+export function rectangle(props: BlockPropsByType[BlockType.Rectangle], rgblChildren?: Block[]): BlockOfType<BlockType.Rectangle> {
+  return block(BlockType.Rectangle, props, rgblChildren);
 }
 
-export function circle(props: BlockPropsByType[BlockType.Circle], children?: Block[]): BlockOfType<BlockType.Circle> {
-  return block(BlockType.Circle, props, children);
+export function circle(props: BlockPropsByType[BlockType.Circle], rgblChildren?: Block[]): BlockOfType<BlockType.Circle> {
+  return block(BlockType.Circle, props, rgblChildren);
 }
 
-export function ellipse(props: BlockPropsByType[BlockType.Ellipse], children?: Block[]): BlockOfType<BlockType.Ellipse> {
-  return block(BlockType.Ellipse, props, children);
+export function ellipse(props: BlockPropsByType[BlockType.Ellipse], rgblChildren?: Block[]): BlockOfType<BlockType.Ellipse> {
+  return block(BlockType.Ellipse, props, rgblChildren);
 }
 
-export function line(props: BlockPropsByType[BlockType.Line], children?: Block[]): BlockOfType<BlockType.Line> {
-  return block(BlockType.Line, props, children);
+export function line(props: BlockPropsByType[BlockType.Line], rgblChildren?: Block[]): BlockOfType<BlockType.Line> {
+  return block(BlockType.Line, props, rgblChildren);
 }
 
-export function text(props: BlockPropsByType[BlockType.Text], children?: Block[]): BlockOfType<BlockType.Text> {
-  return block(BlockType.Text, props, children);
+export function text(props: BlockPropsByType[BlockType.Text], rgblChildren?: Block[]): BlockOfType<BlockType.Text> {
+  return block(BlockType.Text, props, rgblChildren);
 }
 
-export function texta(props: BlockPropsByType[BlockType.Texta], children?: Block[]): BlockOfType<BlockType.Texta> {
-  return block(BlockType.Texta, props, children);
+export function path(props: BlockPropsByType[BlockType.Path], rgblChildren?: Block[]): BlockOfType<BlockType.Path> {
+  return block(BlockType.Path, props, rgblChildren);
 }
 
-export function path(props: BlockPropsByType[BlockType.Path], children?: Block[]): BlockOfType<BlockType.Path> {
-  return block(BlockType.Path, props, children);
+export function arc(props: BlockPropsByType[BlockType.Arc], rgblChildren?: Block[]): BlockOfType<BlockType.Arc> {
+  return block(BlockType.Arc, props, rgblChildren);
 }
 
-export function arc(props: BlockPropsByType[BlockType.Arc], children?: Block[]): BlockOfType<BlockType.Arc> {
-  return block(BlockType.Arc, props, children);
+export function image(props: BlockPropsByType[BlockType.Image], rgblChildren?: Block[]): BlockOfType<BlockType.Image> {
+  return block(BlockType.Image, props, rgblChildren);
 }
 
-export function image(props: BlockPropsByType[BlockType.Image], children?: Block[]): BlockOfType<BlockType.Image> {
-  return block(BlockType.Image, props, children);
+export function group(props: BlockPropsByType[BlockType.Group], rgblChildren: Block[]): BlockOfType<BlockType.Group> {
+  return block(BlockType.Group, props, rgblChildren);
 }
 
-export function group(props: BlockPropsByType[BlockType.Group], children: Block[]): BlockOfType<BlockType.Group> {
-  return block(BlockType.Group, props, children);
+export function layer(props: BlockPropsByType[BlockType.Layer], rgblChildren: Block[]): BlockOfType<BlockType.Layer> {
+  return block(BlockType.Layer, props, rgblChildren);
 }
 
-export function layer(props: BlockPropsByType[BlockType.Layer], children: Block[]): BlockOfType<BlockType.Layer> {
-  return block(BlockType.Layer, props, children);
+export function portal(props: BlockPropsByType[BlockType.Portal], rgblChildren: Block[]): BlockOfType<BlockType.Portal> {
+  return block(BlockType.Portal, props, rgblChildren);
 }
 
-export function portal(props: BlockPropsByType[BlockType.Portal], children: Block[]): BlockOfType<BlockType.Portal> {
-  return block(BlockType.Portal, props, children);
+export function contentSized(props: BlockPropsByType[BlockType.ContentSized], rgblChildren: Block[]): BlockOfType<BlockType.ContentSized> {
+  return block(BlockType.ContentSized, props, rgblChildren);
 }
 
-export function contentSized(props: BlockPropsByType[BlockType.ContentSized], children: Block[]): BlockOfType<BlockType.ContentSized> {
-  return block(BlockType.ContentSized, props, children);
+export function customBlock<TProps extends BaseBlockProps>(
+  type: string,
+  props: TProps,
+  rgblChildren?: Block[]
+): Block {
+  return {
+    type,
+    props,
+    rgblChildren
+  } as unknown as Block;
 }
 
 /** Convenience factory: wraps children in a group that opens `href` in a new tab on click. */
-export function link(props: { href: string } & BlockPropsByType[BlockType.Group], children: Block[]): BlockOfType<BlockType.Group> {
+export function link(props: { href: string } & BlockPropsByType[BlockType.Group], rgblChildren: Block[]): BlockOfType<BlockType.Group> {
   const { href, onClick: userOnClick, tooltip: userTooltip, ...rest } = props;
   return group(
     {
@@ -98,6 +107,6 @@ export function link(props: { href: string } & BlockPropsByType[BlockType.Group]
         if (userOnClick) userOnClick(event);
       }
     },
-    children
+    rgblChildren
   );
 }

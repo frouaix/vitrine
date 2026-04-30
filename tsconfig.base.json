@@ -12,5 +12,6 @@
     "rewriteRelativeImportExtensions": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
-  }
+  },
+  "exclude": ["**/*.d.ts"]
 }

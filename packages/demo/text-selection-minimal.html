@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Text Selection Minimal Test</title>
+  <link rel="stylesheet" href="./text-selection-minimal.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Vitrine Text Selection - Minimal Test</h1>
+    <div class="instructions">
+      <p><strong>Test Instructions:</strong></p>
+      <p>1. Click exactly at the beginning of the word "Click" → should place caret at character 0</p>
+      <p>2. Click on the space before "and" → should place caret around character 5-6</p>
+      <p>3. Click at end of "text" → should place caret around character 18-19</p>
+      <p>Check debug output below to see coordinates and character index</p>
+    </div>
+
+    <div id="canvas"></div>
+
+    <div class="debug">
+      <div class="debug-label">Debug Information:</div>
+      <div id="log">Waiting for click...</div>
+    </div>
+  </div>
+
+  <script type="module" src="./text-selection-minimal-setup.js"></script>
+</body>
+</html>

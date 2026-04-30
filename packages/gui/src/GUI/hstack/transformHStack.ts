@@ -74,7 +74,7 @@ export function transformStack(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id
     },
     children

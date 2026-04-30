@@ -5,10 +5,14 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { ImmediateRenderer } from 'vitrine';
-import type { RendererConfig } from 'vitrine';
+import { ImmediateRenderer, group, Canvas2DContext, clearTextLayoutCaches } from 'vitrine';
+import type { RendererConfig, RenderContext } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
+import { TextSelectionManager } from './selection/TextSelectionManager.ts';
+import type { SelectionRenderConfig } from './selection/TextSelectionManager.ts';
+import { createCharacterBoundsAdapter } from './selection/character-bounds-adapter.ts';
+import type { CharacterBoundsAdapter } from './selection/character-bounds-adapter.ts';
 
 /** Function that returns a GUI control tree each frame. */
 export type GUIControlBuilder = () => GUIControl;
@@ -35,9 +39,12 @@ export interface VitrineComponentConfig {
   invalidateOnInteraction?: boolean;
   /** Additional renderer config overrides. */
   rendererConfig?: Partial<RendererConfig>;
+  /** Text selection configuration. Defaults to disabled. */
+  selectionConfig?: SelectionRenderConfig;
 }
 
 export class VitrineComponent {
+  private static cMountedComponents: number = 0;
   private renderer: ImmediateRenderer | null = null;
   private canvas: HTMLCanvasElement | null = null;
   private container: HTMLElement | null = null;
@@ -52,13 +59,18 @@ export class VitrineComponent {
   private activeAnimationCount: number = 0;
   private hasExplicitAnimationControl: boolean = false;
   private fDirty: boolean = false;
+  private selectionManager: TextSelectionManager | null = null;
+  private selectionMeasureContext: RenderContext | undefined;
+  private selectionBoundsAdapter: CharacterBoundsAdapter | null = null;
+  private selectableTextBlockIds: string[] = [];
   private boundInteractionHandlers: {
-    pointerdown: () => void;
-    pointerup: () => void;
-    pointermove: () => void;
-    click: () => void;
+    pointerdown: (e: PointerEvent) => void;
+    pointerup: (e: PointerEvent) => void;
+    pointermove: (e: PointerEvent) => void;
+    click: (e: MouseEvent) => void;
     pointerleave: () => void;
-    wheel: () => void;
+    wheel: (e: WheelEvent) => void;
+    keydown: (e: KeyboardEvent) => void;
   };
 
   constructor(
@@ -73,12 +85,13 @@ export class VitrineComponent {
     this.renderMode = config.renderMode ?? 'continuous';
     this.invalidateOnInteraction = config.invalidateOnInteraction ?? true;
     this.boundInteractionHandlers = {
-      pointerdown: this.handleInteractionInvalidate.bind(this),
-      pointerup: this.handleInteractionInvalidate.bind(this),
-      pointermove: this.handleInteractionInvalidate.bind(this),
-      click: this.handleInteractionInvalidate.bind(this),
-      pointerleave: this.handleInteractionInvalidate.bind(this),
-      wheel: this.handleInteractionInvalidate.bind(this)
+      pointerdown: this.handlePointerDown.bind(this),
+      pointerup: this.handlePointerUp.bind(this),
+      pointermove: this.handlePointerMove.bind(this),
+      click: () => this.handleSimpleInvalidate(),
+      pointerleave: () => this.handleSimpleInvalidate(),
+      wheel: () => this.handleSimpleInvalidate(),
+      keydown: this.handleKeyDown.bind(this)
     };
   }
 
@@ -106,14 +119,27 @@ export class VitrineComponent {
 
     this.renderer = new ImmediateRenderer({
       canvas: this.canvas,
-      width,
-      height,
+      dx: width,
+      dy: height,
       pixelRatio: this.config.pixelRatio,
-      enableEvents: true,
+      fEnableEvents: true,
       ...this.config.rendererConfig
     });
 
+    // Initialize selection manager if configured
+    if (this.config.selectionConfig?.enabled === true) {
+      this.selectionManager = new TextSelectionManager(this.config.selectionConfig);
+      const canvasMeasure = document.createElement('canvas');
+      const canvasContext = canvasMeasure.getContext('2d');
+      this.selectionMeasureContext = canvasContext ? new Canvas2DContext(canvasContext) : undefined;
+      this.selectionBoundsAdapter = createCharacterBoundsAdapter({
+        context: this.selectionMeasureContext
+      });
+      this.selectionManager.setCharacterBoundsProvider(this.selectionBoundsAdapter.getProvider());
+    }
+
     this.mounted = true;
+    VitrineComponent.cMountedComponents += 1;
     this.setupInteractionInvalidation();
     this.invalidate();
   }
@@ -127,6 +153,9 @@ export class VitrineComponent {
     this.fDirty = false;
     this.activeAnimationCount = 0;
     this.hasExplicitAnimationControl = false;
+    this.selectionManager = null;
+    this.selectionMeasureContext = undefined;
+    this.selectionBoundsAdapter = null;
 
     if (this.renderer) {
       this.renderer.destroy();
@@ -140,6 +169,10 @@ export class VitrineComponent {
     this.canvas = null;
     this.container = null;
     this.mounted = false;
+    VitrineComponent.cMountedComponents = Math.max(0, VitrineComponent.cMountedComponents - 1);
+    if (VitrineComponent.cMountedComponents === 0) {
+      clearTextLayoutCaches();
+    }
   }
 
   /** Update the render function. Takes effect on the next frame. */
@@ -192,6 +225,14 @@ export class VitrineComponent {
   /** Get current render mode. */
   getRenderMode(): RenderMode {
     return this.renderMode;
+  }
+
+  /**
+   * Get the text selection manager (if enabled).
+   * Returns null if selection is not configured for this component.
+   */
+  getSelectionManager(): TextSelectionManager | null {
+    return this.selectionManager;
   }
 
   /**
@@ -279,6 +320,10 @@ export class VitrineComponent {
     this.canvas.addEventListener('click', this.boundInteractionHandlers.click);
     this.canvas.addEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
     this.canvas.addEventListener('wheel', this.boundInteractionHandlers.wheel, { passive: true });
+
+    // Make canvas focusable for keyboard events
+    this.canvas.tabIndex = 0;
+    this.canvas.addEventListener('keydown', this.boundInteractionHandlers.keydown);
   }
 
   private removeInteractionInvalidation(): void {
@@ -289,12 +334,85 @@ export class VitrineComponent {
     this.canvas.removeEventListener('click', this.boundInteractionHandlers.click);
     this.canvas.removeEventListener('pointerleave', this.boundInteractionHandlers.pointerleave);
     this.canvas.removeEventListener('wheel', this.boundInteractionHandlers.wheel);
+    this.canvas.removeEventListener('keydown', this.boundInteractionHandlers.keydown);
   }
 
-  private handleInteractionInvalidate(): void {
+  private handleSimpleInvalidate(): void {
     if (!this.invalidateOnInteraction) return;
     if (this.renderMode === 'continuous') return;
     this.invalidate();
+  }
+
+  private getCanvasCoordinates(e: PointerEvent): { x: number; y: number } | null {
+    if (!this.canvas) return null;
+    const { left: xwCanvas, top: ywCanvas } = this.canvas.getBoundingClientRect();
+    const { clientX: xwPointer, clientY: ywPointer } = e;
+
+    return {
+      x: xwPointer - xwCanvas,
+      y: ywPointer - ywCanvas
+    };
+  }
+
+  private handlePointerDown(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    this.canvas?.focus();
+    
+    const coords = this.getCanvasCoordinates(e);
+    if (!coords) return;
+    
+    for (let i = this.selectableTextBlockIds.length - 1; i >= 0; i--) {
+      const blockId = this.selectableTextBlockIds[i];
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
+      if (charIndex !== null) {
+        this.selectionManager.handlePointerDown(blockId, charIndex);
+        this.invalidate();
+        return;
+      }
+    }
+  }
+
+  private handlePointerUp(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    
+    this.selectionManager.handlePointerUp();
+    this.invalidate();
+  }
+
+  private handlePointerMove(e: PointerEvent): void {
+    this.handleSimpleInvalidate();
+    if (!this.selectionManager) return;
+    
+    const coords = this.getCanvasCoordinates(e);
+    if (!coords) return;
+    
+    for (let i = this.selectableTextBlockIds.length - 1; i >= 0; i--) {
+      const blockId = this.selectableTextBlockIds[i];
+      const charIndex = this.selectionManager.hitTestBlockCharacter(blockId, coords.x, coords.y);
+      if (charIndex !== null) {
+        this.selectionManager.handlePointerMove(charIndex);
+        this.invalidate();
+        return;
+      }
+    }
+  }
+
+  private handleKeyDown(e: KeyboardEvent): void {
+    if (!this.selectionManager) return;
+    
+    // Only handle text navigation keys
+    const handled = this.selectionManager.handleKeyDown(
+      e.key,
+      e.shiftKey,
+      e.ctrlKey || e.metaKey
+    );
+    
+    if (handled) {
+      e.preventDefault();
+      this.invalidate();
+    }
   }
 
   private stopRenderLoop(): void {
@@ -305,11 +423,25 @@ export class VitrineComponent {
   }
 
   private buildBlock(): Block {
-    if (this.mode === 'gui') {
-      const control = (this.renderFn as GUIControlBuilder)();
-      const context: TransformContext = { theme: this.theme };
-      return transformGUIControl(control, context);
+    const contentBlock = this.mode === 'gui'
+      ? transformGUIControl((this.renderFn as GUIControlBuilder)(), { theme: this.theme })
+      : (this.renderFn as BlockBuilder)();
+
+    // If selection manager is active, wrap content with selection overlay
+    if (
+      this.selectionManager
+      && this.selectionBoundsAdapter
+      && this.selectionManager.isRenderingEnabled()
+    ) {
+      const updateResult = this.selectionBoundsAdapter.updateFromBlockTree(contentBlock);
+      this.selectableTextBlockIds = updateResult.selectableTextBlockIds;
+      this.selectionManager.invalidateInsertionGeometry(updateResult.changedBlockIds);
+      const selectionOverlay = this.selectionManager.buildSelectionOverlays();
+      if (selectionOverlay) {
+        return group({}, [contentBlock, selectionOverlay]);
+      }
     }
-    return (this.renderFn as BlockBuilder)();
+
+    return contentBlock;
   }
 }

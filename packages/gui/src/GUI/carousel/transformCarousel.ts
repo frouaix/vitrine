@@ -47,7 +47,7 @@ export function transformCarousel(
     {
       x: xp,
       y: yp,
-      visible: fVisible !== false,
+      fVisible: fVisible !== false,
       id
     },
     children
