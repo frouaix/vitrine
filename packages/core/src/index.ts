@@ -23,7 +23,12 @@ export type { RendererConfig } from './core/renderer-immediate.ts';
 
 // Performance
 export { PerformanceOptimizer, PerformanceMonitor } from './performance.ts';
-export type { Viewport } from './performance.ts';
+export type {
+  Viewport,
+  PerformanceHookMetrics,
+  PerformanceStatsHook,
+  PerformanceStatsSnapshot
+} from './performance.ts';
 
 // Event system
 export { EventManager } from './events.ts';
@@ -33,7 +38,16 @@ export type { HitTestResult } from './hit-test.ts';
 
 // Selection system
 export type { Selection, TextLayout, TextLine } from './core/selection-types.ts';
-export { measureText, calculateTextOffset, getCharacterBounds, hitTestCharacter, layoutTextCharacterBounds, getTextBlockRc as getTextBlockBounds } from './core/text-layout.ts';
+export {
+  measureText,
+  calculateTextOffset,
+  getCharacterBounds,
+  hitTestCharacter,
+  layoutTextCharacterBounds,
+  clearTextLayoutCaches,
+  getTextLayoutCacheStats,
+  getTextBlockRc as getTextBlockBounds
+} from './core/text-layout.ts';
 export { getBlockTransform, getBlockBounds } from './core/bounds.ts';
 export {
   registerBlockType,

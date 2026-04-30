@@ -1,8 +1,17 @@
+import { getTextLayoutCacheStats } from 'vitrine';
 import { VitrineComponent } from 'vitrine-gui';
 import { buildDebugScene, DEBUG_TEXT_BLOCK_IDS } from './text-selection-debug-scene.js';
 
 let selectionManager = null;
 const debugInfo = document.getElementById('debugInfo');
+const cacheFontsEl = document.getElementById('cacheFonts');
+const cacheEntriesEl = document.getElementById('cacheEntries');
+
+function updateCacheStats() {
+  const stats = getTextLayoutCacheStats();
+  cacheFontsEl.textContent = `${stats.fontsInGlyphCache.toLocaleString()} / ${stats.fontsInPrefixCache.toLocaleString()} / ${stats.fontsInMeasureCache.toLocaleString()}`;
+  cacheEntriesEl.textContent = `${stats.glyphEntries.toLocaleString()} / ${stats.prefixEntries.toLocaleString()} / ${stats.measureEntries.toLocaleString()}`;
+}
 
 function log(msg) {
   debugInfo.textContent += `${msg}\n`;
@@ -28,6 +37,13 @@ const component = VitrineComponent.block(buildDebugScene, {
 const canvas = document.getElementById('canvas');
 component.mount(canvas);
 selectionManager = component.getSelectionManager();
+updateCacheStats();
+
+function refreshStatsLoop() {
+  updateCacheStats();
+  requestAnimationFrame(refreshStatsLoop);
+}
+requestAnimationFrame(refreshStatsLoop);
 
 const canvasElem = document.getElementById('canvas').querySelector('canvas');
 if (canvasElem) {
@@ -60,5 +76,7 @@ if (canvasElem) {
         }
       }
     }
+
+    updateCacheStats();
   });
 }

@@ -18,6 +18,20 @@
       <p class="caption">Canvas with various text blocks for debugging. Check debug output below when clicking.</p>
     </div>
 
+    <div class="cache-stats" id="cacheStats">
+      <h2>Text Cache Counters</h2>
+      <div class="cache-stats-grid">
+        <div class="cache-stat">
+          <span class="cache-stat-label">Fonts (G/P/M)</span>
+          <span class="cache-stat-value" id="cacheFonts">0 / 0 / 0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Entries (G/P/M)</span>
+          <span class="cache-stat-value" id="cacheEntries">0 / 0 / 0</span>
+        </div>
+      </div>
+    </div>
+
     <div class="debug-info" id="debugInfo">
       Click on text blocks and check debug output here.
       Coordinates will show canvas size, click position, and hit test results.

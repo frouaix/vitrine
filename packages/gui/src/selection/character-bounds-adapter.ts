@@ -131,7 +131,7 @@ export class CharacterBoundsAdapter {
     this.context = options.context ?? createFallbackRenderContext();
   }
 
-  private EnsureRgrcl(entry: TextBoundsCacheEntry): Rc[] {
+  private ensureRgrcl(entry: TextBoundsCacheEntry): Rc[] {
     if (!entry.rgrcl) {
       entry.rgrcl = layoutTextCharacterBounds(
         entry.descriptor.text,
@@ -142,9 +142,9 @@ export class CharacterBoundsAdapter {
     return entry.rgrcl;
   }
 
-  private EnsureRgrcs(entry: TextBoundsCacheEntry): Rc[] {
+  private ensureRgrcs(entry: TextBoundsCacheEntry): Rc[] {
     if (!entry.rgrcs) {
-      entry.rgrcs = transformBoundsCollection(this.EnsureRgrcl(entry), entry.descriptor.transformWorld);
+      entry.rgrcs = transformBoundsCollection(this.ensureRgrcl(entry), entry.descriptor.transformWorld);
     }
     return entry.rgrcs;
   }
@@ -240,7 +240,7 @@ export class CharacterBoundsAdapter {
       if (!entry) {
         return null;
       }
-      const boundsWorld = this.EnsureRgrcs(entry);
+      const boundsWorld = this.ensureRgrcs(entry);
       return boundsWorld[charIndex] ?? null;
     };
   }

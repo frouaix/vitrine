@@ -252,6 +252,29 @@ function updateStats(): void {
   getRequiredElement<HTMLElement>('statBlocks').textContent = stats.blocksRendered.toLocaleString();
   getRequiredElement<HTMLElement>('statCulled').textContent = stats.blocksCulled.toLocaleString();
   getRequiredElement<HTMLElement>('statRenderTime').textContent = stats.renderTime.toFixed(2);
+  const textCache = stats.hooks && stats.hooks.textLayoutCache
+    ? stats.hooks.textLayoutCache
+    : null;
+  const glyphFonts = textCache && typeof textCache.fontsInGlyphCache === 'number'
+    ? textCache.fontsInGlyphCache
+    : 0;
+  const prefixFonts = textCache && typeof textCache.fontsInPrefixCache === 'number'
+    ? textCache.fontsInPrefixCache
+    : 0;
+  const measureFonts = textCache && typeof textCache.fontsInMeasureCache === 'number'
+    ? textCache.fontsInMeasureCache
+    : 0;
+  const glyphEntries = textCache && typeof textCache.glyphEntries === 'number'
+    ? textCache.glyphEntries
+    : 0;
+  const prefixEntries = textCache && typeof textCache.prefixEntries === 'number'
+    ? textCache.prefixEntries
+    : 0;
+  const measureEntries = textCache && typeof textCache.measureEntries === 'number'
+    ? textCache.measureEntries
+    : 0;
+  getRequiredElement<HTMLElement>('statCacheFonts').textContent = `${glyphFonts.toLocaleString()} / ${prefixFonts.toLocaleString()} / ${measureFonts.toLocaleString()}`;
+  getRequiredElement<HTMLElement>('statCacheEntries').textContent = `${glyphEntries.toLocaleString()} / ${prefixEntries.toLocaleString()} / ${measureEntries.toLocaleString()}`;
 }
 
 // UI Controls

@@ -120,7 +120,7 @@ export function buildDebugScene() {
       text: 'Wrapped (dx=280): this paragraph intentionally wraps across multiple lines to stress caret placement and range rendering.',
       dx: 280,
       fontSize: 14,
-      lineHeight: 20,
+      dyLineHeight: 20,
       fill: '#0f172a',
       baseline: 'top'
     }),
@@ -128,10 +128,10 @@ export function buildDebugScene() {
       id: 'text12',
       x: 520,
       y: 210,
-      text: 'Wrapped (dx=360, lineHeight=28): larger leading should keep selection rectangles aligned to each visual row.',
+      text: 'Wrapped (dx=360, dyLineHeight=28): larger leading should keep selection rectangles aligned to each visual row.',
       dx: 360,
       fontSize: 16,
-      lineHeight: 28,
+      dyLineHeight: 28,
       fill: '#334155',
       baseline: 'top'
     }),
@@ -143,7 +143,7 @@ export function buildDebugScene() {
       dx: 300,
       dy: 56,
       fontSize: 14,
-      lineHeight: 18,
+      dyLineHeight: 18,
       fill: '#475569',
       baseline: 'top'
     }),

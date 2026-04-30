@@ -150,6 +150,14 @@
         <div class="stat-label">Render Time (ms)</div>
         <div class="stat-value" id="renderTime">0</div>
       </div>
+      <div class="stat-box">
+        <div class="stat-label">Text Cache Fonts (G/P/M)</div>
+        <div class="stat-value" id="cacheFonts">0 / 0 / 0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Text Cache Entries (G/P/M)</div>
+        <div class="stat-value" id="cacheEntries">0 / 0 / 0</div>
+      </div>
     </div>
   </div>
 
@@ -178,6 +186,46 @@
       culling: true,
       time: 0
     };
+
+    const textSamples = [
+      'Quarterly report overview',
+      'Cache warm-up pass',
+      'Selection anchor updated',
+      'Render queue flushed',
+      'Latency target: 16.7ms',
+      'Memory window: bounded LRU',
+      'Text metrics: glyph advance',
+      'Wrapped paragraph stress test',
+      'Dashboard widgets synchronized',
+      'Camera transform applied'
+    ];
+    const textFonts = [
+      '12px sans-serif',
+      '13px sans-serif',
+      '14px serif',
+      '12px monospace',
+      'bold 14px sans-serif'
+    ];
+
+    function generateTextBlocks(count) {
+      const textBlocks = [];
+      for (let i = 0; i < count; i++) {
+        const x = (i % 20) * 110 - 600;
+        const y = Math.floor(i / 20) * 28 - 260;
+        const sample = textSamples[i % textSamples.length];
+        const suffix = `${i.toString(16).toUpperCase()}-${(i * 7 % 97).toString().padStart(2, '0')}`;
+        textBlocks.push(text({
+          x,
+          y,
+          text: `${sample} #${suffix}`,
+          font: textFonts[i % textFonts.length],
+          fontSize: 12 + (i % 4),
+          fill: '#d0d7de',
+          baseline: 'top'
+        }));
+      }
+      return textBlocks;
+    }
 
     // Generate random blocks
     function generateBlocks(count) {
@@ -217,6 +265,7 @@
     }
 
     let blocks = generateBlocks(config.blockCount);
+    let textBlocks = generateTextBlocks(320);
 
     function render() {
       if (config.animate) {
@@ -254,6 +303,13 @@
           x: 450 + Math.sin(config.time) * 200,
           y: 300 + Math.cos(config.time * 0.7) * 150,
         }, blocks)
+        ,
+
+        // Text workload to exercise text measurement caches
+        group({
+          x: 470 + Math.cos(config.time * 0.35) * 120,
+          y: 320 + Math.sin(config.time * 0.45) * 70,
+        }, textBlocks)
       ]);
 
       renderer.render(scene);
@@ -264,6 +320,29 @@
       document.getElementById('rendered').textContent = stats.blocksRendered.toLocaleString();
       document.getElementById('culled').textContent = stats.blocksCulled.toLocaleString();
       document.getElementById('renderTime').textContent = stats.renderTime.toFixed(2);
+      const textCache = stats.hooks && stats.hooks.textLayoutCache
+        ? stats.hooks.textLayoutCache
+        : null;
+      const glyphFonts = textCache && typeof textCache.fontsInGlyphCache === 'number'
+        ? textCache.fontsInGlyphCache
+        : 0;
+      const prefixFonts = textCache && typeof textCache.fontsInPrefixCache === 'number'
+        ? textCache.fontsInPrefixCache
+        : 0;
+      const measureFonts = textCache && typeof textCache.fontsInMeasureCache === 'number'
+        ? textCache.fontsInMeasureCache
+        : 0;
+      const glyphEntries = textCache && typeof textCache.glyphEntries === 'number'
+        ? textCache.glyphEntries
+        : 0;
+      const prefixEntries = textCache && typeof textCache.prefixEntries === 'number'
+        ? textCache.prefixEntries
+        : 0;
+      const measureEntries = textCache && typeof textCache.measureEntries === 'number'
+        ? textCache.measureEntries
+        : 0;
+      document.getElementById('cacheFonts').textContent = `${glyphFonts.toLocaleString()} / ${prefixFonts.toLocaleString()} / ${measureFonts.toLocaleString()}`;
+      document.getElementById('cacheEntries').textContent = `${glyphEntries.toLocaleString()} / ${prefixEntries.toLocaleString()} / ${measureEntries.toLocaleString()}`;
 
       requestAnimationFrame(render);
     }
@@ -273,10 +352,12 @@
       config.blockCount = parseInt(e.target.value);
       document.getElementById('blockCountLabel').textContent = config.blockCount.toLocaleString();
       blocks = generateBlocks(config.blockCount);
+      textBlocks = generateTextBlocks(Math.max(200, Math.floor(config.blockCount / 50)));
     });
 
     document.getElementById('regenerate').addEventListener('click', () => {
       blocks = generateBlocks(config.blockCount);
+      textBlocks = generateTextBlocks(Math.max(200, Math.floor(config.blockCount / 50)));
     });
 
     document.getElementById('culling').addEventListener('change', (e) => {

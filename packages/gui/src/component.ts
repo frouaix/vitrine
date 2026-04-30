@@ -5,7 +5,7 @@
 
 import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
-import { ImmediateRenderer, group, Canvas2DContext } from 'vitrine';
+import { ImmediateRenderer, group, Canvas2DContext, clearTextLayoutCaches } from 'vitrine';
 import type { RendererConfig, RenderContext } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
@@ -44,6 +44,7 @@ export interface VitrineComponentConfig {
 }
 
 export class VitrineComponent {
+  private static cMountedComponents: number = 0;
   private renderer: ImmediateRenderer | null = null;
   private canvas: HTMLCanvasElement | null = null;
   private container: HTMLElement | null = null;
@@ -126,7 +127,7 @@ export class VitrineComponent {
     });
 
     // Initialize selection manager if configured
-    if (this.config.selectionConfig?.enabled !== false) {
+    if (this.config.selectionConfig?.enabled === true) {
       this.selectionManager = new TextSelectionManager(this.config.selectionConfig);
       const canvasMeasure = document.createElement('canvas');
       const canvasContext = canvasMeasure.getContext('2d');
@@ -138,6 +139,7 @@ export class VitrineComponent {
     }
 
     this.mounted = true;
+    VitrineComponent.cMountedComponents += 1;
     this.setupInteractionInvalidation();
     this.invalidate();
   }
@@ -167,6 +169,10 @@ export class VitrineComponent {
     this.canvas = null;
     this.container = null;
     this.mounted = false;
+    VitrineComponent.cMountedComponents = Math.max(0, VitrineComponent.cMountedComponents - 1);
+    if (VitrineComponent.cMountedComponents === 0) {
+      clearTextLayoutCaches();
+    }
   }
 
   /** Update the render function. Takes effect on the next frame. */

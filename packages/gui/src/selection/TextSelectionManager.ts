@@ -285,6 +285,7 @@ export class TextSelectionManager {
     return points.filter((point) => point.index >= start && point.index <= end);
   }
 
+  // TODO: this is brute force search, should be optimized
   private groupInsertionPointsByLine(points: InsertionPoint[], lineTolerance: number = 0.5): LineGroup[] {
     const lineGroups: LineGroup[] = [];
     for (const point of points) {

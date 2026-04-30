@@ -8,6 +8,110 @@ import { DU_FONTSIZE_DEFAULT, SF_TEXT_ADVANCE_APPROX_DEFAULT, SF_TEXT_ASCENT_DEF
 
 const mpstFont_mpstGlyphWidth = new Map<string, Map<string, number>>();
 const mpstFont_mpstTextPrefixAdvance = new Map<string, Map<string, number[]>>();
+const mpstFont_mpstTextMeasure = new Map<string, Map<string, TextMeasure>>();
+
+const CACHES_MAX_FONTS = 64;
+const CACHES_MAX_GLYPHS_PER_FONT = 512;
+const CACHES_MAX_PREFIX_PER_FONT = 256;
+const CACHES_MAX_MEASURE_PER_FONT = 512;
+
+function pruneOldestMapEntry<K, V>(map: Map<K, V>): void {
+  const firstKey = map.keys().next().value;
+  if (firstKey !== undefined) {
+    map.delete(firstKey);
+  }
+}
+
+function setWithLruTouch<K, V>(map: Map<K, V>, key: K, value: V, maxEntries: number): void {
+  if (map.has(key)) {
+    map.delete(key);
+  }
+  map.set(key, value);
+  while (map.size > maxEntries) {
+    pruneOldestMapEntry(map);
+  }
+}
+
+function touchMapKey<K, V>(map: Map<K, V>, key: K): void {
+  const value = map.get(key);
+  if (value === undefined) {
+    return;
+  }
+  map.delete(key);
+  map.set(key, value);
+}
+
+function getOrCreateGlyphCacheByFont(stFont: string): Map<string, number> {
+  const existing = mpstFont_mpstGlyphWidth.get(stFont);
+  if (existing) {
+    touchMapKey(mpstFont_mpstGlyphWidth, stFont);
+    return existing;
+  }
+  const created = new Map<string, number>();
+  setWithLruTouch(mpstFont_mpstGlyphWidth, stFont, created, CACHES_MAX_FONTS);
+  return created;
+}
+
+function getOrCreatePrefixCacheByFont(stFont: string): Map<string, number[]> {
+  const existing = mpstFont_mpstTextPrefixAdvance.get(stFont);
+  if (existing) {
+    touchMapKey(mpstFont_mpstTextPrefixAdvance, stFont);
+    return existing;
+  }
+  const created = new Map<string, number[]>();
+  setWithLruTouch(mpstFont_mpstTextPrefixAdvance, stFont, created, CACHES_MAX_FONTS);
+  return created;
+}
+
+function getOrCreateMeasureCacheByFont(stFont: string): Map<string, TextMeasure> {
+  const existing = mpstFont_mpstTextMeasure.get(stFont);
+  if (existing) {
+    touchMapKey(mpstFont_mpstTextMeasure, stFont);
+    return existing;
+  }
+  const created = new Map<string, TextMeasure>();
+  setWithLruTouch(mpstFont_mpstTextMeasure, stFont, created, CACHES_MAX_FONTS);
+  return created;
+}
+
+export function clearTextLayoutCaches(): void {
+  mpstFont_mpstGlyphWidth.clear();
+  mpstFont_mpstTextPrefixAdvance.clear();
+  mpstFont_mpstTextMeasure.clear();
+}
+
+export function getTextLayoutCacheStats(): {
+  fontsInGlyphCache: number;
+  fontsInPrefixCache: number;
+  fontsInMeasureCache: number;
+  glyphEntries: number;
+  prefixEntries: number;
+  measureEntries: number;
+} {
+  let glyphEntries = 0;
+  for (const bucket of mpstFont_mpstGlyphWidth.values()) {
+    glyphEntries += bucket.size;
+  }
+
+  let prefixEntries = 0;
+  for (const bucket of mpstFont_mpstTextPrefixAdvance.values()) {
+    prefixEntries += bucket.size;
+  }
+
+  let measureEntries = 0;
+  for (const bucket of mpstFont_mpstTextMeasure.values()) {
+    measureEntries += bucket.size;
+  }
+
+  return {
+    fontsInGlyphCache: mpstFont_mpstGlyphWidth.size,
+    fontsInPrefixCache: mpstFont_mpstTextPrefixAdvance.size,
+    fontsInMeasureCache: mpstFont_mpstTextMeasure.size,
+    glyphEntries,
+    prefixEntries,
+    measureEntries
+  };
+}
 
 function stFontCacheKey(props: Partial<TextProps> & { font?: string }): string {
   return props.font ?? `${props.fontSize ?? DU_FONTSIZE_DEFAULT}px sans-serif`;
@@ -27,19 +131,16 @@ function getCachedGlyphWidth(
   context?: RenderContext
 ): number {
   const stFont = stFontCacheKey(props);
-  let mpstGlyphWidth = mpstFont_mpstGlyphWidth.get(stFont);
-  if (!mpstGlyphWidth) {
-    mpstGlyphWidth = new Map<string, number>();
-    mpstFont_mpstGlyphWidth.set(stFont, mpstGlyphWidth);
-  }
+  const mpstGlyphWidth = getOrCreateGlyphCacheByFont(stFont);
 
   const widthCached = mpstGlyphWidth.get(stGlyph);
   if (widthCached !== undefined) {
+    touchMapKey(mpstGlyphWidth, stGlyph);
     return widthCached;
   }
 
   const widthMeasured = measureText(stGlyph, propsUnwrappedForMeasure(props), context).width;
-  mpstGlyphWidth.set(stGlyph, widthMeasured);
+  setWithLruTouch(mpstGlyphWidth, stGlyph, widthMeasured, CACHES_MAX_GLYPHS_PER_FONT);
   return widthMeasured;
 }
 
@@ -49,14 +150,11 @@ function getCachedPrefixAdvance(
   context?: RenderContext
 ): number[] {
   const stFont = stFontCacheKey(props);
-  let mpstTextPrefixAdvance = mpstFont_mpstTextPrefixAdvance.get(stFont);
-  if (!mpstTextPrefixAdvance) {
-    mpstTextPrefixAdvance = new Map<string, number[]>();
-    mpstFont_mpstTextPrefixAdvance.set(stFont, mpstTextPrefixAdvance);
-  }
+  const mpstTextPrefixAdvance = getOrCreatePrefixCacheByFont(stFont);
 
   const prefixCached = mpstTextPrefixAdvance.get(text);
   if (prefixCached) {
+    touchMapKey(mpstTextPrefixAdvance, text);
     return prefixCached;
   }
 
@@ -65,7 +163,7 @@ function getCachedPrefixAdvance(
     rgdxPrefix[i + 1] = rgdxPrefix[i] + getCachedGlyphWidth(text[i] ?? '', props, context);
   }
 
-  mpstTextPrefixAdvance.set(text, rgdxPrefix);
+  setWithLruTouch(mpstTextPrefixAdvance, text, rgdxPrefix, CACHES_MAX_PREFIX_PER_FONT);
   return rgdxPrefix;
 }
 
@@ -98,7 +196,17 @@ function findCharIndexByAdvance(rgdxPrefix: number[], xAdvance: number): number 
  */
 export function measureText(text: string, props: Partial<TextProps> & { font?: string }, context?: RenderContext): TextMeasure {
   if (context?.measureText && text.length > 0) {
-    return context.measureText(text, props);
+    const stFont = stFontCacheKey(props);
+    const mpstTextMeasure = getOrCreateMeasureCacheByFont(stFont);
+    const tmCached = mpstTextMeasure.get(text);
+    if (tmCached) {
+      touchMapKey(mpstTextMeasure, text);
+      return tmCached;
+    }
+
+    const tmMeasured = context.measureText(text, props);
+    setWithLruTouch(mpstTextMeasure, text, tmMeasured, CACHES_MAX_MEASURE_PER_FONT);
+    return tmMeasured;
   }
 
   const fontSize = props.fontSize ?? DU_FONTSIZE_DEFAULT;

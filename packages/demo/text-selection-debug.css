@@ -63,6 +63,51 @@ h1 {
   font-style: italic;
 }
 
+.cache-stats {
+  margin-top: 20px;
+  padding: 14px 16px;
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 12px;
+  border: 1px solid rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+}
+
+.cache-stats h2 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #93c5fd;
+}
+
+.cache-stats-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.cache-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(30, 41, 59, 0.55);
+}
+
+.cache-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #93c5fd;
+}
+
+.cache-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
 .debug-info {
   margin-top: 24px;
   padding: 16px;

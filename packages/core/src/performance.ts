@@ -3,7 +3,20 @@
 // Performance optimization utilities
 import type { Block, Rc } from './core/types.ts';
 import { getBlockBounds } from './core/bounds.ts';
+import { getTextLayoutCacheStats } from './core/text-layout.ts';
 import { Matrix2D } from './transform.ts';
+
+export type PerformanceHookMetrics = Record<string, number | string | boolean | null>;
+export type PerformanceStatsHook = () => PerformanceHookMetrics;
+
+export interface PerformanceStatsSnapshot {
+  blocksRendered: number;
+  blocksCulled: number;
+  renderTime: number;
+  fps: number;
+  averageFPS: number;
+  hooks: Record<string, PerformanceHookMetrics>;
+}
 
 export interface Viewport {
   x: number;
@@ -87,9 +100,21 @@ export class PerformanceOptimizer {
 }
 
 export class PerformanceMonitor {
+  private static mpstHook_mpfnStats = new Map<string, PerformanceStatsHook>([
+    ['textLayoutCache', () => getTextLayoutCacheStats()]
+  ]);
+
   private frameCount = 0;
   private lastTime = performance.now();
   private fpsHistory: number[] = [];
+
+  static registerStatsHook(stName: string, fnStats: PerformanceStatsHook): void {
+    this.mpstHook_mpfnStats.set(stName, fnStats);
+  }
+
+  static unregisterStatsHook(stName: string): void {
+    this.mpstHook_mpfnStats.delete(stName);
+  }
 
   update(): void {
     this.frameCount++;
@@ -114,10 +139,22 @@ export class PerformanceMonitor {
     return Math.round(sum / this.fpsHistory.length);
   }
 
-  getStats() {
+  getStats(): PerformanceStatsSnapshot {
+    const mpstHookMetrics: Record<string, PerformanceHookMetrics> = {};
+    for (const [stName, fnStats] of PerformanceMonitor.mpstHook_mpfnStats.entries()) {
+      try {
+        mpstHookMetrics[stName] = fnStats();
+      } catch {
+        mpstHookMetrics[stName] = {
+          fError: true
+        };
+      }
+    }
+
     return {
       ...PerformanceOptimizer.stats,
-      averageFPS: this.getAverageFPS()
+      averageFPS: this.getAverageFPS(),
+      hooks: mpstHookMetrics
     };
   }
 }
