@@ -212,8 +212,8 @@ function filterHueRotate(data: Uint8ClampedArray, angleDeg: number): void {
  * so that edge pixels spread correctly.
  *
  * @param ctx    The canvas context whose current pixel contents should be blurred.
- * @param radius Blur radius in pixels (0 = no-op; clamped to 255 due to lookup tables — radii
- *               above 255 are silently ignored, producing no blur effect).
+ * @param radius Blur radius in pixels (0 = no-op; radii of 256 or greater are silently
+ *               ignored due to lookup table limits, producing no blur effect).
  */
 function filterBlur(ctx: CanvasRenderingContext2D, radius: number): void {
   if (radius <= 0) return;

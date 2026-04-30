@@ -112,7 +112,7 @@ export class Canvas2DContext implements RenderContext {
     const prevOpacity = this.rgOpacity.pop();
     if (prevOpacity !== undefined) this.opacity = prevOpacity;
     const prevFilter = this.rgPolyfillFilter.pop();
-    this.polyfillFilter = prevFilter !== undefined ? prevFilter : null;
+    if (prevFilter !== undefined) this.polyfillFilter = prevFilter;
   }
 
   applyTransform(matrix: Matrix2D): void {
