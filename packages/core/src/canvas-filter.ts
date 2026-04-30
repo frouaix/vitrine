@@ -35,19 +35,50 @@ interface FilterFn {
 
 function parseFilterFunctions(filterStr: string): FilterFn[] {
   const results: FilterFn[] = [];
-  const re = /([\w-]+)\(([^)]*)\)/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(filterStr)) !== null) {
-    const name = match[1];
-    const args = match[2].trim().split(/\s+/).filter(Boolean);
+  let i = 0;
+  const s = filterStr;
+  const len = s.length;
+
+  // Linear manual parser — avoids regex backtracking on pathological inputs.
+  while (i < len) {
+    // Skip whitespace / separators
+    while (i < len && (s[i] === ' ' || s[i] === ',' || s[i] === '\t' || s[i] === '\n' || s[i] === '\r')) i++;
+    if (i >= len) break;
+
+    // A filter function name consists of ASCII letters and hyphens.
+    const ch = s[i];
+    if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'))) { i++; continue; }
+
+    const nameStart = i;
+    while (i < len) {
+      const c = s[i];
+      if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '-') i++;
+      else break;
+    }
+    const name = s.slice(nameStart, i).toLowerCase();
+
+    // Skip optional whitespace then require '('
+    while (i < len && s[i] === ' ') i++;
+    if (i >= len || s[i] !== '(') continue;
+    i++; // consume '('
+
+    // Collect characters up to (but not including) the matching ')'
+    const argsStart = i;
+    while (i < len && s[i] !== ')') i++;
+    const argsStr = s.slice(argsStart, i);
+    if (i < len) i++; // consume ')'
+
+    const args = argsStr.trim().split(/\s+/).filter(Boolean);
     results.push({ name, args });
   }
+
   return results;
 }
 
 function normalizeNumberPercentage(value: string): number {
-  let n = parseFloat(value);
-  if (value.trimEnd().endsWith('%')) n /= 100;
+  const trimmed = value.trim();
+  let n = parseFloat(trimmed);
+  if (trimmed.endsWith('%')) n /= 100;
   return n;
 }
 
@@ -172,8 +203,18 @@ function filterHueRotate(data: Uint8ClampedArray, angleDeg: number): void {
   }
 }
 
-// Fast box-blur kernel (3 passes to approximate Gaussian).
-// Algorithm based on the QuasiMondo box-blur for canvas.
+/**
+ * Apply a fast Gaussian-approximation box blur to the canvas context's pixels.
+ *
+ * Uses the QuasiMondo "stack blur" algorithm (3 horizontal-then-vertical box
+ * blur passes) which provides a good Gaussian approximation in O(width×height)
+ * time regardless of `radius`.  The blur operates on the full canvas dimensions
+ * so that edge pixels spread correctly.
+ *
+ * @param ctx    The canvas context whose current pixel contents should be blurred.
+ * @param radius Blur radius in pixels (0 = no-op; clamped to 255 due to lookup tables — radii
+ *               above 255 are silently ignored, producing no blur effect).
+ */
 function filterBlur(ctx: CanvasRenderingContext2D, radius: number): void {
   if (radius <= 0) return;
   const { width, height } = ctx.canvas;
@@ -305,7 +346,16 @@ function filterBlur(ctx: CanvasRenderingContext2D, radius: number): void {
 // drop-shadow helper
 // ---------------------------------------------------------------------------
 
-/** Parse a CSS color string into { r, g, b, a } (a in 0-1). */
+/**
+ * Parse a CSS color string into its RGBA components.
+ *
+ * Delegates to the browser's own color parsing by filling a single pixel with
+ * the requested color and reading back the raw bytes via `getImageData`.
+ * Falls back to opaque black if parsing fails.
+ *
+ * @param color  Any CSS color string (e.g. `'red'`, `'#ff0000'`, `'rgba(0,0,0,0.5)'`).
+ * @returns      `{ r, g, b }` in the 0-255 range; `a` in the 0-1 range.
+ */
 function parseCssColor(color: string): { r: number; g: number; b: number; a: number } {
   const defaultResult = { r: 0, g: 0, b: 0, a: 1 };
   if (!color) return defaultResult;
@@ -321,6 +371,24 @@ function parseCssColor(color: string): { r: number; g: number; b: number; a: num
   return { r: pixel[0], g: pixel[1], b: pixel[2], a: pixel[3] / 255 };
 }
 
+/**
+ * Apply a CSS `drop-shadow` filter to the canvas context's current pixel contents.
+ *
+ * Implementation steps:
+ *  1. Capture the original pixels.
+ *  2. Build a shadow silhouette: preserve the original alpha but replace RGB with
+ *     the shadow colour, scaling alpha by the colour's own alpha component.
+ *  3. Blur the silhouette with `filterBlur`.
+ *  4. Composite: draw the blurred shadow at (offsetX, offsetY), then draw the
+ *     original image on top.
+ *  5. Write the composed result back to `ctx`.
+ *
+ * @param ctx       Target canvas rendering context.
+ * @param offsetX   Horizontal shadow offset in pixels.
+ * @param offsetY   Vertical shadow offset in pixels.
+ * @param blurRadius Gaussian-approximation blur radius for the shadow.
+ * @param color     CSS colour string for the shadow.
+ */
 function filterDropShadow(
   ctx: CanvasRenderingContext2D,
   offsetX: number,
