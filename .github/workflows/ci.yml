@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build vitrine (texta dependency)
+        run: pnpm --filter vitrine build
+
       - name: Run texta tests
         run: pnpm --filter texta test
 
