@@ -2,6 +2,7 @@
 
 // Line Styles & Blend Modes Demo — showcases Phase 1 Canvas features
 import { group, rectangle, text, circle, line, arc, path, layer, ellipse } from 'vitrine';
+import type { BlendMode } from 'vitrine';
 
 export const demo = {
   id: 'line-styles',
@@ -160,10 +161,10 @@ function starPath(cx: number, cy: number, outerR: number, innerR: number): strin
 }
 
 /** Render a blend mode comparison tile. */
-function renderBlendDemo(x: number, y: number, mode: string, col1: string, col2: string) {
+function renderBlendDemo(x: number, y: number, mode: BlendMode, col1: string, col2: string) {
   return group({ x, y }, [
     text({ x: 30, y: -2, text: mode, fontSize: 11, fill: '#666', align: 'center' as const, baseline: 'bottom' as const }),
-    layer({ blendMode: mode as any }, [
+    layer({ blendMode: mode }, [
       rectangle({ x: 0, y: 0, dx: 40, dy: 40, fill: col1 }),
       rectangle({ x: 20, y: 15, dx: 40, dy: 40, fill: col2 })
     ])

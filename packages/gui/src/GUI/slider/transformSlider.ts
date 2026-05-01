@@ -7,6 +7,29 @@ import { GUIControlType } from '../types.ts';
 import { SLIDER_DEFAULTS } from './defaultsSlider.ts';
 import { COMMON_DEFAULTS, getControlStyle } from '../constants.ts';
 
+type SliderDragState = {
+  fDragging: boolean;
+  xsStart: number;
+  startValue: number;
+};
+
+const mpSliderProp_sliderDragState = new WeakMap<GUIControlOfType<GUIControlType.Slider>['props'], SliderDragState>();
+
+function getOrCreateSliderDragState(props: GUIControlOfType<GUIControlType.Slider>['props']): SliderDragState {
+  const stateExisting = mpSliderProp_sliderDragState.get(props);
+  if (stateExisting) {
+    return stateExisting;
+  }
+
+  const stateNew: SliderDragState = {
+    fDragging: false,
+    xsStart: 0,
+    startValue: 0
+  };
+  mpSliderProp_sliderDragState.set(props, stateNew);
+  return stateNew;
+}
+
 export function transformSlider(
   control: GUIControlOfType<GUIControlType.Slider>,
   context: TransformContext,
@@ -143,11 +166,7 @@ export function transformSlider(
     onChange?.(newValue);
   };
   
-  // Persistent drag state (stored on props to survive re-renders)
-  if (!(props as any)._dragState) {
-    (props as any)._dragState = { fDragging: false, xsStart: 0, startValue: 0 };
-  }
-  const dragState = (props as any)._dragState;
+  const dragState = getOrCreateSliderDragState(props);
   
   const children: Block[] = [];
   

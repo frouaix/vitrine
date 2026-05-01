@@ -240,11 +240,23 @@ export class EventManager {
   /**
    * Find the nearest block with a tooltip function, checking the hit block first then ancestors.
    */
-  private static findBlockWithTooltip(hit: HitTestResult): Block | null {
-    if ((hit.block.props as any).tooltip) return hit.block;
-    for (let i = hit.ancestors.length - 1; i >= 0; i--) {
-      if ((hit.ancestors[i].props as any).tooltip) return hit.ancestors[i];
+  private static findBlockWithTooltip(hit: HitTestResult): {
+    block: Block;
+    tooltip: NonNullable<Block['props']['tooltip']>;
+  } | null {
+    const hitTooltip = hit.block.props.tooltip;
+    if (hitTooltip) {
+      return { block: hit.block, tooltip: hitTooltip };
     }
+
+    for (let i = hit.ancestors.length - 1; i >= 0; i--) {
+      const ancestor = hit.ancestors[i];
+      const tooltip = ancestor.props.tooltip;
+      if (tooltip) {
+        return { block: ancestor, tooltip };
+      }
+    }
+
     return null;
   }
 
@@ -350,10 +362,10 @@ export class EventManager {
     }
 
     // Track tooltip — find nearest block with tooltip property
-    const tooltipBlock = hit ? EventManager.findBlockWithTooltip(hit) : null;
-    if (tooltipBlock) {
+    const tooltipResult = hit ? EventManager.findBlockWithTooltip(hit) : null;
+    if (tooltipResult) {
       this.activeTooltip = {
-        fn: (tooltipBlock.props as any).tooltip,
+        fn: tooltipResult.tooltip,
         xs: sceneCoords.x,
         ys: sceneCoords.y
       };

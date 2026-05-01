@@ -3,6 +3,7 @@
 // Rendering context abstraction
 import { Matrix2D, TransformStack } from '../transform.ts';
 import type {
+  BlendMode,
   DrawArcStyleProps,
   DrawCircleStyleProps,
   DrawImageStyleProps,
@@ -12,6 +13,7 @@ import type {
   DrawTextStyleProps,
   FillStyle,
   LineStyleProps,
+  ShadowProps,
   TextMeasure,
   TextMeasureProps,
 } from './types.ts';
@@ -31,6 +33,10 @@ export interface RenderContext {
   restore(): void;
   applyTransform(xf: Matrix2D): void;
   setOpacity(opacity: number): void;
+  setShadow(shadow: ShadowProps | null): void;
+  setFilter(filter: string | undefined): void;
+  setBlendMode(blendMode: BlendMode | undefined): void;
+  clipRect(xl: number, yl: number, dxl: number, dyl: number): void;
   
   // Drawing primitives - to be implemented by concrete renderers
   clear(): void;
@@ -113,6 +119,39 @@ export class Canvas2DContext implements RenderContext {
   setOpacity(opacity: number): void {
     this.opacity = opacity;
     this.ctx.globalAlpha = opacity;
+  }
+
+  setShadow(shadow: ShadowProps | null): void {
+    if (!shadow) {
+      this.ctx.shadowOffsetX = 0;
+      this.ctx.shadowOffsetY = 0;
+      this.ctx.shadowBlur = 0;
+      this.ctx.shadowColor = 'transparent';
+      return;
+    }
+
+    const { offsetX, offsetY, blur, color } = shadow;
+    this.ctx.shadowOffsetX = offsetX;
+    this.ctx.shadowOffsetY = offsetY;
+    this.ctx.shadowBlur = blur;
+    this.ctx.shadowColor = color;
+  }
+
+  setFilter(filter: string | undefined): void {
+    this.ctx.filter = filter ?? 'none';
+  }
+
+  setBlendMode(blendMode: BlendMode | undefined): void {
+    const compositeOperation: GlobalCompositeOperation = blendMode && blendMode !== 'normal'
+      ? blendMode
+      : 'source-over';
+    this.ctx.globalCompositeOperation = compositeOperation;
+  }
+
+  clipRect(xl: number, yl: number, dxl: number, dyl: number): void {
+    this.ctx.beginPath();
+    this.ctx.rect(xl, yl, dxl, dyl);
+    this.ctx.clip();
   }
 
   clear(): void {
