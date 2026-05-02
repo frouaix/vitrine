@@ -320,7 +320,7 @@ function computeLineMetrics(
     if (line.length === 0) {
       return props.fontSize ?? styleDefault.fontSize ?? 16;
     }
-    return Math.max(...line.map((segment) => segment.ascent), lineHeights[i]! * 0.7);
+    return Math.max(...line.map((segment) => segment.ascent));
   });
 
   return { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault };
@@ -396,7 +396,6 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
 
   const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
   const lines: TextaLayoutLine[] = [];
-  let yLineTop = yTop;
   let yLineBaseline = yBaseline;
 
   for (let i = 0; i < lineMetrics.length; i++) {
@@ -404,6 +403,7 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
     const lineWidth = lineWidths[i] ?? 0;
     const lineHeight = lineHeights[i] ?? 0;
     const lineAscent = lineAscents[i] ?? firstAscent;
+    const yLineTop = yLineBaseline - lineAscent;
     let xRun = getLineStartX(lineWidth);
     const segments: PositionedSegmentMetrics[] = [];
 
@@ -447,7 +447,6 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
       yBaseline: yLineBaseline
     });
 
-    yLineTop += lineHeight;
     yLineBaseline += lineHeight;
   }
 
