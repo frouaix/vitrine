@@ -5,11 +5,14 @@ import {
   Matrix2D,
   Canvas2DContext,
   layoutTextCharacterBounds,
+  getBlockTypeHandlers,
   getBlockTransform,
   transformRc
 } from 'vitrine';
 import type {
   Block,
+  CustomBlockDescriptor,
+  CustomBlockSelectionGeometry,
   Rc,
   RenderContext,
   TextProps
@@ -30,18 +33,17 @@ export interface CharacterBoundsUpdateResult {
   selectableTextBlockIds: string[];
 }
 
-interface TextBlockDescriptor {
+interface CharacterBoundsDescriptor {
   blockId: string;
-  text: string;
-  props: TextProps;
   transformWorld: Matrix2D;
   layoutSignature: string;
+  resolveLocalBounds: () => Rc[];
   worldSignature: string;
 }
 
 /** Cache bounds per character for text block, keyed by id+hash of text/props/transform */
 interface TextBoundsCacheEntry {
-  descriptor: TextBlockDescriptor;
+  descriptor: CharacterBoundsDescriptor;
   rgrcl?: Rc[];
   rgrcs?: Rc[];
 }
@@ -98,7 +100,7 @@ function buildWorldTransformSignature(transform: Matrix2D): string {
   ].map(signaturePart).join('|');
 }
 
-function toTextDescriptor(block: Block, xfCur: Matrix2D): TextBlockDescriptor | null {
+function toTextDescriptor(block: Block, xfCur: Matrix2D, context?: RenderContext): CharacterBoundsDescriptor | null {
   if (
     typeof block.props.id !== 'string'
     || block.props.id.length === 0
@@ -110,10 +112,26 @@ function toTextDescriptor(block: Block, xfCur: Matrix2D): TextBlockDescriptor | 
   const blockId = block.props.id;
   return {
     blockId,
-    text: props.text,
-    props,
     transformWorld: xfCur,
     layoutSignature: buildTextLayoutSignature(props),
+    resolveLocalBounds: () => layoutTextCharacterBounds(props.text, props, context),
+    worldSignature: buildWorldTransformSignature(xfCur)
+  };
+}
+
+function toCustomSelectionDescriptor(
+  geometry: CustomBlockSelectionGeometry,
+  xfCur: Matrix2D
+): CharacterBoundsDescriptor | null {
+  if (geometry.blockId.length === 0) {
+    return null;
+  }
+
+  return {
+    blockId: geometry.blockId,
+    transformWorld: xfCur,
+    layoutSignature: geometry.layoutSignature,
+    resolveLocalBounds: () => geometry.rgrclCharacterBounds,
     worldSignature: buildWorldTransformSignature(xfCur)
   };
 }
@@ -133,11 +151,7 @@ export class CharacterBoundsAdapter {
 
   private ensureRgrcl(entry: TextBoundsCacheEntry): Rc[] {
     if (!entry.rgrcl) {
-      entry.rgrcl = layoutTextCharacterBounds(
-        entry.descriptor.text,
-        entry.descriptor.props,
-        this.context
-      );
+      entry.rgrcl = entry.descriptor.resolveLocalBounds();
     }
     return entry.rgrcl;
   }
@@ -149,8 +163,8 @@ export class CharacterBoundsAdapter {
     return entry.rgrcs;
   }
 
-  private buildDescriptorMap(blRoot: Block): Map<string, TextBlockDescriptor> {
-    const descriptorsByBlockId = new Map<string, TextBlockDescriptor>();
+  private buildDescriptorMap(blRoot: Block): Map<string, CharacterBoundsDescriptor> {
+    const descriptorsByBlockId = new Map<string, CharacterBoundsDescriptor>();
     const stack: Array<{ block: Block; transform: Matrix2D }> = [{ block: blRoot, transform: Matrix2D.identity() }];
 
     while (stack.length > 0) {
@@ -162,9 +176,21 @@ export class CharacterBoundsAdapter {
       const { block, transform: transformParent } = current;
       const transformWorld = transformParent.multiply(getBlockTransform(block.props));
       if (block.type === BlockType.Text) {
-        const descriptor = toTextDescriptor(block, transformWorld);
+        const descriptor = toTextDescriptor(block, transformWorld, this.context);
         if (descriptor) {
           descriptorsByBlockId.set(descriptor.blockId, descriptor);
+        }
+      } else {
+        const handlers = getBlockTypeHandlers(block.type);
+        const geometry = handlers?.getSelectionGeometry?.(
+          block as unknown as CustomBlockDescriptor,
+          { context: this.context }
+        );
+        if (geometry) {
+          const descriptor = toCustomSelectionDescriptor(geometry, transformWorld);
+          if (descriptor) {
+            descriptorsByBlockId.set(descriptor.blockId, descriptor);
+          }
         }
       }
 
