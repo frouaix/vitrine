@@ -35,12 +35,6 @@ const PROPS_OUTLINE_DEBUG_HOVER = {
   strokeWidth: 2
 } as const;
 
-type ClipRectProps = {
-  clip?: boolean;
-  dx?: number;
-  dy?: number;
-};
-
 export interface RendererConfig {
   canvas?: HTMLCanvasElement;
   dx?: number;
@@ -348,11 +342,15 @@ export class ImmediateRenderer {
     const opacityParent = this.context.opacity;
     this.context.setOpacity(opacityParent * opacity);
 
-    // Apply shadow if present
-    this.context.setShadow(shadow ?? null);
+    // Apply shadow only when explicitly set; otherwise inherit from parent save state.
+    if (shadow) {
+      this.context.setShadow(shadow);
+    }
 
-    // Apply CSS filter if present
-    this.context.setFilter(props.filter);
+    // Apply CSS filter only when explicitly set; otherwise inherit from parent save state.
+    if (props.filter !== undefined) {
+      this.context.setFilter(props.filter);
+    }
 
 
     // Render based on block type
@@ -400,11 +398,13 @@ export class ImmediateRenderer {
       case BlockType.Layer: {
         // Apply blend mode for Layer blocks
         if (bl.type === BlockType.Layer) {
-          this.context.setBlendMode(bl.props.blendMode);
+          if (bl.props.blendMode !== undefined) {
+            this.context.setBlendMode(bl.props.blendMode);
+          }
         }
 
         // Apply clipping if clip is set with dimensions
-        const { clip, dx: dxClip, dy: dyClip } = props as ClipRectProps;
+        const { clip, dx: dxClip, dy: dyClip } = bl.props;
         if (clip && dxClip !== undefined && dyClip !== undefined) {
           this.context.clipRect(0, 0, dxClip, dyClip);
         }
