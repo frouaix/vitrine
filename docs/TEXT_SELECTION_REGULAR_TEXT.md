@@ -78,6 +78,6 @@ Use this only for custom rendering paths where automatic `text()` extraction is 
 
 ## Current scope
 
-- Automatic adapter support is for regular `text()` blocks with `id`.
+- Automatic adapter support covers regular `text()` blocks with `id`.
+- It also covers custom blocks that expose selection geometry through the block registry, including `texta()` once `registerTextaBlockType()` has been called.
 - Cross-block selections are not supported.
-- `texta()` requires custom handling if you need selection behavior equivalent to `text()`.
