@@ -130,6 +130,10 @@ export class TransformStack {
     return this.xfCur;
   }
 
+  setCurrent(xf: Matrix2D): void {
+    this.xfCur = xf;
+  }
+
   apply(transform: {
     x?: number;
     y?: number;

@@ -258,11 +258,16 @@ export interface ArcProps extends BaseBlockProps, StrokeProps, FillProps {
 
 export type DrawArcStyleProps = DrawPathStyleProps;
 
-export interface GroupProps extends BaseBlockProps {
+export interface ClipProps {
   clip?: boolean;
+  dx?: number;
+  dy?: number;
 }
 
-export interface LayerProps extends BaseBlockProps {
+export interface GroupProps extends BaseBlockProps, ClipProps {
+}
+
+export interface LayerProps extends BaseBlockProps, ClipProps {
   blendMode?: BlendMode;
   cache?: boolean;
 }

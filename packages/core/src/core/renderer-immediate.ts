@@ -342,25 +342,14 @@ export class ImmediateRenderer {
     const opacityParent = this.context.opacity;
     this.context.setOpacity(opacityParent * opacity);
 
-    // Apply shadow if present
+    // Apply shadow only when explicitly set; otherwise inherit from parent save state.
     if (shadow) {
-      const { offsetX, offsetY, blur, color } = shadow;
-      const ctx = (this.context as any).ctx;
-      if (ctx) {
-        ctx.shadowOffsetX = offsetX;
-        ctx.shadowOffsetY = offsetY;
-        ctx.shadowBlur = blur;
-        ctx.shadowColor = color;
-      }
+      this.context.setShadow(shadow);
     }
 
-    // Apply CSS filter if present
-    const { filter } = props as any;
-    if (filter) {
-      const ctx = (this.context as any).ctx;
-      if (ctx) {
-        ctx.filter = filter;
-      }
+    // Apply CSS filter only when explicitly set; otherwise inherit from parent save state.
+    if (props.filter !== undefined) {
+      this.context.setFilter(props.filter);
     }
 
 
@@ -409,24 +398,15 @@ export class ImmediateRenderer {
       case BlockType.Layer: {
         // Apply blend mode for Layer blocks
         if (bl.type === BlockType.Layer) {
-          const { blendMode } = props as any;
-          if (blendMode) {
-            const ctx = (this.context as any).ctx as CanvasRenderingContext2D;
-            if (ctx) {
-              ctx.globalCompositeOperation = blendMode;
-            }
+          if (bl.props.blendMode !== undefined) {
+            this.context.setBlendMode(bl.props.blendMode);
           }
         }
 
         // Apply clipping if clip is set with dimensions
-        const { clip, dx: dxClip, dy: dyClip } = props as any;
+        const { clip, dx: dxClip, dy: dyClip } = bl.props;
         if (clip && dxClip !== undefined && dyClip !== undefined) {
-          const ctx = (this.context as any).ctx as CanvasRenderingContext2D;
-          if (ctx) {
-            ctx.beginPath();
-            ctx.rect(0, 0, dxClip, dyClip);
-            ctx.clip();
-          }
+          this.context.clipRect(0, 0, dxClip, dyClip);
         }
         break;
       }
@@ -657,7 +637,7 @@ export class ImmediateRenderer {
       // We need to set this as the current transform for rendering children
       
       // Directly set the transform stack's current to the stored transform
-      (this.context.transformStack as any).current = transform.clone();
+      this.context.transformStack.setCurrent(transform.clone());
       
       // Apply to canvas context (with pixelRatio)
       if (this.pixelRatio !== 1) {
@@ -775,7 +755,7 @@ export class ImmediateRenderer {
     // Render tooltip as overlay (identity transform + pixelRatio)
     this.context.save();
     this.context.transformStack.save();
-    (this.context.transformStack as any).current = Matrix2D.identity();
+    this.context.transformStack.setCurrent(Matrix2D.identity());
 
     if (this.pixelRatio !== 1) {
       this.context.applyTransform(Matrix2D.identity().scaleXY(this.pixelRatio, this.pixelRatio));

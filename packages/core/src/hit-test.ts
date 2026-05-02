@@ -51,11 +51,13 @@ export class HitTester {
 
     const ptl = inverse.transformPoint(xs, ys);
 
-    // Reject points outside clip region
-    const { clip, dx: dxClip, dy: dyClip } = props as { clip?: boolean; dx?: number; dy?: number };
-    if (clip && dxClip !== undefined && dyClip !== undefined) {
-      if (ptl.x < 0 || ptl.x > dxClip || ptl.y < 0 || ptl.y > dyClip) {
-        return null;
+    // Reject points outside clip region for container blocks that support clipping.
+    if (bl.type === BlockType.Group || bl.type === BlockType.Layer) {
+      const { clip, dx: dxClip, dy: dyClip } = bl.props;
+      if (clip && dxClip !== undefined && dyClip !== undefined) {
+        if (ptl.x < 0 || ptl.x > dxClip || ptl.y < 0 || ptl.y > dyClip) {
+          return null;
+        }
       }
     }
 
