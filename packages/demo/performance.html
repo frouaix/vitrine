@@ -305,10 +305,11 @@
         }, blocks)
         ,
 
-        // Text workload to exercise text measurement caches
+        // Keep the text workload invisible so the cache exercise does not clutter the scene.
         group({
           x: 470 + Math.cos(config.time * 0.35) * 120,
           y: 320 + Math.sin(config.time * 0.45) * 70,
+          opacity: 0,
         }, textBlocks)
       ]);
 

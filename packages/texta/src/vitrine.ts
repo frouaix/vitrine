@@ -585,7 +585,10 @@ function buildTextaLayoutUncached(
         const rgdxUnit: number[] = [];
         for (let iUnit = segment.iStart; iUnit < segment.iEnd; iUnit++) {
           const textUnit = getUnitText(props.texta, rgBoundaryUtf16, iUnit);
-          const metrics = contextMeasure(textUnit, segment.font ? { font: segment.font } : { fontSize: segment.fontSize });
+          const metrics = contextMeasure(textUnit, {
+            font: segment.font,
+            fontSize: segment.fontSize
+          });
           rgdxUnit.push(metrics.width);
           widthTotalUnits += metrics.width;
         }
