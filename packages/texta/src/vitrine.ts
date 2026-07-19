@@ -222,11 +222,6 @@ function buildTextaLayoutSignature(props: TextaBlockProps): string {
     props.texta.iVersion,
     props.texta.rgUnits,
     props.texta.rgStorageMode,
-    props.texta.strText,
-    props.texta.idStyleDefault,
-    JSON.stringify(props.texta.rgSegGraphemeToUtf16),
-    JSON.stringify(props.texta.rgIdStyleRef),
-    JSON.stringify(props.texta.mpId_StyleEntry),
     props.align,
     props.baseline,
     props.dx,
@@ -249,10 +244,12 @@ function getTextaLayoutCacheKey(
   return `${buildTextaLayoutSignature(props)}|${getTextaMeasureSignature(context)}`;
 }
 
-function splitRunLines(props: TextaBlockProps): Segment[][] {
+function splitRunLines(
+  props: TextaBlockProps,
+  rgBoundaryUtf16: number[],
+  styleDefault: StyleEntryLike
+): Segment[][] {
   const runs = getRgRenderBridgeRun(props.texta);
-  const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
-  const styleDefault = getDefaultStyle(props);
   const mpStyleById = props.texta.mpId_StyleEntry as Record<number, StyleEntryLike>;
   const lineSegments: Segment[][] = [[]];
 
@@ -347,11 +344,11 @@ function splitSegmentWrapAtoms(segment: Segment, value: AttributedTextValue, rgB
 
 function computeLineMetrics(
   props: TextaBlockProps,
+  rgBoundaryUtf16: number[],
   contextMeasure: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure
 ): { lineMetrics: SegmentMetrics[][]; lineWidths: number[]; lineHeights: number[]; lineAscents: number[]; styleDefault: StyleEntryLike } {
   const styleDefault = getDefaultStyle(props);
-  const lineSegments = splitRunLines(props);
-  const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
+  const lineSegments = splitRunLines(props, rgBoundaryUtf16, styleDefault);
 
   let lineMetrics: SegmentMetrics[][];
   if (props.dx !== undefined) {
@@ -524,8 +521,10 @@ function buildTextaLayoutUncached(
     textaLayoutStats.characterBoundsBuilds += 1;
   }
   const contextMeasure = createMeasureTextFn(props, context);
+  const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
   const { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault } = computeLineMetrics(
     props,
+    rgBoundaryUtf16,
     contextMeasure
   );
   const fIncludeCharacterBounds = options?.fIncludeCharacterBounds ?? false;
@@ -563,7 +562,6 @@ function buildTextaLayoutUncached(
     firstAscent
   } = calculateTextaBounds(props, lineWidths, lineHeights, lineAscents, styleDefault);
 
-  const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
   const lines: TextaLayoutLine[] = [];
   let yLineBaseline = yBaseline;
 

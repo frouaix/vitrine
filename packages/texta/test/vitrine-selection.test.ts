@@ -282,7 +282,10 @@ describe("texta selection geometry", () => {
     expect(rcMoved!.x).toBe((rcInitial?.x ?? 0) + 30);
     expect(getMeasureCount()).toBe(cMeasureAfterFirstRead);
 
-    const textChanged = createAttributedText("Reuse 😀 cache again", styleDefault);
+    const textChanged = {
+      ...createAttributedText("Reuse 😀 cache again", styleDefault),
+      iVersion: textValue.iVersion + 1
+    };
     adapter.updateFromBlockTree(createRoot({ texta: textChanged }));
     const rcChanged = provider("rich-cached", 0);
     expect(rcChanged).not.toBeNull();
