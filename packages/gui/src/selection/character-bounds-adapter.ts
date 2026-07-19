@@ -127,11 +127,19 @@ function toCustomSelectionDescriptor(
     return null;
   }
 
+  const resolveCharacterBounds = geometry.resolveCharacterBounds
+    ?? (geometry.rgrclCharacterBounds
+      ? (): Rc[] => geometry.rgrclCharacterBounds ?? []
+      : null);
+  if (!resolveCharacterBounds) {
+    return null;
+  }
+
   return {
     blockId: geometry.blockId,
     transformWorld: xfCur,
     layoutSignature: geometry.layoutSignature,
-    resolveLocalBounds: () => geometry.rgrclCharacterBounds,
+    resolveLocalBounds: resolveCharacterBounds,
     worldSignature: buildWorldTransformSignature(xfCur)
   };
 }

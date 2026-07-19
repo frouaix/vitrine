@@ -34,7 +34,8 @@ export interface CustomBlockSelectionApi {
 export interface CustomBlockSelectionGeometry {
   blockId: string;
   layoutSignature: string;
-  rgrclCharacterBounds: Rc[];
+  rgrclCharacterBounds?: Rc[];
+  resolveCharacterBounds?: () => Rc[];
 }
 
 export interface CustomBlockHandlers {

@@ -2,9 +2,8 @@ import type { AttributedTextValue } from './types.ts';
 import { getRgRenderBridgeBoundaryUtf16, getRgRenderBridgeRun } from './render-bridges.ts';
 import {
   customBlock,
+  PerformanceMonitor,
   registerBlockType,
-  measureText,
-  calculateTextOffset,
   SF_TEXT_ADVANCE_APPROX_DEFAULT
 } from 'vitrine';
 import type {
@@ -67,6 +66,38 @@ type TextaLayout = {
   bounds: Rc;
   rgrclCharacterBounds: Rc[];
   styleDefault: StyleEntryLike;
+};
+
+type TextaLayoutOptions = {
+  fIncludeCharacterBounds?: boolean;
+};
+
+interface TextaLayoutCacheEntry {
+  layout: TextaLayout;
+  fIncludesCharacterBounds: boolean;
+}
+
+export interface TextaLayoutCacheStats {
+  [stMetric: string]: number;
+  cacheEntries: number;
+  layoutRequests: number;
+  cacheHits: number;
+  cacheMisses: number;
+  layoutBuilds: number;
+  characterBoundsBuilds: number;
+  selectionGeometryResolveCalls: number;
+  hitRatePercent: number;
+}
+
+const mpstLayoutCache = new Map<string, TextaLayoutCacheEntry>();
+const C_LAYOUT_CACHE_MAX = 256;
+const textaLayoutStats = {
+  layoutRequests: 0,
+  cacheHits: 0,
+  cacheMisses: 0,
+  layoutBuilds: 0,
+  characterBoundsBuilds: 0,
+  selectionGeometryResolveCalls: 0
 };
 
 export interface TextaBlockProps extends BaseBlockProps {
@@ -158,10 +189,42 @@ function getUnitText(value: AttributedTextValue, rgBoundaryUtf16: number[], iUni
   return value.strText.slice(iUtf16Start, iUtf16End);
 }
 
+function pruneOldestMapEntry<K, V>(map: Map<K, V>): void {
+  const firstKey = map.keys().next().value;
+  if (firstKey !== undefined) {
+    map.delete(firstKey);
+  }
+}
+
+function setWithLruTouch<K, V>(map: Map<K, V>, key: K, value: V, maxEntries: number): void {
+  if (map.has(key)) {
+    map.delete(key);
+  }
+  map.set(key, value);
+  while (map.size > maxEntries) {
+    pruneOldestMapEntry(map);
+  }
+}
+
+function touchMapKey<K, V>(map: Map<K, V>, key: K): void {
+  const value = map.get(key);
+  if (value === undefined) {
+    return;
+  }
+  map.delete(key);
+  map.set(key, value);
+}
+
 function buildTextaLayoutSignature(props: TextaBlockProps): string {
   return [
     props.texta.iVersion,
+    props.texta.rgUnits,
     props.texta.rgStorageMode,
+    props.texta.strText,
+    props.texta.idStyleDefault,
+    JSON.stringify(props.texta.rgSegGraphemeToUtf16),
+    JSON.stringify(props.texta.rgIdStyleRef),
+    JSON.stringify(props.texta.mpId_StyleEntry),
     props.align,
     props.baseline,
     props.dx,
@@ -169,6 +232,19 @@ function buildTextaLayoutSignature(props: TextaBlockProps): string {
     props.fontSize,
     props.lineHeight
   ].join('|');
+}
+
+function getTextaMeasureSignature(
+  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure }
+): string {
+  return context?.measureText ? 'measured' : 'approx';
+}
+
+function getTextaLayoutCacheKey(
+  props: TextaBlockProps,
+  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure }
+): string {
+  return `${buildTextaLayoutSignature(props)}|${getTextaMeasureSignature(context)}`;
 }
 
 function splitRunLines(props: TextaBlockProps): Segment[][] {
@@ -326,14 +402,24 @@ function computeLineMetrics(
   return { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault };
 }
 
-function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure }): TextaLayout {
+function buildTextaLayoutUncached(
+  props: TextaBlockProps,
+  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure },
+  options?: TextaLayoutOptions
+): TextaLayout {
+  textaLayoutStats.layoutBuilds += 1;
+  if (options?.fIncludeCharacterBounds === true) {
+    textaLayoutStats.characterBoundsBuilds += 1;
+  }
   const contextMeasure = createMeasureTextFn(props, context);
   const { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault } = computeLineMetrics(
     props,
     contextMeasure
   );
-  const iUnitCount = props.texta.rgIdStyleRef.length;
-  const rgrclCharacterBounds: Array<Rc | null> = new Array(iUnitCount).fill(null);
+  const fIncludeCharacterBounds = options?.fIncludeCharacterBounds ?? false;
+  const rgrclCharacterBounds: Array<Rc | null> = fIncludeCharacterBounds
+    ? new Array(props.texta.rgIdStyleRef.length).fill(null)
+    : [];
 
   if (lineMetrics.length === 0) {
     return {
@@ -413,26 +499,28 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
         x: xRun
       });
 
-      let widthTotalUnits = 0;
-      const rgdxUnit: number[] = [];
-      for (let iUnit = segment.iStart; iUnit < segment.iEnd; iUnit++) {
-        const textUnit = getUnitText(props.texta, rgBoundaryUtf16, iUnit);
-        const metrics = contextMeasure(textUnit, segment.font ? { font: segment.font } : { fontSize: segment.fontSize });
-        rgdxUnit.push(metrics.width);
-        widthTotalUnits += metrics.width;
-      }
+      if (fIncludeCharacterBounds) {
+        let widthTotalUnits = 0;
+        const rgdxUnit: number[] = [];
+        for (let iUnit = segment.iStart; iUnit < segment.iEnd; iUnit++) {
+          const textUnit = getUnitText(props.texta, rgBoundaryUtf16, iUnit);
+          const metrics = contextMeasure(textUnit, segment.font ? { font: segment.font } : { fontSize: segment.fontSize });
+          rgdxUnit.push(metrics.width);
+          widthTotalUnits += metrics.width;
+        }
 
-      const scale = widthTotalUnits > 0 ? segment.width / widthTotalUnits : 1;
-      let widthBefore = 0;
-      for (let iUnitOffset = 0; iUnitOffset < rgdxUnit.length; iUnitOffset++) {
-        const widthAfter = widthBefore + rgdxUnit[iUnitOffset]!;
-        rgrclCharacterBounds[segment.iStart + iUnitOffset] = {
-          x: xRun + widthBefore * scale,
-          y: yLineTop,
-          width: Math.max(0, (widthAfter - widthBefore) * scale),
-          height: lineHeight
-        };
-        widthBefore = widthAfter;
+        const scale = widthTotalUnits > 0 ? segment.width / widthTotalUnits : 1;
+        let widthBefore = 0;
+        for (let iUnitOffset = 0; iUnitOffset < rgdxUnit.length; iUnitOffset++) {
+          const widthAfter = widthBefore + rgdxUnit[iUnitOffset]!;
+          rgrclCharacterBounds[segment.iStart + iUnitOffset] = {
+            x: xRun + widthBefore * scale,
+            y: yLineTop,
+            width: Math.max(0, (widthAfter - widthBefore) * scale),
+            height: lineHeight
+          };
+          widthBefore = widthAfter;
+        }
       }
 
       xRun += segment.width;
@@ -450,23 +538,25 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
     yLineBaseline += lineHeight;
   }
 
-  let xFallback = bounds.x + bounds.width;
-  let yFallback = bounds.y;
-  let heightFallback = lineHeights[0] ?? 0;
-  for (let i = 0; i < rgrclCharacterBounds.length; i++) {
-    const rc = rgrclCharacterBounds[i];
-    if (rc) {
-      xFallback = rc.x + rc.width;
-      yFallback = rc.y;
-      heightFallback = rc.height;
-      continue;
+  if (fIncludeCharacterBounds) {
+    let xFallback = bounds.x + bounds.width;
+    let yFallback = bounds.y;
+    let heightFallback = lineHeights[0] ?? 0;
+    for (let i = 0; i < rgrclCharacterBounds.length; i++) {
+      const rc = rgrclCharacterBounds[i];
+      if (rc) {
+        xFallback = rc.x + rc.width;
+        yFallback = rc.y;
+        heightFallback = rc.height;
+        continue;
+      }
+      rgrclCharacterBounds[i] = {
+        x: xFallback,
+        y: yFallback,
+        width: 0,
+        height: heightFallback
+      };
     }
-    rgrclCharacterBounds[i] = {
-      x: xFallback,
-      y: yFallback,
-      width: 0,
-      height: heightFallback
-    };
   }
 
   return {
@@ -474,6 +564,59 @@ function buildTextaLayout(props: TextaBlockProps, context?: { measureText?: (tex
     bounds,
     rgrclCharacterBounds: rgrclCharacterBounds as Rc[],
     styleDefault
+  };
+}
+
+function buildTextaLayout(
+  props: TextaBlockProps,
+  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure },
+  options?: TextaLayoutOptions
+): TextaLayout {
+  textaLayoutStats.layoutRequests += 1;
+  const fIncludeCharacterBounds = options?.fIncludeCharacterBounds ?? false;
+  const stCacheKey = getTextaLayoutCacheKey(props, context);
+  const cached = mpstLayoutCache.get(stCacheKey);
+  if (cached && (cached.fIncludesCharacterBounds || !fIncludeCharacterBounds)) {
+    textaLayoutStats.cacheHits += 1;
+    touchMapKey(mpstLayoutCache, stCacheKey);
+    return cached.layout;
+  }
+
+  textaLayoutStats.cacheMisses += 1;
+  const layout = buildTextaLayoutUncached(props, context, options);
+  setWithLruTouch(mpstLayoutCache, stCacheKey, {
+    layout,
+    fIncludesCharacterBounds: fIncludeCharacterBounds
+  }, C_LAYOUT_CACHE_MAX);
+  return layout;
+}
+
+export function clearTextaLayoutCache(): void {
+  mpstLayoutCache.clear();
+}
+
+export function resetTextaLayoutCacheStats(): void {
+  textaLayoutStats.layoutRequests = 0;
+  textaLayoutStats.cacheHits = 0;
+  textaLayoutStats.cacheMisses = 0;
+  textaLayoutStats.layoutBuilds = 0;
+  textaLayoutStats.characterBoundsBuilds = 0;
+  textaLayoutStats.selectionGeometryResolveCalls = 0;
+}
+
+export function getTextaLayoutCacheStats(): TextaLayoutCacheStats {
+  const hitRatePercent = textaLayoutStats.layoutRequests > 0
+    ? (textaLayoutStats.cacheHits / textaLayoutStats.layoutRequests) * 100
+    : 0;
+  return {
+    cacheEntries: mpstLayoutCache.size,
+    layoutRequests: textaLayoutStats.layoutRequests,
+    cacheHits: textaLayoutStats.cacheHits,
+    cacheMisses: textaLayoutStats.cacheMisses,
+    layoutBuilds: textaLayoutStats.layoutBuilds,
+    characterBoundsBuilds: textaLayoutStats.characterBoundsBuilds,
+    selectionGeometryResolveCalls: textaLayoutStats.selectionGeometryResolveCalls,
+    hitRatePercent
   };
 }
 
@@ -539,28 +682,33 @@ function createTextaHandlers(): CustomBlockHandlers {
           && yl <= cachedBounds.y + cachedBounds.height;
       }
       const bounds = buildTextaLayout(block.props as unknown as TextaBlockProps).bounds;
+      layoutCache?.mpbl_rc.set(block as unknown as Block, bounds);
       return xl >= bounds.x
         && xl <= bounds.x + bounds.width
         && yl >= bounds.y
         && yl <= bounds.y + bounds.height;
     },
     rcl: (block): Rc => buildTextaLayout(block.props as unknown as TextaBlockProps).bounds,
-    getDebugOutlineBounds: (block): Rc => buildTextaLayout(block.props as unknown as TextaBlockProps).bounds,
+    getDebugOutlineBounds: (block, api): Rc => buildTextaLayout(block.props as unknown as TextaBlockProps, api.context).bounds,
     getSelectionGeometry: (block, api) => {
       const props = block.props as unknown as TextaBlockProps;
       if (typeof props.id !== 'string' || props.id.length === 0) {
         return null;
       }
 
-      const layout = buildTextaLayout(props, api.context);
       return {
         blockId: props.id,
         layoutSignature: buildTextaLayoutSignature(props),
-        rgrclCharacterBounds: layout.rgrclCharacterBounds
+        resolveCharacterBounds: (): Rc[] => {
+          textaLayoutStats.selectionGeometryResolveCalls += 1;
+          return buildTextaLayout(props, api.context, { fIncludeCharacterBounds: true }).rgrclCharacterBounds;
+        }
       };
     }
   };
 }
+
+PerformanceMonitor.registerStatsHook('textaLayoutCache', () => getTextaLayoutCacheStats());
 
 let fRegistered = false;
 

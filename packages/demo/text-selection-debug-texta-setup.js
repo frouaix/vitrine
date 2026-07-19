@@ -1,4 +1,3 @@
-import { getTextLayoutCacheStats } from 'vitrine';
 import { VitrineComponent } from 'vitrine-gui';
 import { registerTextaBlockType } from 'texta/browser';
 import { buildDebugTextaScene, DEBUG_TEXTA_BLOCK_IDS } from './text-selection-debug-texta-scene.js';
@@ -7,13 +6,74 @@ registerTextaBlockType();
 
 let selectionManager = null;
 const debugInfo = document.getElementById('debugInfo');
+const fpsEl = document.getElementById('fps');
+const avgFpsEl = document.getElementById('avgFps');
+const renderTimeEl = document.getElementById('renderTime');
+const blocksRenderedEl = document.getElementById('blocksRendered');
+const textaCacheEntriesEl = document.getElementById('textaCacheEntries');
+const textaCacheHitRateEl = document.getElementById('textaCacheHitRate');
+const textaCacheHitsEl = document.getElementById('textaCacheHits');
+const textaCacheMissesEl = document.getElementById('textaCacheMisses');
+const textaLayoutBuildsEl = document.getElementById('textaLayoutBuilds');
+const textaCharacterBoundsBuildsEl = document.getElementById('textaCharacterBoundsBuilds');
+const textaSelectionResolvesEl = document.getElementById('textaSelectionResolves');
 const cacheFontsEl = document.getElementById('cacheFonts');
 const cacheEntriesEl = document.getElementById('cacheEntries');
 
+function formatInteger(value) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toLocaleString()
+    : '0';
+}
+
+function formatDecimal(value, digits = 1) {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : '0.0';
+}
+
+function getHookMetric(hooks, hookName, metricName) {
+  const hook = hooks?.[hookName];
+  const value = hook?.[metricName];
+  return typeof value === 'number' ? value : 0;
+}
+
 function updateCacheStats() {
-  const stats = getTextLayoutCacheStats();
-  cacheFontsEl.textContent = `${stats.fontsInGlyphCache.toLocaleString()} / ${stats.fontsInPrefixCache.toLocaleString()} / ${stats.fontsInMeasureCache.toLocaleString()}`;
-  cacheEntriesEl.textContent = `${stats.glyphEntries.toLocaleString()} / ${stats.prefixEntries.toLocaleString()} / ${stats.measureEntries.toLocaleString()}`;
+  const stats = component.getPerformanceStats();
+  if (!stats) {
+    return;
+  }
+
+  fpsEl.textContent = formatInteger(stats.fps);
+  avgFpsEl.textContent = formatInteger(stats.averageFPS);
+  renderTimeEl.textContent = formatDecimal(stats.renderTime, 2);
+  blocksRenderedEl.textContent = formatInteger(stats.blocksRendered);
+
+  const textaEntries = getHookMetric(stats.hooks, 'textaLayoutCache', 'cacheEntries');
+  const textaHitRate = getHookMetric(stats.hooks, 'textaLayoutCache', 'hitRatePercent');
+  const textaHits = getHookMetric(stats.hooks, 'textaLayoutCache', 'cacheHits');
+  const textaMisses = getHookMetric(stats.hooks, 'textaLayoutCache', 'cacheMisses');
+  const textaLayoutBuilds = getHookMetric(stats.hooks, 'textaLayoutCache', 'layoutBuilds');
+  const textaCharacterBoundsBuilds = getHookMetric(stats.hooks, 'textaLayoutCache', 'characterBoundsBuilds');
+  const textaSelectionResolves = getHookMetric(stats.hooks, 'textaLayoutCache', 'selectionGeometryResolveCalls');
+
+  textaCacheEntriesEl.textContent = formatInteger(textaEntries);
+  textaCacheHitRateEl.textContent = `${formatDecimal(textaHitRate, 1)}%`;
+  textaCacheHitsEl.textContent = formatInteger(textaHits);
+  textaCacheMissesEl.textContent = formatInteger(textaMisses);
+  textaLayoutBuildsEl.textContent = formatInteger(textaLayoutBuilds);
+  textaCharacterBoundsBuildsEl.textContent = formatInteger(textaCharacterBoundsBuilds);
+  textaSelectionResolvesEl.textContent = formatInteger(textaSelectionResolves);
+
+  const glyphFonts = getHookMetric(stats.hooks, 'textLayoutCache', 'fontsInGlyphCache');
+  const prefixFonts = getHookMetric(stats.hooks, 'textLayoutCache', 'fontsInPrefixCache');
+  const measureFonts = getHookMetric(stats.hooks, 'textLayoutCache', 'fontsInMeasureCache');
+  const glyphEntries = getHookMetric(stats.hooks, 'textLayoutCache', 'glyphEntries');
+  const prefixEntries = getHookMetric(stats.hooks, 'textLayoutCache', 'prefixEntries');
+  const measureEntries = getHookMetric(stats.hooks, 'textLayoutCache', 'measureEntries');
+
+  cacheFontsEl.textContent = `${formatInteger(glyphFonts)} / ${formatInteger(prefixFonts)} / ${formatInteger(measureFonts)}`;
+  cacheEntriesEl.textContent = `${formatInteger(glyphEntries)} / ${formatInteger(prefixEntries)} / ${formatInteger(measureEntries)}`;
 }
 
 function log(msg) {

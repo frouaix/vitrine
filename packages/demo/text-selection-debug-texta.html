@@ -20,8 +20,52 @@
     </div>
 
     <div class="cache-stats" id="cacheStats">
-      <h2>Text Cache Counters</h2>
+      <h2>Performance and Cache Counters</h2>
       <div class="cache-stats-grid">
+        <div class="cache-stat">
+          <span class="cache-stat-label">FPS</span>
+          <span class="cache-stat-value" id="fps">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Average FPS</span>
+          <span class="cache-stat-value" id="avgFps">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Render Time (ms)</span>
+          <span class="cache-stat-value" id="renderTime">0.00</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Blocks Rendered</span>
+          <span class="cache-stat-value" id="blocksRendered">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Entries</span>
+          <span class="cache-stat-value" id="textaCacheEntries">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Hit Rate</span>
+          <span class="cache-stat-value" id="textaCacheHitRate">0.0%</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Hits</span>
+          <span class="cache-stat-value" id="textaCacheHits">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Misses</span>
+          <span class="cache-stat-value" id="textaCacheMisses">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Layout Builds</span>
+          <span class="cache-stat-value" id="textaLayoutBuilds">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Char-Bounds Builds</span>
+          <span class="cache-stat-value" id="textaCharacterBoundsBuilds">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Selection Geometry Resolves</span>
+          <span class="cache-stat-value" id="textaSelectionResolves">0</span>
+        </div>
         <div class="cache-stat">
           <span class="cache-stat-label">Fonts (G/P/M)</span>
           <span class="cache-stat-value" id="cacheFonts">0 / 0 / 0</span>
@@ -31,10 +75,15 @@
           <span class="cache-stat-value" id="cacheEntries">0 / 0 / 0</span>
         </div>
       </div>
+      <p class="cache-stats-note">
+        On a stable drag-selection, FPS should stay high while <strong>Texta Layout Builds</strong>,
+        <strong>Char-Bounds Builds</strong>, and <strong>Selection Geometry Resolves</strong> flatten
+        after warmup; <strong>Texta Cache Hits</strong> should keep climbing.
+      </p>
     </div>
 
     <div class="debug-info" id="debugInfo">
-      Click inside texta blocks and review block hit, insertion index, and selection updates.
+      Click or drag inside texta blocks, then compare hit-testing logs with the counters above.
     </div>
   </div>
 

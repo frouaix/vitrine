@@ -109,6 +109,17 @@ h1 {
   color: #f8fafc;
 }
 
+.cache-stats-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.cache-stats-note strong {
+  color: #fef3c7;
+}
+
 .debug-info {
   margin-top: 24px;
   padding: 16px;
