@@ -7,6 +7,7 @@ import type { Block } from 'vitrine';
 import type { GUIControl, TransformContext, ThemeDefinition } from './GUI/types.ts';
 import { ImmediateRenderer, group, Canvas2DContext, clearTextLayoutCaches } from 'vitrine';
 import type { RendererConfig, RenderContext } from 'vitrine';
+import type { PerformanceStatsSnapshot } from 'vitrine';
 import { transformGUIControl, rsControl } from './GUI/transform.ts';
 import { lightTheme } from './GUI/themes.ts';
 import { TextSelectionManager } from './selection/TextSelectionManager.ts';
@@ -233,6 +234,14 @@ export class VitrineComponent {
    */
   getSelectionManager(): TextSelectionManager | null {
     return this.selectionManager;
+  }
+
+  /** Returns the latest renderer performance snapshot, or null if not mounted. */
+  getPerformanceStats(): PerformanceStatsSnapshot | null {
+    if (!this.renderer) {
+      return null;
+    }
+    return this.renderer.getPerformanceStats();
   }
 
   /**

@@ -56,10 +56,13 @@ export {
 } from './core/block-registry.ts';
 export type {
   BlockLayoutCache,
+  CustomBlockDescriptor,
   CustomBlockHandlers,
   CustomBlockRenderApi,
   CustomBlockHitTestApi,
-  CustomBlockDebugApi
+  CustomBlockDebugApi,
+  CustomBlockSelectionApi,
+  CustomBlockSelectionGeometry
 } from './core/block-registry.ts';
 
 // Block factory functions

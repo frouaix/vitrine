@@ -82,5 +82,9 @@ export {
   registerTextaBlockType,
   texta,
   stBlockTypeTexta,
+  clearTextaLayoutCache,
+  getTextaLayoutCacheStats,
+  resetTextaLayoutCacheStats,
+  type TextaLayoutCacheStats,
   type TextaBlockProps
 } from "./vitrine.ts";

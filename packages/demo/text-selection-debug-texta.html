@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Texta Selection Debug</title>
+  <link rel="stylesheet" href="./text-selection-debug-texta.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Vitrine Texta Selection Debug</h1>
+    <p class="intro">
+      Testing text selection on texta() blocks with mixed runs: font family, size, weight, style,
+      color, background, opacity, wrapping, and alignment variants.
+    </p>
+    <div class="canvas-shell">
+      <div id="canvas"></div>
+      <p class="caption">Canvas with multiple texta blocks for selection and hit-testing diagnostics.</p>
+    </div>
+
+    <div class="cache-stats" id="cacheStats">
+      <h2>Performance and Cache Counters</h2>
+      <div class="cache-stats-grid">
+        <div class="cache-stat">
+          <span class="cache-stat-label">FPS</span>
+          <span class="cache-stat-value" id="fps">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Average FPS</span>
+          <span class="cache-stat-value" id="avgFps">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Render Time (ms)</span>
+          <span class="cache-stat-value" id="renderTime">0.00</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Blocks Rendered</span>
+          <span class="cache-stat-value" id="blocksRendered">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Entries</span>
+          <span class="cache-stat-value" id="textaCacheEntries">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Hit Rate</span>
+          <span class="cache-stat-value" id="textaCacheHitRate">0.0%</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Hits</span>
+          <span class="cache-stat-value" id="textaCacheHits">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Cache Misses</span>
+          <span class="cache-stat-value" id="textaCacheMisses">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Texta Layout Builds</span>
+          <span class="cache-stat-value" id="textaLayoutBuilds">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Char-Bounds Builds</span>
+          <span class="cache-stat-value" id="textaCharacterBoundsBuilds">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Selection Geometry Resolves</span>
+          <span class="cache-stat-value" id="textaSelectionResolves">0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Fonts (G/P/M)</span>
+          <span class="cache-stat-value" id="cacheFonts">0 / 0 / 0</span>
+        </div>
+        <div class="cache-stat">
+          <span class="cache-stat-label">Entries (G/P/M)</span>
+          <span class="cache-stat-value" id="cacheEntries">0 / 0 / 0</span>
+        </div>
+      </div>
+      <p class="cache-stats-note">
+        On a stable drag-selection, FPS should stay high while <strong>Texta Layout Builds</strong>,
+        <strong>Char-Bounds Builds</strong>, and <strong>Selection Geometry Resolves</strong> flatten
+        after warmup; <strong>Texta Cache Hits</strong> should keep climbing.
+      </p>
+    </div>
+
+    <div class="debug-info" id="debugInfo">
+      Click or drag inside texta blocks, then compare hit-testing logs with the counters above.
+    </div>
+  </div>
+
+  <div class="page-nav">
+    <a href="text-selection-debug.html">← Regular Text Debug</a>
+    <a href="gallery.html">Gallery →</a>
+  </div>
+
+  <script type="module" src="./text-selection-debug-texta-setup.js"></script>
+</body>
+</html>

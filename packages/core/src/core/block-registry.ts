@@ -27,11 +27,23 @@ export interface CustomBlockDebugApi {
   context: RenderContext;
 }
 
+export interface CustomBlockSelectionApi {
+  context?: RenderContext;
+}
+
+export interface CustomBlockSelectionGeometry {
+  blockId: string;
+  layoutSignature: string;
+  rgrclCharacterBounds?: Rc[];
+  resolveCharacterBounds?: () => Rc[];
+}
+
 export interface CustomBlockHandlers {
   render?: (block: CustomBlockDescriptor, api: CustomBlockRenderApi) => void;
   hitTestShape?: (block: CustomBlockDescriptor, xl: number, yl: number, api: CustomBlockHitTestApi) => boolean;
   rcl?: (block: CustomBlockDescriptor) => Rc | null;
   getDebugOutlineBounds?: (block: CustomBlockDescriptor, api: CustomBlockDebugApi) => Rc | null;
+  getSelectionGeometry?: (block: CustomBlockDescriptor, api: CustomBlockSelectionApi) => CustomBlockSelectionGeometry | null;
 }
 
 const mpCustomBlockHandlers = new Map<string, CustomBlockHandlers>();

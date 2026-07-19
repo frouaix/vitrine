@@ -26,6 +26,7 @@ export default defineConfig({
         tables: resolve(__dirname, 'tables.html'),
         textSelection: resolve(__dirname, 'text-selection.html'),
         textSelectionDebug: resolve(__dirname, 'text-selection-debug.html'),
+        textSelectionDebugTexta: resolve(__dirname, 'text-selection-debug-texta.html'),
         textSelectionMinimal: resolve(__dirname, 'text-selection-minimal.html')
       }
     }
