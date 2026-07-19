@@ -1,9 +1,11 @@
 import type { AttributedTextValue } from './types.ts';
 import { getRgRenderBridgeBoundaryUtf16, getRgRenderBridgeRun } from './render-bridges.ts';
 import {
+  calculateTextOffset,
   customBlock,
   PerformanceMonitor,
   registerBlockType,
+  measureText,
   SF_TEXT_ADVANCE_APPROX_DEFAULT
 } from 'vitrine';
 import type {
@@ -402,36 +404,23 @@ function computeLineMetrics(
   return { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault };
 }
 
-function buildTextaLayoutUncached(
+function calculateTextaBounds(
   props: TextaBlockProps,
-  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure },
-  options?: TextaLayoutOptions
-): TextaLayout {
-  textaLayoutStats.layoutBuilds += 1;
-  if (options?.fIncludeCharacterBounds === true) {
-    textaLayoutStats.characterBoundsBuilds += 1;
-  }
-  const contextMeasure = createMeasureTextFn(props, context);
-  const { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault } = computeLineMetrics(
-    props,
-    contextMeasure
-  );
-  const fIncludeCharacterBounds = options?.fIncludeCharacterBounds ?? false;
-  const rgrclCharacterBounds: Array<Rc | null> = fIncludeCharacterBounds
-    ? new Array(props.texta.rgIdStyleRef.length).fill(null)
-    : [];
-
-  if (lineMetrics.length === 0) {
+  lineWidths: number[],
+  lineHeights: number[],
+  lineAscents: number[],
+  styleDefault: StyleEntryLike
+): { bounds: Rc; yBaseline: number; firstAscent: number } {
+  if (lineWidths.length === 0 || lineHeights.length === 0) {
     return {
-      lines: [],
       bounds: {
         x: 0,
         y: 0,
         width: 0,
         height: 0
       },
-      rgrclCharacterBounds: [],
-      styleDefault
+      yBaseline: 0,
+      firstAscent: props.fontSize ?? styleDefault.fontSize ?? 16
     };
   }
 
@@ -473,12 +462,106 @@ function buildTextaLayoutUncached(
     }
   }
 
-  const bounds: Rc = {
-    x: xMin,
-    y: yTop,
-    width: Math.max(0, xMax - xMin),
-    height: Math.max(0, totalHeight)
+  return {
+    bounds: {
+      x: xMin,
+      y: yTop,
+      width: Math.max(0, xMax - xMin),
+      height: Math.max(0, totalHeight)
+    },
+    yBaseline,
+    firstAscent
   };
+}
+
+function estimateTextaBounds(props: TextaBlockProps): Rc {
+  const lineHeight = props.lineHeight ?? props.fontSize ?? 16;
+  if (props.texta.strText.length === 0) {
+    return {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    };
+  }
+
+  const baseMetrics = measureText(props.texta.strText, { font: props.font, fontSize: props.fontSize });
+  const lines = props.texta.strText.split('\n');
+  const lineWidths = lines.map((line) => measureText(line, { font: props.font, fontSize: props.fontSize }).width);
+  const widthMax = lineWidths.length > 0
+    ? Math.max(...lineWidths)
+    : baseMetrics.width;
+  const explicitLineCount = Math.max(1, lines.length);
+  const wrappedLineCount = props.dx !== undefined
+    ? lineWidths.reduce((count, width) => count + Math.max(1, Math.ceil(Math.max(1, width) / Math.max(1, props.dx!))), 0)
+    : explicitLineCount;
+  const width = props.dx !== undefined
+    ? Math.min(widthMax, props.dx)
+    : widthMax;
+  const height = Math.max(lineHeight, wrappedLineCount * lineHeight);
+  const { xOffset, yOffset } = calculateTextOffset(
+    width,
+    height,
+    baseMetrics.ascent,
+    props.align,
+    props.baseline
+  );
+  return {
+    x: xOffset,
+    y: yOffset,
+    width,
+    height
+  };
+}
+
+function buildTextaLayoutUncached(
+  props: TextaBlockProps,
+  context?: { measureText?: (text: string, props: { font?: string; fontSize?: number }) => TextMeasure },
+  options?: TextaLayoutOptions
+): TextaLayout {
+  textaLayoutStats.layoutBuilds += 1;
+  if (options?.fIncludeCharacterBounds === true) {
+    textaLayoutStats.characterBoundsBuilds += 1;
+  }
+  const contextMeasure = createMeasureTextFn(props, context);
+  const { lineMetrics, lineWidths, lineHeights, lineAscents, styleDefault } = computeLineMetrics(
+    props,
+    contextMeasure
+  );
+  const fIncludeCharacterBounds = options?.fIncludeCharacterBounds ?? false;
+  const rgrclCharacterBounds: Array<Rc | null> = fIncludeCharacterBounds
+    ? new Array(props.texta.rgIdStyleRef.length).fill(null)
+    : [];
+
+  if (lineMetrics.length === 0) {
+    return {
+      lines: [],
+      bounds: {
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0
+      },
+      rgrclCharacterBounds: [],
+      styleDefault
+    };
+  }
+
+  const getLineStartX = (lineWidth: number): number => {
+    if (props.align === 'center') {
+      return -lineWidth / 2;
+    }
+    if (props.align === 'right' || props.align === 'end') {
+      return -lineWidth;
+    }
+    return 0;
+  };
+
+  const {
+    bounds,
+    yBaseline,
+    firstAscent
+  } = calculateTextaBounds(props, lineWidths, lineHeights, lineAscents, styleDefault);
 
   const rgBoundaryUtf16 = getRgRenderBridgeBoundaryUtf16(props.texta);
   const lines: TextaLayoutLine[] = [];
@@ -681,14 +764,14 @@ function createTextaHandlers(): CustomBlockHandlers {
           && yl >= cachedBounds.y
           && yl <= cachedBounds.y + cachedBounds.height;
       }
-      const bounds = buildTextaLayout(block.props as unknown as TextaBlockProps).bounds;
+      const bounds = estimateTextaBounds(block.props as unknown as TextaBlockProps);
       layoutCache?.mpbl_rc.set(block as unknown as Block, bounds);
       return xl >= bounds.x
         && xl <= bounds.x + bounds.width
         && yl >= bounds.y
         && yl <= bounds.y + bounds.height;
     },
-    rcl: (block): Rc => buildTextaLayout(block.props as unknown as TextaBlockProps).bounds,
+    rcl: (block): Rc => estimateTextaBounds(block.props as unknown as TextaBlockProps),
     getDebugOutlineBounds: (block, api): Rc => buildTextaLayout(block.props as unknown as TextaBlockProps, api.context).bounds,
     getSelectionGeometry: (block, api) => {
       const props = block.props as unknown as TextaBlockProps;
