@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Text Selection Demo</title>
+  <script type="module" crossorigin src="/vitrine/assets/textSelection-B9haZPS5.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/renderer-immediate-Cgw0fpt9.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/transformCalendar-0pgyLNcA.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/transform-C4vePwR9.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/component-OMU2e7W0.js">
+  <link rel="stylesheet" crossorigin href="/vitrine/assets/textSelection-D6jbfmtD.css">
+</head>
+<body>
+  <div class="page">
+    <h1>Vitrine Text Selection</h1>
+    <p class="intro">
+      Test multi-user text selection with configurable caret and highlight colors.
+      Click to place caret, drag to select. Try adding multiple user selections below.
+    </p>
+    <div class="canvas-shell">
+      <div id="canvas"></div>
+      <p class="caption">Selection overlays are rendered as Portal blocks above the content.</p>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>User ID</label>
+        <input type="text" id="userId" value="user1" placeholder="e.g., user1">
+      </div>
+      <div class="control-group">
+        <label>Start Char</label>
+        <input type="number" id="startChar" value="0" min="0">
+      </div>
+      <div class="control-group">
+        <label>End Char</label>
+        <input type="number" id="endChar" value="5" min="0">
+      </div>
+      <div class="control-group">
+        <label>Color</label>
+        <input type="color" id="selColor" value="#3b82f6">
+      </div>
+      <button onclick="addSelection()">Add Selection</button>
+      <button class="button-secondary" onclick="clearAllSelections()">Clear All</button>
+    </div>
+
+    <div class="stats">
+      <div><strong>Active Selections:</strong> <span id="selectionCount">0</span></div>
+      <div id="selectionList"></div>
+    </div>
+  </div>
+
+
+  <nav class="page-nav">
+    <a href="gallery.html">← Gallery</a>
+    <a href="component-demo.html">Component Demo →</a>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Tables Integration Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: ui-sans-serif, sans-serif;
+      background: #eef2f7;
+      color: #0f172a;
+    }
+
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #cfd8e3;
+      background: #ffffff;
+    }
+
+    #toolbar .title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1e293b;
+    }
+
+    #toolbar .subtitle {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    #toolbar #perf {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #layout {
+      display: grid;
+      grid-template-columns: minmax(320px, 34%) 1fr;
+      height: calc(100vh - 44px);
+      min-height: 0;
+    }
+
+    #notes {
+      border-right: 1px solid #d6deea;
+      background: #f8fafc;
+      padding: 16px;
+      overflow: auto;
+    }
+
+    #notes h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      color: #0f172a;
+    }
+
+    #notes p {
+      margin: 8px 0;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    #notes pre {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border: 1px solid #d9e2ec;
+      border-radius: 8px;
+      background: #ffffff;
+      font-size: 12px;
+      line-height: 1.45;
+      overflow: auto;
+      color: #1e293b;
+    }
+
+    #canvas-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #eef2f7;
+      border-top: 1px solid #cfd8e3;
+      font-size: 14px;
+    }
+
+    .bottom-nav a {
+      text-decoration: none;
+      color: #1a73e8;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/tables-Ck5SIv7p.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/renderer-immediate-Cgw0fpt9.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/index-BSQPC2V8.js">
+</head>
+<body>
+  <div id="toolbar">
+    <span class="title">Tables Demo</span>
+    <span class="subtitle">vitrine-tables + vitrine-tables-adapter integration patterns</span>
+    <span id="perf">-</span>
+  </div>
+
+  <div id="layout">
+    <section id="notes">
+      <h2>Integration Pattern</h2>
+      <p>Each cell content is a Vitrine block tree with optional intrinsic metrics. The layout engine computes geometry, then the adapter maps frames to renderable blocks.</p>
+      <pre><code>const engine = new ReferenceTableLayoutEngine();
+const measurer = createVitrineTableCellMeasurer();
+const delegate = createVitrineTableRenderDelegate({
+  frameStroke: '#b6c2d2',
+  insetX: 8,
+  insetY: 6
+});
+
+const layout = engine.layout(tableModel, { availableWidth }, measurer);
+const tableBlock = buildVitrineBlocksFromTableLayout(
+  tableModel,
+  layout,
+  delegate,
+  { rootGroupProps: { x: 24, y: 52 } }
+);</code></pre>
+      <p>Try mouse wheel over canvas to pan examples vertically and horizontally.</p>
+    </section>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="markdown.html">&larr; Markdown</a>
+    <a href="performance.html">Performance &rarr;</a>
+  </nav>
+
+</body>
+</html>

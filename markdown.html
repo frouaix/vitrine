@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine – Markdown Renderer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: ui-sans-serif, sans-serif;
+      background: #f3f4f7;
+      color: #1e293b;
+    }
+
+    /* ── Toolbar ── */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #d1d5db;
+      flex-shrink: 0;
+    }
+
+    #toolbar .label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+      margin-right: 4px;
+    }
+
+    #toolbar button {
+      padding: 4px 12px;
+      font-size: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      cursor: pointer;
+      color: #334155;
+      transition: background 0.1s;
+    }
+    #toolbar button:hover { background: #e2e8f0; }
+
+    #perf {
+      margin-left: auto;
+      font-size: 12px;
+      color: #64748b;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    #bench {
+      font-size: 12px;
+      color: #334155;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      max-width: 48vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Main split pane ── */
+    #main {
+      display: flex;
+      height: calc(100vh - 45px);
+    }
+
+    #editor-pane {
+      flex: 0 0 50%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #d1d5db;
+      background: #ffffff;
+    }
+
+    #editor-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #md-input {
+      flex: 1;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 16px;
+      font-family: ui-monospace, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #ffffff;
+    }
+
+    #preview-pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #f8fafc;
+    }
+
+    #preview-pane .pane-title {
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+    }
+
+    #canvas-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #preview-canvas {
+      display: block;
+    }
+
+    /* ── Page nav ── */
+    .page-nav {
+      display: none; /* hidden when embedded; shown via the nav below */
+    }
+
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      border-top: 1px solid #c9ced6;
+      background: #f3f4f7;
+      font-size: 14px;
+    }
+
+    .bottom-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/markdown-DXqy4NR4.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/renderer-immediate-Cgw0fpt9.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/vitrine-C_Sq743w.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/index-BSQPC2V8.js">
+</head>
+<body>
+
+  <div id="toolbar">
+    <span class="label">Samples:</span>
+    <button id="btn-basics">1 – Basics</button>
+    <button id="btn-code">2 – Code &amp; quoting</button>
+    <button id="btn-lists">3 – Lists</button>
+    <button id="btn-tables">4 – Tables</button>
+    <button id="btn-texta-doc">5 – TEXTA_MARKDOWN.md</button>
+    <button id="btn-benchmark">Benchmark 5s</button>
+    <span id="bench">—</span>
+    <span id="perf">—</span>
+  </div>
+
+  <div id="main">
+    <div id="editor-pane">
+      <div class="pane-title">Markdown source</div>
+      <textarea id="md-input" title="Markdown source" placeholder="Enter markdown here…" spellcheck="false"></textarea>
+    </div>
+    <div id="preview-pane">
+      <div class="pane-title">Vitrine texta() preview</div>
+      <div id="canvas-wrap">
+        <canvas id="preview-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="texta.html">← Texta</a>
+    <a href="tables.html">Tables →</a>
+  </nav>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Texta Attributed Text Demo</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px 20px 50px;
+      font-family: sans-serif;
+      background: #f3f4f7;
+    }
+    canvas {
+      border: 1px solid #c9ced6;
+      background: white;
+      display: block;
+      margin: 0 auto;
+      max-width: 100%;
+      height: auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .info {
+      max-width: 1100px;
+      margin: 0 auto 18px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border: 1px solid #d9dee6;
+      border-radius: 10px;
+      color: #334155;
+      line-height: 1.45;
+    }
+    .page-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid #c9ced6;
+      background: #f3f4f7;
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  <script type="module" crossorigin src="/vitrine/assets/texta-BztDmmez.js"></script>
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/renderer-immediate-Cgw0fpt9.js">
+  <link rel="modulepreload" crossorigin href="/vitrine/assets/vitrine-C_Sq743w.js">
+</head>
+<body>
+  <h1>Vitrine Texta Block</h1>
+  <div class="info">
+    <strong>This page demonstrates the new <code>texta()</code> block:</strong>
+    per-run style changes (font, weight, size, color, opacity, line-height), multiline attributed text, alignment and baseline anchoring, and mixed-script content.
+  </div>
+  <canvas id="canvas"></canvas>
+
+
+  <nav class="page-nav">
+    <a href="events.html">← Events</a>
+    <a href="markdown.html">Markdown →</a>
+  </nav>
+</body>
+</html>
