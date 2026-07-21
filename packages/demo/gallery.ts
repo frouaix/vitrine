@@ -49,6 +49,8 @@ import { demo as imageFiltersDemo } from './demos/image-filters.ts';
 import { demo as textWrappingDemo } from './demos/text-wrapping.ts';
 import { demo as linksDemo } from './demos/links.ts';
 import { demo as basicBlocksDemo } from './demos/basic-blocks.ts';
+import { demo as layoutPaginationPresentationDemo } from './demos/layout-pagination-presentation.ts';
+import { demo as layoutPaginationFlowDemo } from './demos/layout-pagination-flow.ts';
 
 // Demo registry
 const demos: GalleryDemo[] = [
@@ -72,6 +74,8 @@ const demos: GalleryDemo[] = [
   { ...guiFormDemo, category: 'ui' },
   { ...guiDashboardDemo, category: 'ui' },
   { ...guiGalleryDemo, category: 'ui' },
+  { ...layoutPaginationPresentationDemo, category: 'documents' },
+  { ...layoutPaginationFlowDemo, category: 'documents' },
   { ...snakeDemo, category: 'games' }
 ] as GalleryDemo[];
 
@@ -137,6 +141,7 @@ function renderDemoList() {
     'productivity': { name: 'Productivity', icon: '📋' },
     'creative': { name: 'Creative', icon: '🎨' },
     'ui': { name: 'UI Components', icon: '🎛️' },
+    'documents': { name: 'Documents & Layout', icon: '📄' },
     'games': { name: 'Interactive', icon: '🎮' }
   };
 
