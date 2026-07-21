@@ -1,63 +1,72 @@
 import type {
+  LayoutTextStyle,
+  LayoutNode,
+  LayoutRect,
+  PageArtifactKind
+} from './common.ts';
+import { normalizeLayoutInsets } from './common.ts';
+import type {
   FlowLayoutDocument,
   LayoutDocument,
+  PresentationLayoutDocument,
+} from './flow.ts';
+import type {
   LayoutFragment,
-  LayoutNode,
   LayoutPaginationOptions,
-  LayoutRect,
   PaginatedLayoutResult,
   PaginationDiagnostic,
-  PageArtifactKind,
-  PresentationLayoutDocument,
   ResolvedPageSpec
-} from './model.ts';
-import { normalizeLayoutInsets, resolvePageSpec } from './model.ts';
+} from './pagination.ts';
+import { resolvePageSpec } from './pagination.ts';
 import type { LayoutMeasureDelegate, LayoutMeasuredContent } from './measure.ts';
 import { createNullMeasureDelegate } from './measure.ts';
 
-export interface PreparedFlowLayoutDocument {
+export interface PreparedFlowLayoutDocument<TNodeId extends string = string> {
   kind: 'flow';
   documentId: string;
   page: ResolvedPageSpec;
-  body: LayoutNode;
-  header?: LayoutNode;
-  footer?: LayoutNode;
-  background?: LayoutNode;
-  foreground?: LayoutNode;
+  body: LayoutNode<TNodeId>;
+  header?: LayoutNode<TNodeId>;
+  footer?: LayoutNode<TNodeId>;
+  background?: LayoutNode<TNodeId>;
+  foreground?: LayoutNode<TNodeId>;
 }
 
-export interface PreparedPresentationLayoutDocument {
+export interface PreparedPresentationLayoutDocument<TNodeId extends string = string> {
   kind: 'presentation';
   documentId: string;
   page: ResolvedPageSpec;
-  slides: LayoutNode[];
+  slides: LayoutNode<TNodeId>[];
   previewScale: 'contain' | 'cover' | 'stretch';
-  background?: LayoutNode;
-  foreground?: LayoutNode;
+  background?: LayoutNode<TNodeId>;
+  foreground?: LayoutNode<TNodeId>;
 }
 
-export type PreparedLayoutDocument =
-  | PreparedFlowLayoutDocument
-  | PreparedPresentationLayoutDocument;
+export type PreparedLayoutDocument<TNodeId extends string = string> =
+  | PreparedFlowLayoutDocument<TNodeId>
+  | PreparedPresentationLayoutDocument<TNodeId>;
 
-interface FlowLayoutRuntime {
+interface FlowLayoutRuntime<TNodeId extends string = string> {
   page: ResolvedPageSpec;
-  delegate: LayoutMeasureDelegate;
-  diagnostics: PaginationDiagnostic[];
-  pages: PaginatedLayoutResult['pages'];
+  delegate: LayoutMeasureDelegate<TNodeId>;
+  diagnostics: PaginationDiagnostic<TNodeId>[];
+  pages: PaginatedLayoutResult<TNodeId>['pages'];
   bodyBox: LayoutRect;
   maxPages: number;
   currentPageIndex: number;
   cursorY: number;
 }
 
-function assertRootNodeAllowed(node: LayoutNode, role: 'body' | 'header' | 'footer' | 'background' | 'foreground'): void {
+function assertRootNodeAllowed<TNodeId extends string>(
+  node: LayoutNode<TNodeId>,
+  role: 'body' | 'header' | 'footer' | 'background' | 'foreground'
+): void {
   if (node.kind === 'fixed' && role !== 'body') {
     throw new Error(`Nested fixed nodes are not allowed in ${role}.`);
   }
 }
 
-function validateFlowDocument(document: FlowLayoutDocument): void {
+function validateFlowDocument<TNodeId extends string>(document: FlowLayoutDocument<TNodeId>): void {
   assertRootNodeAllowed(document.body, 'body');
   if (document.header) {
     assertRootNodeAllowed(document.header, 'header');
@@ -73,7 +82,7 @@ function validateFlowDocument(document: FlowLayoutDocument): void {
   }
 }
 
-function validatePresentationDocument(document: PresentationLayoutDocument): void {
+function validatePresentationDocument<TNodeId extends string>(document: PresentationLayoutDocument<TNodeId>): void {
   if (document.slides.length === 0) {
     throw new Error('Presentation documents must define at least one slide.');
   }
@@ -89,7 +98,7 @@ function validatePresentationDocument(document: PresentationLayoutDocument): voi
   }
 }
 
-export function validateLayoutDocument(document: LayoutDocument): void {
+export function validateLayoutDocument<TNodeId extends string>(document: LayoutDocument<TNodeId>): void {
   if (document.id.trim().length === 0) {
     throw new Error('Layout document id must be non-empty.');
   }
@@ -102,7 +111,9 @@ export function validateLayoutDocument(document: LayoutDocument): void {
   validateFlowDocument(document);
 }
 
-export function prepareLayoutDocument(document: LayoutDocument): PreparedLayoutDocument {
+export function prepareLayoutDocument<TNodeId extends string>(
+  document: LayoutDocument<TNodeId>
+): PreparedLayoutDocument<TNodeId> {
   validateLayoutDocument(document);
 
   const page = resolvePageSpec(document.page);
@@ -152,7 +163,7 @@ function addDiagnostic(
   diagnostics.push(diagnostic);
 }
 
-function estimateTextHeight(text: string, availableWidth: number, textStyle?: Record<string, unknown>): number {
+function estimateTextHeight(text: string, availableWidth: number, textStyle?: LayoutTextStyle): number {
   const fontSize = typeof textStyle?.fontSize === 'number' ? textStyle.fontSize : 16;
   const lineHeight = typeof textStyle?.lineHeight === 'number' ? textStyle.lineHeight : fontSize * 1.4;
   const charsPerLine = Math.max(1, Math.floor(Math.max(availableWidth, fontSize) / Math.max(1, fontSize * 0.6)));
@@ -240,12 +251,12 @@ function estimateNodeHeight(
   }
 }
 
-function createArtifactFragment(
-  node: LayoutNode,
+function createArtifactFragment<TNodeId extends string>(
+  node: LayoutNode<TNodeId>,
   pageIndex: number,
   rect: LayoutRect,
   artifactKind: PageArtifactKind
-): LayoutFragment {
+): LayoutFragment<TNodeId> {
   return {
     nodeId: node.id,
     nodeKind: node.kind,
@@ -256,7 +267,7 @@ function createArtifactFragment(
   };
 }
 
-function ensurePage(runtime: FlowLayoutRuntime): void {
+function ensurePage<TNodeId extends string>(runtime: FlowLayoutRuntime<TNodeId>): void {
   if (runtime.pages[runtime.currentPageIndex]) {
     return;
   }
@@ -271,7 +282,9 @@ function ensurePage(runtime: FlowLayoutRuntime): void {
   });
 }
 
-function currentPage(runtime: FlowLayoutRuntime): PaginatedLayoutResult['pages'][number] {
+function currentPage<TNodeId extends string>(
+  runtime: FlowLayoutRuntime<TNodeId>
+): PaginatedLayoutResult<TNodeId>['pages'][number] {
   ensurePage(runtime);
   return runtime.pages[runtime.currentPageIndex]!;
 }
@@ -309,9 +322,9 @@ function pushPageArtifacts(
   }
 }
 
-function startNewFlowPage(
-  runtime: FlowLayoutRuntime,
-  prepared: PreparedFlowLayoutDocument,
+function startNewFlowPage<TNodeId extends string>(
+  runtime: FlowLayoutRuntime<TNodeId>,
+  prepared: PreparedFlowLayoutDocument<TNodeId>,
   headerHeight: number,
   footerHeight: number
 ): void {
@@ -323,9 +336,9 @@ function startNewFlowPage(
   runtime.cursorY = runtime.bodyBox.y;
 }
 
-function advancePage(
-  runtime: FlowLayoutRuntime,
-  prepared: PreparedFlowLayoutDocument,
+function advancePage<TNodeId extends string>(
+  runtime: FlowLayoutRuntime<TNodeId>,
+  prepared: PreparedFlowLayoutDocument<TNodeId>,
   headerHeight: number,
   footerHeight: number
 ): void {
@@ -338,9 +351,9 @@ function advancePage(
   runtime.cursorY = runtime.bodyBox.y;
 }
 
-function emitLeafFragment(
-  runtime: FlowLayoutRuntime,
-  node: LayoutNode,
+function emitLeafFragment<TNodeId extends string>(
+  runtime: FlowLayoutRuntime<TNodeId>,
+  node: LayoutNode<TNodeId>,
   width: number,
   height: number,
   renderData?: unknown
@@ -361,10 +374,10 @@ function emitLeafFragment(
   runtime.cursorY += height;
 }
 
-function layoutNodeIntoPages(
-  node: LayoutNode,
-  runtime: FlowLayoutRuntime,
-  prepared: PreparedFlowLayoutDocument,
+function layoutNodeIntoPages<TNodeId extends string>(
+  node: LayoutNode<TNodeId>,
+  runtime: FlowLayoutRuntime<TNodeId>,
+  prepared: PreparedFlowLayoutDocument<TNodeId>,
   availableWidth: number,
   headerHeight: number,
   footerHeight: number
@@ -431,12 +444,12 @@ function layoutNodeIntoPages(
   }
 }
 
-function layoutFlowDocument(
-  prepared: PreparedFlowLayoutDocument,
-  delegate: LayoutMeasureDelegate,
+function layoutFlowDocument<TNodeId extends string>(
+  prepared: PreparedFlowLayoutDocument<TNodeId>,
+  delegate: LayoutMeasureDelegate<TNodeId>,
   options?: LayoutPaginationOptions
-): PaginatedLayoutResult {
-  const diagnostics: PaginationDiagnostic[] = [];
+): PaginatedLayoutResult<TNodeId> {
+  const diagnostics: PaginationDiagnostic<TNodeId>[] = [];
   const headerHeight = prepared.header
     ? estimateNodeHeight(prepared.header, prepared.page.contentBox.width, prepared.page, delegate, diagnostics)
     : 0;
@@ -449,7 +462,7 @@ function layoutFlowDocument(
     width: prepared.page.contentBox.width,
     height: Math.max(0, prepared.page.contentBox.height - headerHeight - footerHeight)
   };
-  const runtime: FlowLayoutRuntime = {
+  const runtime: FlowLayoutRuntime<TNodeId> = {
     page: prepared.page,
     delegate,
     diagnostics,
@@ -474,7 +487,9 @@ function layoutFlowDocument(
   };
 }
 
-function layoutPresentationDocument(prepared: PreparedPresentationLayoutDocument): PaginatedLayoutResult {
+function layoutPresentationDocument<TNodeId extends string>(
+  prepared: PreparedPresentationLayoutDocument<TNodeId>
+): PaginatedLayoutResult<TNodeId> {
   return {
     documentId: prepared.documentId,
     page: prepared.page,
@@ -498,22 +513,22 @@ function layoutPresentationDocument(prepared: PreparedPresentationLayoutDocument
   };
 }
 
-export class PaginatedLayoutEngine {
-  private delegate: LayoutMeasureDelegate;
+export class PaginatedLayoutEngine<TNodeId extends string = string> {
+  private delegate: LayoutMeasureDelegate<TNodeId>;
 
-  constructor(delegate: LayoutMeasureDelegate = createNullMeasureDelegate()) {
+  constructor(delegate: LayoutMeasureDelegate<TNodeId> = createNullMeasureDelegate<TNodeId>()) {
     this.delegate = delegate;
   }
 
-  getMeasureDelegate(): LayoutMeasureDelegate {
+  getMeasureDelegate(): LayoutMeasureDelegate<TNodeId> {
     return this.delegate;
   }
 
-  prepare(document: LayoutDocument): PreparedLayoutDocument {
+  prepare(document: LayoutDocument<TNodeId>): PreparedLayoutDocument<TNodeId> {
     return prepareLayoutDocument(document);
   }
 
-  layout(document: LayoutDocument, options?: LayoutPaginationOptions): PaginatedLayoutResult {
+  layout(document: LayoutDocument<TNodeId>, options?: LayoutPaginationOptions): PaginatedLayoutResult<TNodeId> {
     const prepared = this.prepare(document);
     if (prepared.kind === 'presentation') {
       return layoutPresentationDocument(prepared);
@@ -522,8 +537,8 @@ export class PaginatedLayoutEngine {
   }
 }
 
-export function createPaginatedLayoutEngine(
-  delegate: LayoutMeasureDelegate = createNullMeasureDelegate()
-): PaginatedLayoutEngine {
+export function createPaginatedLayoutEngine<TNodeId extends string = string>(
+  delegate: LayoutMeasureDelegate<TNodeId> = createNullMeasureDelegate<TNodeId>()
+): PaginatedLayoutEngine<TNodeId> {
   return new PaginatedLayoutEngine(delegate);
 }

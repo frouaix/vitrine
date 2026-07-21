@@ -1,41 +1,61 @@
 export type {
-  BaseLayoutNode,
+  BaseLayoutNodeProps,
   BoxLayoutNode,
+  BoxLayoutNodeProps,
   BreakAfterPolicy,
   BreakBeforePolicy,
   BreakInsidePolicy,
   FixedLayoutNode,
-  FlowLayoutDocument,
-  FragmentContinuation,
-  LayoutDocument,
-  LayoutDocumentKind,
-  LayoutFragment,
+  FixedLayoutNodeProps,
+  LayoutContent,
   LayoutInsets,
   LayoutNode,
-  LayoutPaginationOptions,
+  LayoutNodeForType,
+  LayoutNodeOfType,
+  LayoutNodePropsByType,
+  LayoutNodeType,
+  LayoutTextStyle,
   LayoutRect,
   LayoutSize,
   MeasuredLayoutNode,
+  MeasuredLayoutNodeProps,
   PageArtifactKind,
   PageBreakLayoutNode,
+  PageBreakLayoutNodeProps,
+  SpacerLayoutNode,
+  SpacerLayoutNodeProps,
+  StackLayoutNode,
+  StackLayoutNodeProps,
+  TableLayoutNode,
+  TableLayoutNodeProps,
+  TextLayoutNode,
+  TextLayoutNodeProps
+} from './common.ts';
+export {
+  normalizeLayoutInsets
+} from './common.ts';
+export type {
+  FlowLayoutDocument,
+  LayoutDocument,
+  LayoutDocumentKind,
+  PresentationLayoutDocument,
+  PresentationPreviewScale
+} from './flow.ts';
+export type {
+  FragmentContinuation,
+  LayoutFragment,
+  LayoutPaginationOptions,
   PageSpec,
   PageUnit,
   PaginatedLayoutResult,
   PaginatedPage,
   PaginationDiagnostic,
   PaginationDiagnosticSeverity,
-  PresentationLayoutDocument,
-  PresentationPreviewScale,
-  ResolvedPageSpec,
-  SpacerLayoutNode,
-  StackLayoutNode,
-  TableLayoutNode,
-  TextLayoutNode
-} from './model.ts';
+  ResolvedPageSpec
+} from './pagination.ts';
 export {
-  normalizeLayoutInsets,
   resolvePageSpec
-} from './model.ts';
+} from './pagination.ts';
 export type {
   LayoutAvailableSpace,
   LayoutIntrinsicSize,

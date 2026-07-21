@@ -278,4 +278,37 @@ describe('layout pagination foundations', () => {
     expect(fragment?.rect.height).toBe(96);
     expect(fragment?.renderData).toEqual({ measured: true });
   });
+
+  it('supports string-literal unions for node ids', () => {
+    type NodeId = 'intro' | 'body' | 'summary';
+    const document: LayoutDocument<NodeId> = {
+      kind: 'flow',
+      id: 'typed-doc',
+      page: {
+        width: 300,
+        height: 220,
+        unit: 'px'
+      },
+      body: {
+        kind: 'stack',
+        id: 'body',
+        children: [
+          {
+            kind: 'text',
+            id: 'intro',
+            text: 'Intro copy'
+          },
+          {
+            kind: 'text',
+            id: 'summary',
+            text: 'Summary copy'
+          }
+        ]
+      }
+    };
+
+    const result = createPaginatedLayoutEngine<NodeId>().layout(document);
+    const nodeIds = result.pages.flatMap((page) => page.fragments.map((fragment) => fragment.nodeId)).filter(Boolean);
+    expect(nodeIds).toEqual(['intro', 'summary']);
+  });
 });

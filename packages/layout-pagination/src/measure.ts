@@ -1,4 +1,5 @@
-import type { LayoutNode, LayoutRect, LayoutSize, ResolvedPageSpec } from './model.ts';
+import type { LayoutNode, LayoutRect, LayoutSize } from './common.ts';
+import type { ResolvedPageSpec } from './pagination.ts';
 
 export interface LayoutAvailableSpace extends LayoutSize {}
 
@@ -8,8 +9,8 @@ export interface LayoutIntrinsicSize {
   minHeight: number;
 }
 
-export interface LayoutMeasureRequest {
-  node: LayoutNode;
+export interface LayoutMeasureRequest<TNodeId extends string = string> {
+  node: LayoutNode<TNodeId>;
   availableSpace: LayoutAvailableSpace;
   page: ResolvedPageSpec;
 }
@@ -20,11 +21,11 @@ export interface LayoutMeasuredContent {
   renderData?: unknown;
 }
 
-export interface LayoutMeasureDelegate {
-  measure(request: LayoutMeasureRequest): LayoutMeasuredContent | null;
+export interface LayoutMeasureDelegate<TNodeId extends string = string> {
+  measure(request: LayoutMeasureRequest<TNodeId>): LayoutMeasuredContent | null;
 }
 
-export function createNullMeasureDelegate(): LayoutMeasureDelegate {
+export function createNullMeasureDelegate<TNodeId extends string = string>(): LayoutMeasureDelegate<TNodeId> {
   return {
     measure(): LayoutMeasuredContent | null {
       return null;
