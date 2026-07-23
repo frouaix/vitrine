@@ -1,6 +1,9 @@
 import { VitrineComponent } from 'vitrine-gui';
-import { buildPresentationPreview } from './layout-pagination-preview.ts';
+import { registerTextaBlockType } from 'texta/browser';
+import { buildPresentationPreview } from 'vitrine-layout-pagination-adapter';
 import { documentPresentation, presentationResult } from './layout-pagination-scenarios.ts';
+
+registerTextaBlockType();
 
 let currentSlideIndex = 0;
 let time = 0;

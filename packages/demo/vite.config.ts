@@ -40,6 +40,7 @@ export default defineConfig({
       'vitrine-tables': resolve(__dirname, '../tables/src/index.ts'),
       'vitrine-tables-adapter': resolve(__dirname, '../tables-vitrine/src/index.ts'),
       'vitrine-layout-pagination': resolve(__dirname, '../layout-pagination/src/index.ts'),
+      'vitrine-layout-pagination-adapter': resolve(__dirname, '../layout-pagination-vitrine/src/index.ts'),
       'vitrine': resolve(__dirname, '../core/src/index.ts'),
       'vitrine-gui': resolve(__dirname, '../gui/src/index.ts')
     }

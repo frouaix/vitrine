@@ -1,6 +1,9 @@
 import { VitrineComponent } from 'vitrine-gui';
-import { buildFlowDocumentPreview } from './layout-pagination-preview.ts';
+import { registerTextaBlockType } from 'texta/browser';
+import { buildFlowDocumentPreview } from 'vitrine-layout-pagination-adapter';
 import { documentFlow, flowResult } from './layout-pagination-scenarios.ts';
+
+registerTextaBlockType();
 
 const component = VitrineComponent.block(() => (
   buildFlowDocumentPreview(documentFlow, flowResult, {

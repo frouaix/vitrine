@@ -103,6 +103,17 @@ Measured content is delegated through `LayoutMeasureDelegate`:
 
 This keeps the package renderer-agnostic while still allowing text, tables, and custom content to participate in layout.
 
+For Vitrine rendering, use the companion adapter package:
+
+```ts
+import {
+  buildVitrineBlocksFromPaginatedLayout,
+  createVitrineLayoutMeasureDelegate
+} from 'vitrine-layout-pagination-adapter';
+```
+
+That adapter lets `measured` and `table` nodes carry intrinsic size plus Vitrine block content while this package remains layout-only.
+
 ## Current engine behavior
 
 The current `PaginatedLayoutEngine` is intentionally an MVP.
@@ -216,7 +227,6 @@ This is still an MVP engine. It does **not** yet provide:
 - widow/orphan control
 - keep-with-next / avoid-break-inside enforcement beyond type-level support
 - table-specific pagination behavior
-- automatic Vitrine rendering adapters in this package
 - PDF output
 - semantic markdown parsing or markdown-to-layout conversion
 
@@ -264,6 +274,5 @@ Likely next areas of work:
 
 1. richer flow fragmentation
 2. stronger measurement integration for text/texta/tables
-3. preview adapters for Vitrine block trees
-4. semantic markdown/document builders
-5. PDF export integration based on the paginated result
+3. semantic markdown/document builders
+4. PDF export integration based on the paginated result

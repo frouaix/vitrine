@@ -32,6 +32,12 @@ importers:
       vitrine-gui:
         specifier: workspace:*
         version: link:../gui
+      vitrine-layout-pagination:
+        specifier: workspace:*
+        version: link:../layout-pagination
+      vitrine-layout-pagination-adapter:
+        specifier: workspace:*
+        version: link:../layout-pagination-vitrine
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -63,6 +69,19 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@22.19.11)
+
+  packages/layout-pagination-vitrine:
+    dependencies:
+      vitrine:
+        specifier: workspace:*
+        version: link:../core
+      vitrine-layout-pagination:
+        specifier: workspace:*
+        version: link:../layout-pagination
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   packages/tables:
     devDependencies:
