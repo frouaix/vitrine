@@ -13,7 +13,9 @@
   "dependencies": {
     "texta": "workspace:*",
     "vitrine": "workspace:*",
-    "vitrine-gui": "workspace:*"
+    "vitrine-gui": "workspace:*",
+    "vitrine-layout-pagination": "workspace:*",
+    "vitrine-layout-pagination-adapter": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

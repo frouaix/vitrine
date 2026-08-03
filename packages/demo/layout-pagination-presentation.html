@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine - Layout Pagination Presentation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 28%), #020617;
+    }
+    .page {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 28px 28px 84px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+    .intro {
+      max-width: 900px;
+      margin: 10px 0 22px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    .canvas-shell {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 22px;
+      background: rgba(15, 23, 42, 0.72);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+    #canvas {
+      width: 100%;
+      min-height: 980px;
+    }
+    .caption {
+      margin: 14px 18px 18px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+    .page-nav {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(2, 6, 23, 0.92);
+      backdrop-filter: blur(10px);
+      font-size: 14px;
+    }
+    .page-nav a {
+      color: #60a5fa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .page-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Layout Pagination — Presentation</h1>
+    <p class="intro">
+      Standalone presentation-page preview with explicit 16:9 slide geometry, a large active slide,
+      and a realistic thumbnail rail for browser-authored slide decks.
+    </p>
+    <div class="canvas-shell">
+      <div id="canvas"></div>
+      <p class="caption">Slides are explicit pages. The page size remains fixed; only the browser preview scales.</p>
+    </div>
+  </div>
+
+  <div class="page-nav">
+    <a href="text-selection-debug-texta.html">← Text Selection Debug (Texta)</a>
+    <a href="layout-pagination-flow.html">Flow Document Demo →</a>
+  </div>
+
+  <script type="module" src="./layout-pagination-presentation-setup.js"></script>
+</body>
+</html>

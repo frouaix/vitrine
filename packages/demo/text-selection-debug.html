@@ -4,45 +4,32 @@
   <link rel="icon" type="image/png" href="favicon.png" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vitrine - Text Selection Debug</title>
-  <link rel="stylesheet" href="./text-selection-debug.css">
+  <meta http-equiv="refresh" content="0; url=text-selection.html">
+  <title>Redirecting to Text Selection…</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Inter, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-  <div class="page">
-    <h1>Vitrine Text Selection Debug</h1>
-    <p class="intro">
-      Testing text selection with various text block configurations: different fonts, sizes, line spacing, and multi-line wrapping.
-    </p>
-    <div class="canvas-shell">
-      <div id="canvas"></div>
-      <p class="caption">Canvas with various text blocks for debugging. Check debug output below when clicking.</p>
-    </div>
-
-    <div class="cache-stats" id="cacheStats">
-      <h2>Text Cache Counters</h2>
-      <div class="cache-stats-grid">
-        <div class="cache-stat">
-          <span class="cache-stat-label">Fonts (G/P/M)</span>
-          <span class="cache-stat-value" id="cacheFonts">0 / 0 / 0</span>
-        </div>
-        <div class="cache-stat">
-          <span class="cache-stat-label">Entries (G/P/M)</span>
-          <span class="cache-stat-value" id="cacheEntries">0 / 0 / 0</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="debug-info" id="debugInfo">
-      Click on text blocks and check debug output here.
-      Coordinates will show canvas size, click position, and hit test results.
-    </div>
-  </div>
-
-  <div class="page-nav">
-    <a href="component-demo.html">← Component Demo</a>
-    <a href="text-selection-debug-texta.html">Texta Selection Debug →</a>
-  </div>
-
-  <script type="module" src="./text-selection-debug-setup.js"></script>
+  <p>Redirecting to <a href="text-selection.html">Text Selection</a>…</p>
+  <script>
+    window.location.href = 'text-selection.html';
+  </script>
 </body>
 </html>

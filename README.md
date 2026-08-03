@@ -28,6 +28,7 @@ Vitrine is organized as a pnpm workspace monorepo with several publishable packa
 |---------|-----------|----------|-------------|
 | Core | `packages/core` | `vitrine` | Block tree, rendering, events, hit-testing, frustum culling — zero GUI dependencies |
 | GUI | `packages/gui` | `vitrine-gui` | High-level GUI controls, theming, layout, and `VitrineComponent` |
+| Layout & Pagination | `packages/layout-pagination` | `vitrine-layout-pagination` | Renderer-agnostic document layout and pagination contracts |
 | Tables | `packages/tables` | `vitrine-tables` | Table layout model and extension contracts |
 | Tables Adapter | `packages/tables-vitrine` | `vitrine-tables-adapter` | Vitrine adapter for table rendering |
 | Texta | `packages/texta` | `texta` | Attributed text engine for semantic and render transformations |
