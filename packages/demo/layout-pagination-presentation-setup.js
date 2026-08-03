@@ -1,16 +1,17 @@
 import { VitrineComponent } from 'vitrine-gui';
 import { registerTextaBlockType } from 'texta/browser';
-import { buildPresentationPreview } from 'vitrine-layout-pagination-adapter';
+import {
+  buildPresentationPageFlipWrapper,
+  createPresentationPageFlipState
+} from 'vitrine-layout-pagination-adapter';
 import { documentPresentation, presentationResult } from './layout-pagination-scenarios.ts';
 
 registerTextaBlockType();
 
-let currentSlideIndex = 0;
-let time = 0;
+const slideFlipState = createPresentationPageFlipState();
 
 const component = VitrineComponent.block(() => (
-  buildPresentationPreview(documentPresentation, presentationResult, {
-    currentPageIndex: currentSlideIndex,
+  buildPresentationPageFlipWrapper(documentPresentation, presentationResult, slideFlipState, {
     x: 72,
     y: 92,
     mainScale: 0.86,
@@ -24,16 +25,3 @@ const component = VitrineComponent.block(() => (
 });
 
 component.mount(document.getElementById('canvas'));
-
-let lastTime = performance.now();
-function animate(now) {
-  const dt = (now - lastTime) / 1000;
-  lastTime = now;
-  time += dt;
-  if (time >= 4) {
-    time = 0;
-    currentSlideIndex = (currentSlideIndex + 1) % presentationResult.pages.length;
-  }
-  requestAnimationFrame(animate);
-}
-requestAnimationFrame(animate);

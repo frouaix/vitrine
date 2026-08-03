@@ -1,17 +1,22 @@
 import { VitrineComponent } from 'vitrine-gui';
 import { registerTextaBlockType } from 'texta/browser';
-import { buildFlowDocumentPreview } from 'vitrine-layout-pagination-adapter';
+import {
+  buildFlowPageFlipWrapper,
+  createFlowPageFlipState
+} from 'vitrine-layout-pagination-adapter';
 import { documentFlow, flowResult } from './layout-pagination-scenarios.ts';
 
 registerTextaBlockType();
 
+const flowFlipState = createFlowPageFlipState();
+
 const component = VitrineComponent.block(() => (
-  buildFlowDocumentPreview(documentFlow, flowResult, {
-    x: 70,
-    y: 86,
-    scale: 1.1,
-    pageGap: 42,
-    columns: 2
+  buildFlowPageFlipWrapper(documentFlow, flowResult, flowFlipState, {
+    x: 270,
+    y: 96,
+    mainScale: 1.12,
+    thumbnailScale: 0.18,
+    thumbnailGap: 22
   })
 ), {
   width: 1600,

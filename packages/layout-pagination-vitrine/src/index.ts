@@ -1,5 +1,5 @@
 import { group, rectangle, text } from 'vitrine';
-import type { Block, GroupProps } from 'vitrine';
+import type { Block, GroupProps, VitrinePointerEvent } from 'vitrine';
 import {
   normalizeLayoutInsets,
   type BoxLayoutNode,
@@ -127,6 +127,36 @@ export interface PresentationPreviewOptions {
   theme?: Partial<VitrinePreviewTheme>;
 }
 
+interface PageFlipStateBase {
+  currentPageIndex: number;
+  dragStartXs?: number;
+  dragCommitted?: boolean;
+}
+
+export interface PresentationPageFlipState extends PageFlipStateBase {}
+
+export interface FlowPageFlipState extends PageFlipStateBase {}
+
+export interface PresentationPageFlipWrapperOptions {
+  x?: number;
+  y?: number;
+  mainScale?: number;
+  thumbnailScale?: number;
+  thumbnailGap?: number;
+  dragThreshold?: number;
+  theme?: Partial<VitrinePreviewTheme>;
+}
+
+export interface FlowPageFlipWrapperOptions {
+  x?: number;
+  y?: number;
+  mainScale?: number;
+  thumbnailScale?: number;
+  thumbnailGap?: number;
+  dragThreshold?: number;
+  theme?: Partial<VitrinePreviewTheme>;
+}
+
 export const themeDefault: VitrinePreviewTheme = {
   canvasFill: '#0f172a',
   pageFill: '#ffffff',
@@ -151,6 +181,169 @@ function mergePreviewTheme(theme?: Partial<VitrinePreviewTheme>): VitrinePreview
       ...themeDefault.artifactFills,
       ...theme?.artifactFills
     }
+  };
+}
+
+function clampPageIndex(index: number, pageCount: number): number {
+  if (pageCount <= 0) {
+    return 0;
+  }
+  return Math.max(0, Math.min(index, pageCount - 1));
+}
+
+function setCurrentPageIndex(
+  state: PageFlipStateBase,
+  pageCount: number,
+  nextPageIndex: number
+): void {
+  state.currentPageIndex = clampPageIndex(nextPageIndex, pageCount);
+}
+
+function stepPage(
+  state: PageFlipStateBase,
+  pageCount: number,
+  delta: number
+): void {
+  setCurrentPageIndex(state, pageCount, state.currentPageIndex + delta);
+}
+
+function beginPageFlipDrag(
+  state: PageFlipStateBase,
+  event: VitrinePointerEvent
+): void {
+  state.dragStartXs = event.xs;
+  state.dragCommitted = false;
+}
+
+function resetPageFlipDrag(state: PageFlipStateBase): void {
+  state.dragStartXs = undefined;
+  state.dragCommitted = false;
+}
+
+function handlePageFlipDrag(
+  state: PageFlipStateBase,
+  event: VitrinePointerEvent,
+  pageCount: number,
+  threshold: number
+): void {
+  if (state.dragCommitted || state.dragStartXs === undefined || event.xs === undefined) {
+    return;
+  }
+
+  const dxDrag = event.xs - state.dragStartXs;
+  if (dxDrag <= -threshold) {
+    stepPage(state, pageCount, 1);
+    state.dragCommitted = true;
+  } else if (dxDrag >= threshold) {
+    stepPage(state, pageCount, -1);
+    state.dragCommitted = true;
+  }
+}
+
+function pageFlipOverlay(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  state: PageFlipStateBase,
+  pageCount: number,
+  dragThreshold: number
+): Block {
+  return rectangle({
+    x,
+    y,
+    dx: width,
+    dy: height,
+    fill: 'rgba(0, 0, 0, 0)',
+    onClick: (event: VitrinePointerEvent) => {
+      if (event.xl === undefined) {
+        return;
+      }
+      if (event.xl < width * 0.35) {
+        stepPage(state, pageCount, -1);
+      } else if (event.xl > width * 0.65) {
+        stepPage(state, pageCount, 1);
+      }
+    },
+    onPointerDown: (event: VitrinePointerEvent) => {
+      beginPageFlipDrag(state, event);
+    },
+    onDrag: (event: VitrinePointerEvent) => {
+      handlePageFlipDrag(state, event, pageCount, dragThreshold);
+    },
+    onPointerUp: () => {
+      resetPageFlipDrag(state);
+    }
+  });
+}
+
+function navButton(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  enabled: boolean,
+  onClick: () => void
+): Block {
+  const fill = enabled ? '#ffffff' : 'rgba(255,255,255,0.45)';
+  const stroke = enabled ? '#cbd5e1' : '#cbd5e1';
+  const textFill = enabled ? '#0f172a' : '#94a3b8';
+  return group({}, [
+    rectangle({
+      x,
+      y,
+      dx: width,
+      dy: height,
+      fill,
+      stroke,
+      strokeWidth: 1,
+      cornerRadius: 12,
+      onClick: enabled ? () => onClick() : undefined
+    }),
+    text({
+      x: x + width / 2,
+      y: y + height / 2,
+      text: label,
+      fontSize: 14,
+      fill: textFill,
+      align: 'center',
+      baseline: 'middle'
+    })
+  ]);
+}
+
+function pageCounterLabel(
+  x: number,
+  y: number,
+  label: string,
+  theme: VitrinePreviewTheme
+): Block {
+  return text({
+    x,
+    y,
+    text: label,
+    fontSize: 13,
+    fill: theme.mutedTextFill,
+    baseline: 'top'
+  });
+}
+
+export function createPresentationPageFlipState(
+  currentPageIndex: number = 0
+): PresentationPageFlipState {
+  return {
+    currentPageIndex,
+    dragCommitted: false
+  };
+}
+
+export function createFlowPageFlipState(
+  currentPageIndex: number = 0
+): FlowPageFlipState {
+  return {
+    currentPageIndex,
+    dragCommitted: false
   };
 }
 
@@ -725,6 +918,257 @@ export function buildPresentationPreview<TNodeId extends string = string>(
       baseline: 'top'
     }));
   });
+
+  return group({}, rgblChildren);
+}
+
+export function buildPresentationPageFlipWrapper<TNodeId extends string = string>(
+  document: VitrineLayoutDocument<TNodeId>,
+  result: PaginatedLayoutResult<TNodeId>,
+  state: PresentationPageFlipState,
+  options: PresentationPageFlipWrapperOptions = {}
+): Block {
+  const theme = mergePreviewTheme(options.theme);
+  const pageCount = result.pages.length;
+  const iCurrent = clampPageIndex(state.currentPageIndex, pageCount);
+  state.currentPageIndex = iCurrent;
+
+  const xStart = options.x ?? 40;
+  const yStart = options.y ?? 64;
+  const mainScale = options.mainScale ?? 0.5;
+  const thumbScale = options.thumbnailScale ?? 0.14;
+  const thumbGap = options.thumbnailGap ?? 18;
+  const dragThreshold = options.dragThreshold ?? 72;
+  const pageCurrent = result.pages[iCurrent]!;
+  const dxMain = result.page.width * mainScale;
+  const dyMain = result.page.height * mainScale;
+  const rgblChildren: Block[] = [
+    rectangle({
+      dx: 1280,
+      dy: 860,
+      fill: '#020617'
+    }),
+    text({
+      x: 44,
+      y: 26,
+      text: `Presentation flip view · slide ${iCurrent + 1} of ${pageCount}`,
+      fontSize: 22,
+      fill: '#e2e8f0',
+      baseline: 'top'
+    }),
+    text({
+      x: 44,
+      y: 58,
+      text: 'Click, drag, or use the thumbnail strip to flip between explicit slide pages.',
+      fontSize: 13,
+      fill: '#94a3b8',
+      baseline: 'top'
+    }),
+    buildVitrineBlocksFromPaginatedPage(document, pageCurrent, {
+      x: xStart,
+      y: yStart,
+      scale: mainScale,
+      showPageShadow: true,
+      showPageFrame: true,
+      pageFill: theme.pageFill,
+      pageStroke: theme.pageStroke,
+      pageShadowFill: theme.shadowFill,
+      artifactFills: theme.artifactFills,
+      defaultTextFill: theme.textFill
+    }),
+    pageFlipOverlay(
+      xStart,
+      yStart,
+      dxMain,
+      dyMain,
+      state,
+      pageCount,
+      dragThreshold
+    ),
+    navButton(
+      xStart,
+      yStart + dyMain + 18,
+      96,
+      38,
+      'Prev',
+      iCurrent > 0,
+      () => stepPage(state, pageCount, -1)
+    ),
+    navButton(
+      xStart + dxMain - 96,
+      yStart + dyMain + 18,
+      96,
+      38,
+      'Next',
+      iCurrent < pageCount - 1,
+      () => stepPage(state, pageCount, 1)
+    ),
+    pageCounterLabel(
+      xStart + dxMain / 2 - 46,
+      yStart + dyMain + 28,
+      `Slide ${iCurrent + 1} / ${pageCount}`,
+      theme
+    )
+  ];
+
+  result.pages.forEach((page: PaginatedPage<TNodeId>, index: number) => {
+    const thumbX = xStart + index * (result.page.width * thumbScale + thumbGap);
+    const thumbY = yStart + dyMain + 74;
+    rgblChildren.push(buildVitrineBlocksFromPaginatedPage(document, page, {
+      x: thumbX,
+      y: thumbY,
+      scale: thumbScale,
+      showPageFrame: true,
+      pageFill: theme.pageFill,
+      pageStroke: index === iCurrent ? theme.accentFill : theme.pageStroke,
+      artifactFills: theme.artifactFills,
+      defaultTextFill: theme.textFill
+    }));
+    rgblChildren.push(rectangle({
+      x: thumbX,
+      y: thumbY,
+      dx: result.page.width * thumbScale,
+      dy: result.page.height * thumbScale,
+      fill: 'rgba(0, 0, 0, 0)',
+      onClick: () => {
+        setCurrentPageIndex(state, pageCount, index);
+      }
+    }));
+    rgblChildren.push(text({
+      x: thumbX + 8,
+      y: thumbY + 8,
+      text: String(index + 1),
+      fontSize: 10,
+      fill: index === iCurrent ? theme.accentFill : theme.mutedTextFill,
+      baseline: 'top'
+    }));
+  });
+
+  return group({}, rgblChildren);
+}
+
+export function buildFlowPageFlipWrapper<TNodeId extends string = string>(
+  document: VitrineLayoutDocument<TNodeId>,
+  result: PaginatedLayoutResult<TNodeId>,
+  state: FlowPageFlipState,
+  options: FlowPageFlipWrapperOptions = {}
+): Block {
+  const theme = mergePreviewTheme(options.theme);
+  const pageCount = result.pages.length;
+  const iCurrent = clampPageIndex(state.currentPageIndex, pageCount);
+  state.currentPageIndex = iCurrent;
+
+  const xStart = options.x ?? 92;
+  const yStart = options.y ?? 92;
+  const mainScale = options.mainScale ?? 1.02;
+  const thumbScale = options.thumbnailScale ?? 0.16;
+  const thumbGap = options.thumbnailGap ?? 20;
+  const dragThreshold = options.dragThreshold ?? 58;
+  const pageCurrent = result.pages[iCurrent]!;
+  const dxMain = result.page.width * mainScale;
+  const dyMain = result.page.height * mainScale;
+  const thumbStride = result.page.width * thumbScale + thumbGap;
+  const thumbStartX = xStart + Math.max(0, (dxMain - ((Math.min(pageCount, 5) * thumbStride) - thumbGap)) / 2);
+  const iThumbStart = Math.max(0, Math.min(iCurrent - 2, Math.max(0, pageCount - 5)));
+  const iThumbEnd = Math.min(pageCount, iThumbStart + 5);
+
+  const rgblChildren: Block[] = [
+    rectangle({
+      dx: 1600,
+      dy: 1120,
+      fill: theme.canvasFill
+    }),
+    text({
+      x: 52,
+      y: 28,
+      text: `Flow document flip view · page ${iCurrent + 1} of ${pageCount}`,
+      fontSize: 22,
+      fill: '#e2e8f0',
+      baseline: 'top'
+    }),
+    text({
+      x: 52,
+      y: 60,
+      text: 'Document pages render one at a time here; drag or click to turn pages while keeping paginated content intact.',
+      fontSize: 13,
+      fill: '#94a3b8',
+      baseline: 'top'
+    }),
+    buildVitrineBlocksFromPaginatedPage(document, pageCurrent, {
+      x: xStart,
+      y: yStart,
+      scale: mainScale,
+      showPageShadow: true,
+      showPageFrame: true,
+      pageFill: theme.pageFill,
+      pageStroke: theme.pageStroke,
+      pageShadowFill: theme.shadowFill,
+      artifactFills: theme.artifactFills,
+      defaultTextFill: theme.textFill
+    }),
+    pageFlipOverlay(
+      xStart,
+      yStart,
+      dxMain,
+      dyMain,
+      state,
+      pageCount,
+      dragThreshold
+    ),
+    navButton(
+      xStart,
+      yStart + dyMain + 18,
+      110,
+      40,
+      'Previous',
+      iCurrent > 0,
+      () => stepPage(state, pageCount, -1)
+    ),
+    navButton(
+      xStart + dxMain - 110,
+      yStart + dyMain + 18,
+      110,
+      40,
+      'Next',
+      iCurrent < pageCount - 1,
+      () => stepPage(state, pageCount, 1)
+    ),
+    pageCounterLabel(
+      xStart + dxMain / 2 - 42,
+      yStart + dyMain + 30,
+      `Page ${iCurrent + 1} / ${pageCount}`,
+      theme
+    )
+  ];
+
+  for (let iPage = iThumbStart; iPage < iThumbEnd; iPage += 1) {
+    const page = result.pages[iPage]!;
+    const xThumb = thumbStartX + (iPage - iThumbStart) * thumbStride;
+    const yThumb = yStart + dyMain + 84;
+    rgblChildren.push(buildVitrineBlocksFromPaginatedPage(document, page, {
+      x: xThumb,
+      y: yThumb,
+      scale: thumbScale,
+      showPageFrame: true,
+      pageFill: theme.pageFill,
+      pageStroke: iPage === iCurrent ? theme.accentFill : theme.pageStroke,
+      artifactFills: theme.artifactFills,
+      defaultTextFill: theme.textFill,
+      rootGroupProps: {
+        opacity: iPage === iCurrent ? 1 : 0.82
+      }
+    }));
+    rgblChildren.push(rectangle({
+      x: xThumb,
+      y: yThumb,
+      dx: result.page.width * thumbScale,
+      dy: result.page.height * thumbScale,
+      fill: 'rgba(0, 0, 0, 0)',
+      onClick: () => {
+        setCurrentPageIndex(state, pageCount, iPage);
+      }
+    }));
+  }
 
   return group({}, rgblChildren);
 }
